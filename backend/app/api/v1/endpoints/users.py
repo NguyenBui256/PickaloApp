@@ -63,9 +63,9 @@ async def get_user_profile(
 
 @router.get("/merchants", response_model=list[UserResponse])
 async def list_merchants(
+    session: DBSession,
     skip: int = 0,
     limit: int = 20,
-    session: DBSession,
 ) -> list[UserResponse]:
     """
     List all merchant users.

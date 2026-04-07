@@ -25,8 +25,8 @@ class RegisterRequest(BaseModel):
         str,
         Field(
             min_length=8,
-            max_length=100,
-            description="Password (min 8 characters)",
+            max_length=16,
+            description="Password (8-16 characters)",
         ),
     ]
     full_name: Annotated[
@@ -120,7 +120,8 @@ class ChangePasswordRequest(BaseModel):
         str,
         Field(
             min_length=8,
-            max_length=100,
+            max_length=16,
+            description="New password (8-16 characters)",
         ),
     ]
 

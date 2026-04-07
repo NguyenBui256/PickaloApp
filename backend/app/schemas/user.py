@@ -4,9 +4,11 @@ User schemas for request and response.
 Pydantic models for user data validation and serialization.
 """
 
+import uuid
 from datetime import date
 from typing import Annotated
-from pydantic import BaseModel, EmailStr, Field
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.models.user import UserRole
 
@@ -63,6 +65,12 @@ class UserResponse(UserBase):
     is_active: bool
     is_verified: bool
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_uuid_to_str(cls, v: uuid.UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(v)
+
     model_config = {"from_attributes": True}
 
 
@@ -72,3 +80,13 @@ class UserProfileResponse(UserResponse):
     created_at: str
     updated_at: str
     deleted_at: str | None = None
+
+    @field_validator("created_at", "updated_at", "deleted_at", mode="before")
+    @classmethod
+    def convert_datetime_to_str(cls, v: date | None) -> str | None:
+        """Convert datetime to ISO string for JSON serialization."""
+        if v is None:
+            return None
+        if isinstance(v, date):
+            return v.isoformat()
+        return str(v)

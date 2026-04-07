@@ -1,0 +1,3085 @@
+{
+  "version": "2.10",
+  "children": [
+    {
+      "type": "frame",
+      "id": "qnNQl",
+      "x": 50,
+      "y": 50,
+      "name": "Login Screen",
+      "width": 375,
+      "height": 810,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "8dfHw",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$--accent-primary",
+                "position": 0
+              },
+              {
+                "color": "$--surface-inverse",
+                "position": 1
+              }
+            ]
+          },
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "frame",
+          "id": "QbI1D",
+          "name": "Logo Area",
+          "layout": "vertical",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "rl1Cd",
+              "name": "Logo",
+              "fill": "$--foreground-inverse",
+              "content": "PickAlo",
+              "textAlign": "center",
+              "fontFamily": "$--font-heading",
+              "fontSize": 42,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "RJYKu",
+              "name": "Tagline",
+              "fill": "$--foreground-muted",
+              "content": "Book Your Game",
+              "textAlign": "center",
+              "fontFamily": "$--font-body",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "4lpyI",
+          "name": "Login Form",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "4g1y1",
+              "name": "Welcome",
+              "fill": "$--foreground-inverse",
+              "content": "Welcome Back!",
+              "fontFamily": "$--font-heading",
+              "fontSize": 24,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "39GhM",
+              "name": "Email Label",
+              "fill": "$--foreground-muted",
+              "content": "Email",
+              "fontFamily": "$--font-body",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "vxdvF",
+              "name": "Email Input",
+              "fill": "$--surface-primary",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "w4fi4",
+                  "name": "Email Icon",
+                  "fill": "$--foreground-muted",
+                  "content": "✉",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "3BXp2",
+                  "name": "Email Placeholder",
+                  "fill": "$--foreground-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "your@email.com",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g265r",
+              "name": "Password Label",
+              "fill": "$--foreground-muted",
+              "content": "Password",
+              "fontFamily": "$--font-body",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "F5eDO",
+              "name": "Password Input",
+              "fill": "$--surface-primary",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "i5vSY",
+                  "name": "Lock Icon",
+                  "fill": "$--foreground-muted",
+                  "content": "🔒",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "3zaA8",
+                  "name": "Password Placeholder",
+                  "fill": "$--foreground-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "••••••••",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "vccf9",
+              "name": "Forgot Password",
+              "fill": "$--accent-light",
+              "content": "Forgot Password?",
+              "textAlign": "right",
+              "fontFamily": "$--font-body",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "2D3ps",
+              "name": "Login Button",
+              "fill": "$--accent-primary",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GclZG",
+                  "name": "Button Text",
+                  "fill": "$--foreground-inverse",
+                  "content": "Sign In",
+                  "fontFamily": "$--font-heading",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "6zJWE",
+              "name": "Or Divider",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "1G7pS",
+                  "name": "Line",
+                  "opacity": 0.3,
+                  "fill": "$--foreground-muted",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "text",
+                  "id": "mryKu",
+                  "name": "Or",
+                  "fill": "$--foreground-muted",
+                  "content": "OR",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "rectangle",
+                  "id": "7J0rK",
+                  "name": "Line",
+                  "opacity": 0.3,
+                  "fill": "$--foreground-muted",
+                  "width": "fill_container",
+                  "height": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZOPot",
+              "name": "Social Buttons",
+              "width": "fit_content(0)",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "0mPUr",
+                  "name": "Google",
+                  "width": "fill_container",
+                  "fill": "$--surface-primary",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "64g6P",
+                      "name": "Google",
+                      "fill": "$--foreground-primary",
+                      "content": "G",
+                      "fontFamily": "$--font-heading",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "b9gvi",
+                  "name": "Facebook",
+                  "width": "fill_container",
+                  "fill": "$--surface-primary",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "4LjBl",
+                      "name": "Facebook",
+                      "fill": "$--foreground-primary",
+                      "content": "f",
+                      "fontFamily": "$--font-heading",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ApqOR",
+              "name": "Sign Up Prompt",
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "b5WfE",
+                  "name": "Sign Up Text",
+                  "fill": "$--foreground-muted",
+                  "content": "Don't have an account?",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "d2CD1",
+                  "name": "Sign Up Link",
+                  "fill": "$--foreground-inverse",
+                  "content": "Sign Up",
+                  "fontFamily": "$--font-body",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "deyeI",
+      "x": 450,
+      "y": 50,
+      "name": "Home Screen",
+      "width": 375,
+      "height": 810,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "HiQxK",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": "$--surface-primary",
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "frame",
+          "id": "sT4QX",
+          "name": "Header",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "QKuSe",
+              "name": "Greeting Area",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "m9o0o",
+                  "name": "Greeting",
+                  "fill": "$--foreground-primary",
+                  "content": "Hello, Player! 👋",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "iAvD9",
+                  "name": "Subtext",
+                  "fill": "$--foreground-secondary",
+                  "content": "Ready to play?",
+                  "fontFamily": "Geist",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "ellipse",
+              "id": "TMz72",
+              "name": "Avatar",
+              "fill": "$--surface-secondary",
+              "width": 44,
+              "height": 44,
+              "stroke": {
+                "thickness": 2,
+                "fill": "$--accent-primary"
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "kOmd1",
+          "name": "Search Container",
+          "width": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "bszxR",
+              "name": "Search Bar",
+              "width": "fill_container",
+              "fill": "$--surface-secondary",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8mZRY",
+                  "name": "Search Icon",
+                  "content": "🔍",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "0NPHn",
+                  "name": "Placeholder",
+                  "fill": "$--foreground-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Search venues, sports...",
+                  "fontFamily": "Geist",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "hcDMD",
+                  "name": "Filter Button",
+                  "fill": "$--accent-primary",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XwmXb",
+                      "name": "Filter",
+                      "fill": "$--foreground-inverse",
+                      "content": "⚙",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "M2LYE",
+          "name": "Categories Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "FpsBO",
+              "name": "Categories Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "F4UBI",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Sports",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "8tOcU",
+                  "name": "See All",
+                  "fill": "$--accent-primary",
+                  "content": "See All",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2DP13",
+              "name": "Categories List",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "oOR48",
+                  "name": "Pickleball",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "ZpRJt",
+                      "name": "Icon",
+                      "fill": "$--accent-light",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--accent-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "SDlFC",
+                      "name": "Label",
+                      "fill": "$--foreground-primary",
+                      "content": "Pickleball",
+                      "textAlign": "center",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qph8P",
+                  "name": "Tennis",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "EuFn7",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "JSmQv",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Tennis",
+                      "textAlign": "center",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kSfFw",
+                  "name": "Badminton",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "eodnD",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "yUAIJ",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Badminton",
+                      "textAlign": "center",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fSFDv",
+                  "name": "Football",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "WUe9H",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "gXFLb",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Football",
+                      "textAlign": "center",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NbQGJ",
+          "name": "Venues Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "n44Zm",
+              "name": "Venues Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XBSg4",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Nearby Venues",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "qJqEf",
+                  "name": "Map Button",
+                  "fill": "$--surface-secondary",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Glrdq",
+                      "name": "Map Icon",
+                      "content": "🗺",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HFyPC",
+                      "name": "Map Text",
+                      "fill": "$--foreground-primary",
+                      "content": "Map",
+                      "fontFamily": "Geist",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "gLdLE",
+              "name": "Venue Card 1",
+              "fill": "$--surface-primary",
+              "stroke": {
+                "thickness": 1,
+                "fill": "$--border-color"
+              },
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "TxCQp",
+                  "name": "Image",
+                  "fill": "$--surface-secondary",
+                  "width": "fill_container",
+                  "height": 120
+                },
+                {
+                  "type": "frame",
+                  "id": "AEOfk",
+                  "name": "Info",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "XtenY",
+                      "name": "Name",
+                      "fill": "$--foreground-primary",
+                      "content": "Hanoi Pickleball Center",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "nUXoD",
+                      "name": "Location",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "OxAyo",
+                          "name": "Loc Icon",
+                          "content": "📍",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "4q0Af",
+                          "name": "Address",
+                          "fill": "$--foreground-secondary",
+                          "content": "Cau Giay, Hanoi",
+                          "fontFamily": "Geist",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xBU7g",
+                  "name": "Footer",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Nm6S6",
+                      "name": "Price",
+                      "fill": "$--accent-primary",
+                      "content": "150,000₫/h",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qexKV",
+                      "name": "Rating",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ziuCv",
+                          "name": "Star",
+                          "content": "⭐",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Dd1VF",
+                          "name": "Score",
+                          "fill": "$--foreground-primary",
+                          "content": "4.8",
+                          "fontFamily": "Geist",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "9XR0G",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 710,
+          "name": "Bottom Nav",
+          "width": "fill_container(0)",
+          "fill": "$--surface-primary",
+          "stroke": {
+            "thickness": 1,
+            "fill": "$--border-color"
+          },
+          "justifyContent": "space_around",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "coX5B",
+              "name": "Home",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DvDgv",
+                  "name": "Icon",
+                  "content": "🏠",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "rx51o",
+                  "name": "Label",
+                  "fill": "$--accent-primary",
+                  "content": "Home",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "fmsLD",
+              "name": "Map",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MADDy",
+                  "name": "Icon",
+                  "content": "🗺",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "OWLOv",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Map",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rcJ79",
+              "name": "Booking",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NuOBK",
+                  "name": "Icon",
+                  "content": "📅",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "SvthH",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Booking",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4pPWH",
+              "name": "Profile",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ELoeZ",
+                  "name": "Icon",
+                  "content": "👤",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "cVMJl",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Profile",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "mG2oG",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": "$--surface-primary",
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "frame",
+          "id": "m7bkb",
+          "name": "Header",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "VgcwL",
+              "name": "Greeting Area",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Bf982",
+                  "name": "Greeting",
+                  "fill": "$--foreground-primary",
+                  "content": "Hello, Player!",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "rZfFi",
+                  "name": "Subtext",
+                  "fill": "$--foreground-secondary",
+                  "content": "Ready to play?",
+                  "fontFamily": "Geist",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "ellipse",
+              "id": "c0o7B",
+              "name": "Avatar",
+              "fill": "$--surface-secondary",
+              "width": 44,
+              "height": 44,
+              "stroke": {
+                "thickness": 2,
+                "fill": "$--accent-primary"
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "NGCwN",
+          "name": "Search Container",
+          "width": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "GQwWJ",
+              "name": "Search Bar",
+              "width": "fill_container",
+              "fill": "$--surface-secondary",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ykPjI",
+                  "name": "Search Icon",
+                  "content": "🔍",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "c5vrB",
+                  "name": "Placeholder",
+                  "fill": "$--foreground-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Search venues...",
+                  "fontFamily": "Geist",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "uUH0k",
+                  "name": "Filter Button",
+                  "fill": "$--accent-primary",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "CcyQX",
+                      "name": "Filter",
+                      "fill": "$--foreground-inverse",
+                      "content": "⚙",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "hZnMM",
+          "name": "Categories Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "7RLrA",
+              "name": "Categories Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mH52S",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Sports",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "zeD5h",
+                  "name": "See All",
+                  "fill": "$--accent-primary",
+                  "content": "See All",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YU9h9",
+              "name": "Categories List",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "kPUNF",
+                  "name": "Pickleball",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "tGaon",
+                      "name": "Icon",
+                      "fill": "$--accent-light",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--accent-primary"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "id": "QPhID",
+                      "name": "Label",
+                      "fill": "$--foreground-primary",
+                      "content": "Pickleball",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "7VJ2v",
+                  "name": "Tennis",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "9pVSe",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "Xw4hN",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Tennis",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EUlDR",
+                  "name": "Badminton",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "RAJ5s",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wza2I",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Badminton",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "c5UuR",
+                  "name": "Football",
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "6NDYZ",
+                      "name": "Icon",
+                      "fill": "$--surface-secondary",
+                      "width": 56,
+                      "height": 56
+                    },
+                    {
+                      "type": "text",
+                      "id": "w0DU2",
+                      "name": "Label",
+                      "fill": "$--foreground-secondary",
+                      "content": "Football",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Zc8CF",
+          "name": "Venues Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "frame",
+              "id": "vYWL9",
+              "name": "Venues Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uV61p",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Nearby Venues",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "i1OAd",
+                  "name": "Map Button",
+                  "fill": "$--surface-secondary",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Qcfof",
+                      "name": "Map Icon",
+                      "content": "🗺",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lH7y8",
+                      "name": "Map Text",
+                      "fill": "$--foreground-primary",
+                      "content": "Map",
+                      "fontFamily": "Geist",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ElHMR",
+              "name": "Venue Card 1",
+              "fill": "$--surface-primary",
+              "stroke": {
+                "thickness": 1,
+                "fill": "$--border-color"
+              },
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "bzmqH",
+                  "name": "Image",
+                  "fill": "$--surface-secondary",
+                  "width": "fill_container",
+                  "height": 120
+                },
+                {
+                  "type": "frame",
+                  "id": "xq1xq",
+                  "name": "Info",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SSgGr",
+                      "name": "Name",
+                      "fill": "$--foreground-primary",
+                      "content": "Hanoi Pickleball Center",
+                      "fontFamily": "Inter",
+                      "fontSize": 15,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "258Lc",
+                      "name": "Location",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "zp0vl",
+                          "name": "Loc Icon",
+                          "content": "📍",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "wqZKX",
+                          "name": "Address",
+                          "fill": "$--foreground-secondary",
+                          "content": "Cau Giay, Hanoi",
+                          "fontFamily": "Geist",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "y1nza",
+                  "name": "Footer",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5bBei",
+                      "name": "Price",
+                      "fill": "$--accent-primary",
+                      "content": "150,000₫/h",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "xBngB",
+                      "name": "Rating",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "a3LjF",
+                          "name": "Star",
+                          "content": "⭐",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "gkEmW",
+                          "name": "Score",
+                          "fill": "$--foreground-primary",
+                          "content": "4.8",
+                          "fontFamily": "Geist",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "GRXCH",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 710,
+          "name": "Bottom Nav",
+          "width": "fill_container(0)",
+          "fill": "$--surface-primary",
+          "stroke": {
+            "thickness": 1,
+            "fill": "$--border-color"
+          },
+          "justifyContent": "space_around",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "MTWFe",
+              "name": "Home",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "QoPxK",
+                  "name": "Icon",
+                  "content": "🏠",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "nIhI1",
+                  "name": "Label",
+                  "fill": "$--accent-primary",
+                  "content": "Home",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kShOZ",
+              "name": "Map",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8582L",
+                  "name": "Icon",
+                  "content": "🗺",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ZLupb",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Map",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "w5oRD",
+              "name": "Booking",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "7KQRf",
+                  "name": "Icon",
+                  "content": "📅",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "uC3T5",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Booking",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "2ZXKy",
+              "name": "Profile",
+              "layout": "vertical",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "OTYUC",
+                  "name": "Icon",
+                  "content": "👤",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "GFG5z",
+                  "name": "Label",
+                  "fill": "$--foreground-muted",
+                  "content": "Profile",
+                  "fontFamily": "Geist",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SJdH7",
+      "x": 850,
+      "y": 50,
+      "name": "Map Screen",
+      "width": 375,
+      "height": 810,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "7YCuI",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": "$--surface-primary",
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "frame",
+          "id": "i55Ag",
+          "name": "Header",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "nWbVt",
+              "name": "Title",
+              "fill": "$--foreground-primary",
+              "content": "Find Venues",
+              "fontFamily": "Inter",
+              "fontSize": 20,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "67NcU",
+              "name": "Back",
+              "fill": "$--surface-secondary",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "N94QY",
+                  "name": "Back",
+                  "fill": "$--foreground-primary",
+                  "content": "←",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qyM8Y",
+          "name": "Search Container",
+          "width": "fill_container",
+          "children": [
+            {
+              "type": "frame",
+              "id": "vtRXz",
+              "name": "Search Bar",
+              "width": "fill_container",
+              "fill": "$--surface-secondary",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "IWCbD",
+                  "name": "Search Icon",
+                  "content": "🔍",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "9GaO5",
+                  "name": "Placeholder",
+                  "fill": "$--foreground-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Search location...",
+                  "fontFamily": "Geist",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "rectangle",
+          "id": "rdaq5",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 120,
+          "name": "Map Area",
+          "fill": "$--surface-secondary",
+          "width": "fill_container(0)",
+          "height": 400
+        },
+        {
+          "type": "frame",
+          "id": "FlvE4",
+          "layoutPosition": "absolute",
+          "x": 80,
+          "y": 180,
+          "name": "Pin 1",
+          "layout": "vertical",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "vb5a8",
+              "name": "Pin",
+              "fill": "$--accent-primary",
+              "width": 32,
+              "height": 32,
+              "stroke": {
+                "thickness": 2,
+                "fill": "$--surface-inverse"
+              }
+            },
+            {
+              "type": "text",
+              "id": "xBDQ5",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 8,
+              "name": "Label",
+              "fill": "$--foreground-inverse",
+              "content": "150K",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 9,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "iK7vo",
+          "layoutPosition": "absolute",
+          "x": 200,
+          "y": 250,
+          "name": "Pin 2",
+          "layout": "vertical",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "Tvu48",
+              "name": "Pin",
+              "fill": "$--surface-secondary",
+              "width": 32,
+              "height": 32,
+              "stroke": {
+                "thickness": 2,
+                "fill": "$--foreground-primary"
+              }
+            },
+            {
+              "type": "text",
+              "id": "CSuqx",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 8,
+              "name": "Label",
+              "fill": "$--foreground-primary",
+              "content": "200K",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 9,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "53X6x",
+          "layoutPosition": "absolute",
+          "x": 280,
+          "y": 150,
+          "name": "Pin 3",
+          "layout": "vertical",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "S4i3r",
+              "name": "Pin",
+              "fill": "$--surface-secondary",
+              "width": 32,
+              "height": 32,
+              "stroke": {
+                "thickness": 2,
+                "fill": "$--foreground-primary"
+              }
+            },
+            {
+              "type": "text",
+              "id": "lCI5t",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 8,
+              "name": "Label",
+              "fill": "$--foreground-primary",
+              "content": "180K",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 9,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "34W4P",
+          "layoutPosition": "absolute",
+          "x": 170,
+          "y": 300,
+          "name": "User Pin",
+          "layout": "vertical",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "ellipse",
+              "id": "5ov8C",
+              "name": "User",
+              "fill": "$--accent-primary",
+              "width": 20,
+              "height": 20,
+              "stroke": {
+                "thickness": 3,
+                "fill": "$--surface-inverse"
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "cX9AN",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 540,
+          "name": "Filter Chips",
+          "width": "fill_container(0)",
+          "children": [
+            {
+              "type": "frame",
+              "id": "d995I",
+              "name": "Pickleball",
+              "fill": "$--accent-primary",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Yh4xx",
+                  "name": "Text",
+                  "fill": "$--foreground-inverse",
+                  "content": "Pickleball",
+                  "fontFamily": "Geist",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "S16RN",
+              "name": "Indoor",
+              "fill": "$--surface-secondary",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "8Ixsx",
+                  "name": "Text",
+                  "fill": "$--foreground-primary",
+                  "content": "Indoor",
+                  "fontFamily": "Geist",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Xvic0",
+              "name": "AC",
+              "fill": "$--surface-secondary",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "5ZDfz",
+                  "name": "Text",
+                  "fill": "$--foreground-primary",
+                  "content": "AC",
+                  "fontFamily": "Geist",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Haux0",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 600,
+          "name": "Venue Preview",
+          "width": "fill_container(0)",
+          "fill": "$--surface-primary",
+          "stroke": {
+            "thickness": 1,
+            "fill": "$--border-color"
+          },
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "sYEz3",
+              "name": "Image",
+              "fill": "$--surface-secondary",
+              "width": 80,
+              "height": 80
+            },
+            {
+              "type": "frame",
+              "id": "SKBPr",
+              "name": "Info",
+              "width": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "exQGF",
+                  "name": "Name",
+                  "fill": "$--foreground-primary",
+                  "content": "Tay Ho Pickleball",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "W1GYb",
+                  "name": "Location",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cmRDT",
+                      "name": "Icon",
+                      "content": "📍",
+                      "fontFamily": "Inter",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "4A0mH",
+                      "name": "Address",
+                      "fill": "$--foreground-secondary",
+                      "content": "Tay Ho, Hanoi",
+                      "fontFamily": "Geist",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "r0ToG",
+                  "name": "Footer",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "y9onj",
+                      "name": "Price",
+                      "fill": "$--accent-primary",
+                      "content": "180,000₫/h",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "09eRt",
+                      "name": "Rating",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "9YJ8T",
+                          "name": "Star",
+                          "content": "⭐",
+                          "fontFamily": "Inter",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xi8lM",
+                          "name": "Score",
+                          "fill": "$--foreground-primary",
+                          "content": "4.9",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "G154H",
+              "name": "Button",
+              "fill": "$--accent-primary",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "C573k",
+                  "name": "Text",
+                  "fill": "$--foreground-inverse",
+                  "content": "Book",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fkNIq",
+      "x": 50,
+      "y": 900,
+      "name": "Venue Detail",
+      "width": 375,
+      "height": 810,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "h9gnZ",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": "$--surface-primary",
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "rectangle",
+          "id": "m5dod",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Venue Image",
+          "fill": "$--surface-secondary",
+          "width": "fill_container(0)",
+          "height": 250
+        },
+        {
+          "type": "frame",
+          "id": "Yp93n",
+          "layoutPosition": "absolute",
+          "x": 16,
+          "y": 16,
+          "name": "Back Button",
+          "width": 36,
+          "height": 36,
+          "fill": "$--surface-primary",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "rm6fz",
+              "name": "Back",
+              "fill": "$--foreground-primary",
+              "content": "←",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "nBx7B",
+          "layoutPosition": "absolute",
+          "x": 320,
+          "y": 16,
+          "name": "Favorite Button",
+          "width": 36,
+          "height": 36,
+          "fill": "$--surface-primary",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "ODLLW",
+              "name": "Heart",
+              "fill": "$--foreground-primary",
+              "content": "♡",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FAN8d",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 200,
+          "name": "Info Card",
+          "width": "fill_container(0)",
+          "fill": "$--surface-primary",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "QOldS",
+              "name": "Name",
+              "fill": "$--foreground-primary",
+              "content": "Hanoi Pickleball Center",
+              "fontFamily": "Inter",
+              "fontSize": 22,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "6Aqm3",
+              "name": "Meta",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "J4qOF",
+                  "name": "Rating",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YNJ1m",
+                      "name": "Star",
+                      "content": "⭐",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SUrRO",
+                      "name": "Score",
+                      "fill": "$--foreground-primary",
+                      "content": "4.8",
+                      "fontFamily": "Geist",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RPpek",
+                      "name": "Reviews",
+                      "fill": "$--foreground-muted",
+                      "content": "(128 reviews)",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dakKk",
+                  "name": "Location",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ipqe3",
+                      "name": "Icon",
+                      "content": "📍",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yqyz0",
+                      "name": "Address",
+                      "fill": "$--foreground-secondary",
+                      "content": "2.5 km away",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "I4rtK",
+              "name": "Amenities",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "0kxA7",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Amenities",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "ShoOd",
+                  "name": "List",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "GfHR4",
+                      "name": "AC",
+                      "fill": "$--surface-secondary",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "X0xGg",
+                          "name": "Text",
+                          "fill": "$--foreground-primary",
+                          "content": "❄️ AC",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "JIEeM",
+                      "name": "Parking",
+                      "fill": "$--surface-secondary",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "F0wWA",
+                          "name": "Text",
+                          "fill": "$--foreground-primary",
+                          "content": "🅿️ Parking",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "15qPd",
+                      "name": "Drinks",
+                      "fill": "$--surface-secondary",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "cm3HV",
+                          "name": "Text",
+                          "fill": "$--foreground-primary",
+                          "content": "🥤 Drinks",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "FNLRY",
+              "name": "Courts",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "h732D",
+                  "name": "Title",
+                  "fill": "$--foreground-primary",
+                  "content": "Available Courts",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "QKmZ5",
+                  "name": "Court 1",
+                  "fill": "$--surface-secondary",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "h9c6y",
+                      "name": "Info",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "pFV4W",
+                          "name": "Name",
+                          "fill": "$--foreground-primary",
+                          "content": "Court 1 - Indoor",
+                          "fontFamily": "Geist",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "text",
+                          "id": "dlUta",
+                          "name": "Type",
+                          "fill": "$--foreground-muted",
+                          "content": "Pickleball • 2 players",
+                          "fontFamily": "Geist",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "NAhyx",
+                      "name": "Price",
+                      "fill": "$--accent-primary",
+                      "content": "150,000₫/h",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "CMLuG",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 700,
+          "name": "Book Button",
+          "width": "fill_container(0)",
+          "fill": "$--accent-primary",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "vzlNK",
+              "name": "Text",
+              "fill": "$--foreground-inverse",
+              "content": "Book Now",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "3jGUi",
+      "x": 450,
+      "y": 900,
+      "name": "Booking Screen",
+      "width": 375,
+      "height": 810,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "LG690",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Background",
+          "fill": "$--surface-primary",
+          "width": "fill_container(0)",
+          "height": "fill_container(0)"
+        },
+        {
+          "type": "frame",
+          "id": "poRP2",
+          "name": "Header",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "leEZf",
+              "name": "Back",
+              "fill": "$--surface-secondary",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Itp6x",
+                  "name": "Back",
+                  "fill": "$--foreground-primary",
+                  "content": "←",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "4T064",
+              "name": "Title",
+              "fill": "$--foreground-primary",
+              "content": "Book Court",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "0CR1t",
+          "name": "Date Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "02b1c",
+              "name": "Title",
+              "fill": "$--foreground-secondary",
+              "content": "Select Date",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "xGBbj",
+              "name": "Date List",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "hfYmn",
+                  "name": "Today",
+                  "fill": "$--accent-primary",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TTNRt",
+                      "name": "Day",
+                      "fill": "$--foreground-inverse",
+                      "content": "Mon",
+                      "fontFamily": "Geist",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "agLFK",
+                      "name": "Num",
+                      "fill": "$--foreground-inverse",
+                      "content": "7",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "S1zYh",
+                  "name": "Tue",
+                  "fill": "$--surface-secondary",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Wj09W",
+                      "name": "Day",
+                      "fill": "$--foreground-secondary",
+                      "content": "Tue",
+                      "fontFamily": "Geist",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "TIo9s",
+                      "name": "Num",
+                      "fill": "$--foreground-primary",
+                      "content": "8",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hBRV3",
+                  "name": "Wed",
+                  "fill": "$--surface-secondary",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Clgfx",
+                      "name": "Day",
+                      "fill": "$--foreground-secondary",
+                      "content": "Wed",
+                      "fontFamily": "Geist",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "1Y8RM",
+                      "name": "Num",
+                      "fill": "$--foreground-primary",
+                      "content": "9",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dZXwo",
+                  "name": "Thu",
+                  "fill": "$--surface-secondary",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "IbApL",
+                      "name": "Day",
+                      "fill": "$--foreground-secondary",
+                      "content": "Thu",
+                      "fontFamily": "Geist",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "C3kDz",
+                      "name": "Num",
+                      "fill": "$--foreground-primary",
+                      "content": "10",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ZflFu",
+          "name": "Time Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "2X9wV",
+              "name": "Title",
+              "fill": "$--foreground-secondary",
+              "content": "Select Time",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "C10GO",
+              "name": "Time Grid",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "6yiUp",
+                  "name": "Col1",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "YyUkH",
+                      "name": "9AM",
+                      "fill": "$--surface-secondary",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lM5ew",
+                          "name": "Time",
+                          "fill": "$--foreground-primary",
+                          "content": "09:00",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "WGyQ4",
+                          "name": "Price",
+                          "fill": "$--foreground-muted",
+                          "content": "150K",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zd9VM",
+                      "name": "10AM",
+                      "fill": "$--surface-secondary",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "8WBLa",
+                          "name": "Time",
+                          "fill": "$--foreground-primary",
+                          "content": "10:00",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "uCjgj",
+                          "name": "Price",
+                          "fill": "$--foreground-muted",
+                          "content": "150K",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "XjHje",
+                      "name": "5PM",
+                      "fill": "$--accent-light",
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$--accent-primary"
+                      },
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Kp7Oz",
+                          "name": "Time",
+                          "fill": "$--accent-primary",
+                          "content": "17:00",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "sqIHy",
+                          "name": "Price",
+                          "fill": "$--accent-primary",
+                          "content": "225K",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 10,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "x8zuI",
+                  "name": "Col2",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "9jbKp",
+                      "name": "11AM",
+                      "fill": "$--surface-secondary",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uG6Ra",
+                          "name": "Time",
+                          "fill": "$--foreground-primary",
+                          "content": "11:00",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "KCiyE",
+                          "name": "Price",
+                          "fill": "$--foreground-muted",
+                          "content": "150K",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UVhbz",
+                      "name": "6PM",
+                      "fill": "$--surface-secondary",
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QJJ38",
+                          "name": "Time",
+                          "fill": "$--foreground-primary",
+                          "content": "18:00",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "5Ualf",
+                          "name": "Price",
+                          "fill": "$--foreground-muted",
+                          "content": "225K",
+                          "fontFamily": "IBM Plex Mono",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "JPgTa",
+          "name": "Duration Section",
+          "width": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "vJNMd",
+              "name": "Title",
+              "fill": "$--foreground-secondary",
+              "content": "Duration",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "7cV0Z",
+              "name": "Selector",
+              "width": "fill_container",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "lFudv",
+                  "name": "1h",
+                  "width": "fill_container",
+                  "fill": "$--accent-primary",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "N7vwF",
+                      "name": "Text",
+                      "fill": "$--foreground-inverse",
+                      "content": "1 hour",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QXuqV",
+                  "name": "1.5h",
+                  "width": "fill_container",
+                  "fill": "$--surface-secondary",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ID7IX",
+                      "name": "Text",
+                      "fill": "$--foreground-primary",
+                      "content": "1.5 hours",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Zf6Fc",
+                  "name": "2h",
+                  "width": "fill_container",
+                  "fill": "$--surface-secondary",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "U9NZA",
+                      "name": "Text",
+                      "fill": "$--foreground-primary",
+                      "content": "2 hours",
+                      "fontFamily": "Geist",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "KYrPB",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 580,
+          "name": "Summary",
+          "width": "fill_container(0)",
+          "fill": "$--surface-secondary",
+          "layout": "vertical",
+          "children": [
+            {
+              "type": "text",
+              "id": "sO0Jo",
+              "name": "Title",
+              "fill": "$--foreground-primary",
+              "content": "Booking Summary",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "P6aoc",
+              "name": "Row1",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BwNJB",
+                  "name": "Label",
+                  "fill": "$--foreground-secondary",
+                  "content": "Court",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "8vWyI",
+                  "name": "Value",
+                  "fill": "$--foreground-primary",
+                  "content": "Court 1 - Indoor",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "X70KA",
+              "name": "Row2",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "o6t7U",
+                  "name": "Label",
+                  "fill": "$--foreground-secondary",
+                  "content": "Date & Time",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "7ihDw",
+                  "name": "Value",
+                  "fill": "$--foreground-primary",
+                  "content": "Mon, Apr 7 • 17:00",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "8B4va",
+              "name": "Row3",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pH3s5",
+                  "name": "Label",
+                  "fill": "$--foreground-secondary",
+                  "content": "Duration",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Hu6ny",
+                  "name": "Value",
+                  "fill": "$--foreground-primary",
+                  "content": "1 hour",
+                  "fontFamily": "Geist",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "rectangle",
+              "id": "KLqbd",
+              "name": "Divider",
+              "fill": "$--border-color",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "oIKtd",
+              "name": "Total",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PAUW5",
+                  "name": "Label",
+                  "fill": "$--foreground-primary",
+                  "content": "Total",
+                  "fontFamily": "Inter",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "Jh9Yu",
+                  "name": "Value",
+                  "fill": "$--accent-primary",
+                  "content": "225,000₫",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 16,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dP2gb",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 730,
+          "name": "Confirm",
+          "width": "fill_container(0)",
+          "fill": "$--accent-primary",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "2clfd",
+              "name": "Text",
+              "fill": "$--foreground-inverse",
+              "content": "Confirm Booking",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "G8CMG",
+      "x": 1300,
+      "y": 50,
+      "name": "Primary Button",
+      "reusable": true,
+      "width": 200,
+      "height": 50
+    },
+    {
+      "type": "frame",
+      "id": "ip4M9",
+      "x": 1300,
+      "y": 120,
+      "name": "Venue Card",
+      "reusable": true,
+      "width": 300,
+      "height": 180
+    },
+    {
+      "type": "frame",
+      "id": "1sD1R",
+      "x": 1300,
+      "y": 320,
+      "name": "Search Bar",
+      "reusable": true,
+      "width": 300,
+      "height": 45
+    }
+  ],
+  "variables": {
+    "--accent-light": {
+      "type": "color",
+      "value": "#E8F5EA"
+    },
+    "--accent-primary": {
+      "type": "color",
+      "value": "#2D6B3F"
+    },
+    "--border-color": {
+      "type": "color",
+      "value": "#E0E5E0"
+    },
+    "--font-body": {
+      "type": "string",
+      "value": "Geist"
+    },
+    "--font-caption": {
+      "type": "string",
+      "value": "Newsreader"
+    },
+    "--font-data": {
+      "type": "string",
+      "value": "IBM Plex Mono"
+    },
+    "--font-heading": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "--foreground-inverse": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "--foreground-muted": {
+      "type": "color",
+      "value": "#808A80"
+    },
+    "--foreground-primary": {
+      "type": "color",
+      "value": "#1E3322"
+    },
+    "--foreground-secondary": {
+      "type": "color",
+      "value": "#6B7B6B"
+    },
+    "--rounded-2xl": {
+      "type": "number",
+      "value": 20
+    },
+    "--rounded-full": {
+      "type": "number",
+      "value": 9999
+    },
+    "--rounded-lg": {
+      "type": "number",
+      "value": 12
+    },
+    "--rounded-md": {
+      "type": "number",
+      "value": 8
+    },
+    "--rounded-sm": {
+      "type": "number",
+      "value": 4
+    },
+    "--rounded-xl": {
+      "type": "number",
+      "value": 16
+    },
+    "--spacing-2xl": {
+      "type": "number",
+      "value": 24
+    },
+    "--spacing-3xl": {
+      "type": "number",
+      "value": 32
+    },
+    "--spacing-lg": {
+      "type": "number",
+      "value": 16
+    },
+    "--spacing-md": {
+      "type": "number",
+      "value": 12
+    },
+    "--spacing-sm": {
+      "type": "number",
+      "value": 8
+    },
+    "--spacing-xl": {
+      "type": "number",
+      "value": 20
+    },
+    "--spacing-xs": {
+      "type": "number",
+      "value": 4
+    },
+    "--surface-inverse": {
+      "type": "color",
+      "value": "#1E3322"
+    },
+    "--surface-primary": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "--surface-secondary": {
+      "type": "color",
+      "value": "#F4F5F5"
+    }
+  }
+}

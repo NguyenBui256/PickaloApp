@@ -8,12 +8,14 @@ and merchant approval/rejection workflows.
 import uuid
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Depends
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import get_db
 from app.models.booking import Booking, BookingStatus, BookingService
 from app.models.venue import Venue, VenueService
 from app.models.user import User
@@ -623,7 +625,7 @@ class BookingService:
         return count
 
 
-async def get_booking_service(session: AsyncSession) -> BookingService:
+async def get_booking_service(session: Annotated[AsyncSession, Depends(get_db)]) -> BookingService:
     """
     Dependency to get booking service instance.
 

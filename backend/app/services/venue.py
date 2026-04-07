@@ -8,12 +8,14 @@ and service/pricing management.
 import uuid
 from datetime import datetime, time, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Depends
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from geoalchemy2 import func as geofunc
+from geoalchemy2 import functions as geofunc
 
+from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
 from app.models.booking import Booking, BookingStatus
 
@@ -723,7 +725,7 @@ class VenueService:
         return self.HANOI_DISTRICTS.copy()
 
 
-async def get_venue_service(session: AsyncSession) -> VenueService:
+async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -> VenueService:
     """
     Dependency to get venue service instance.
 

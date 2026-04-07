@@ -6,13 +6,15 @@ Handles user authentication, token generation, and session management.
 
 import uuid
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Depends
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.security import verify_password, hash_password, create_access_token, create_refresh_token
 from app.models.user import User, UserRole
 
@@ -119,10 +121,8 @@ class AuthService:
         Returns:
             Dictionary with access_token, refresh_token, expires_in
         """
-        # Generate tokens
-        access_token = create_access_token(
-            {"sub": str(user.id), "role": user.role.value}
-        )
+        # Generate tokens with user ID as subject
+        access_token = create_access_token(str(user.id))
         refresh_token = create_refresh_token(str(user.id))
 
         # Store refresh token (in production, use Redis)
@@ -294,7 +294,7 @@ class AuthService:
         return True
 
 
-async def get_auth_service(session: AsyncSession) -> AuthService:
+async def get_auth_service(session: Annotated[AsyncSession, Depends(get_db)]) -> AuthService:
     """
     Dependency to get auth service instance.
 

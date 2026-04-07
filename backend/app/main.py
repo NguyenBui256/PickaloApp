@@ -23,22 +23,22 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown events.
     """
     # Startup
-    print(f"🚀 Starting {settings.app_name} v{settings.app_version}")
-    print(f"📝 Environment: {settings.environment}")
-    print(f"🔧 Debug mode: {settings.debug}")
+    print(f"Starting {settings.app_name} v{settings.app_version}")
+    print(f"Environment: {settings.environment}")
+    print(f"Debug mode: {settings.debug}")
 
     # Initialize database (development only - use migrations in production)
     if settings.environment == "development" and settings.debug:
         try:
             await init_db()
-            print("✅ Database initialized")
+            print("Database initialized")
         except Exception as e:
-            print(f"⚠️  Database initialization warning: {e}")
+            print(f"Database initialization warning: {e}")
 
     yield
 
     # Shutdown
-    print("👋 Shutting down...")
+    print("Shutting down...")
 
 
 # Create FastAPI application

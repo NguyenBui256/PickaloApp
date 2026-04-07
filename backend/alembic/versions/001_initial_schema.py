@@ -10,6 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from geoalchemy2 import Geography
 
 # revision identifiers, used by Alembic.
 revision: str = "001_initial"
@@ -71,7 +72,7 @@ def upgrade() -> None:
         sa.Column("district", sa.String(50), nullable=True),
         sa.Column(
             "location",
-            postgresql.GEOGRAPHY("POINT", srid=4326, spatial_index=False),
+            Geography("POINT", srid=4326, spatial_index=False),
             nullable=False,
         ),
         sa.Column("venue_type", sa.String(50), nullable=False),

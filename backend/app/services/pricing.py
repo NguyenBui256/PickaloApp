@@ -8,12 +8,14 @@ and venue-specific pricing tiers.
 import uuid
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Depends
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func as sql_func
 
+from app.core.database import get_db
 from app.models.venue import Venue, VenueService, PricingTimeSlot, VenueType, DayType
 from app.models.booking import Booking
 
@@ -339,7 +341,7 @@ class PricingService:
         }
 
 
-async def get_pricing_service(session: AsyncSession) -> PricingService:
+async def get_pricing_service(session: Annotated[AsyncSession, Depends(get_db)]) -> PricingService:
     """
     Dependency to get pricing service instance.
 
