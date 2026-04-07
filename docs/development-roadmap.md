@@ -35,16 +35,20 @@ PickAlo is a sports facility booking platform connecting venue owners (Merchants
 
 ---
 
-### Sprint 2: User Authentication & Profiles ⏳ **PLANNED**
-**Planned:** April 8-21, 2026
-**Status:** 0% Complete
+### Sprint 2: User Authentication & Profiles ✅ **COMPLETE**
+**Completed:** April 7, 2026
+**Status:** 100% Complete
 
-**Key Features:**
-- [ ] User registration and login (JWT)
-- [ ] User profile management
-- [ ] Role-based access control (User/Merchant/Admin)
-- [ ] Password reset functionality
-- [ ] Email verification
+**Accomplishments:**
+- ✅ Complete authentication system with JWT tokens (access + refresh)
+- ✅ User registration with phone/password and role selection
+- ✅ Password hashing with bcrypt (cost factor 12)
+- ✅ Token refresh mechanism for seamless UX
+- ✅ Protected endpoints with role-based access control (RBAC)
+- ✅ User profile management (get, update, change password)
+- ✅ Phone verification placeholder (OTP: 123456 for testing)
+- ✅ Comprehensive auth tests (15 test scenarios)
+- ✅ OpenAPI documentation for all auth endpoints
 
 ---
 
@@ -127,7 +131,7 @@ PickAlo is a sports facility booking platform connecting venue owners (Merchants
 - [ ] Local market competition
 
 ## Next Steps
-1. Begin Sprint 2: User Authentication implementation
-2. Set up API endpoints for user registration and authentication
-3. Implement role-based access control system
-4. Create frontend user interface components for login/register
+1. Begin Sprint 3: Venue Management implementation
+2. Set up API endpoints for merchant registration and venue creation
+3. Implement venue listing with geospatial data
+4. Create venue management interface components

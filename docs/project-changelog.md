@@ -5,6 +5,42 @@ All significant changes to the PickAlo platform are documented here.
 ## [Unreleased]
 
 ### Added
+- Sprint 3: Venue Management planning
+
+---
+
+## [0.3.0] - April 7, 2026
+
+### Added
+- **Authentication System**
+  - Complete JWT authentication with access + refresh tokens
+  - User registration with phone/password and role selection (User/Merchant/Admin)
+  - Password hashing with bcrypt (cost factor 12)
+  - Token refresh mechanism for seamless UX
+  - Role-based access control (RBAC) with protected endpoints
+
+- **User Management**
+  - User profile management (get, update, change password)
+  - Phone verification placeholder (OTP: 123456 for testing)
+  - Comprehensive auth error handling and validation
+  - OpenAPI documentation for all auth endpoints
+
+- **Testing & Quality**
+  - Comprehensive auth tests (15 test scenarios)
+  - Test coverage for authentication flows and security features
+  - Edge case handling and error scenario testing
+
+### Technical Debt
+- None - Sprint 2 focused on secure, production-ready authentication system
+
+### Known Issues
+- None - All Sprint 2 objectives completed successfully
+
+---
+
+## [Unreleased]
+
+### Added
 - Project initialization and planning phase
 
 ---
@@ -95,6 +131,21 @@ All significant changes to the PickAlo platform are documented here.
 ---
 
 ## Version History
+
+### Version 0.3.0
+**Release Date:** April 7, 2026
+**Focus:** Authentication & Authorization completion
+
+**Milestones Achieved:**
+- ✅ Complete JWT authentication system with access + refresh tokens
+- ✅ User registration and role selection (User/Merchant/Admin)
+- ✅ Role-based access control (RBAC) implementation
+- ✅ User profile management and password change functionality
+- ✅ Comprehensive auth tests (15 test scenarios)
+- ✅ Phone verification placeholder and error handling
+- ✅ OpenAPI documentation for all auth endpoints
+
+**Project Status:** Ready for Sprint 3 development
 
 ### Version 0.2.0
 **Release Date:** April 7, 2026

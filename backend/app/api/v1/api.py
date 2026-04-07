@@ -6,8 +6,8 @@ Combines all API route modules into a single router.
 
 from fastapi import APIRouter
 
-# Import route modules (will be created in future sprints)
-# from app.api.v1.endpoints import auth, venues, bookings, payments, etc.
+# Import route modules
+from app.api.v1.endpoints import auth, users
 
 api_router = APIRouter()
 
@@ -20,7 +20,6 @@ async def v1_root() -> dict[str, str]:
         "docs": "/docs",
     }
 
-# Route modules will be included here as they are created
-# Example:
-# api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
-# api_router.include_router(venues.router, prefix="/venues", tags=["venues"])
+# Include route modules
+api_router.include_router(auth.router)
+api_router.include_router(users.router)
