@@ -11,9 +11,9 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
+from app.models.base import Base
 
 
 # Create async engine
@@ -38,12 +38,6 @@ async_session_factory = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
-
-
-class Base(DeclarativeBase):
-    """Base class for all database models."""
-
-    pass
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

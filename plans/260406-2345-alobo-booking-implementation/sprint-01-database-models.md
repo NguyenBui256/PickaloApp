@@ -1,11 +1,12 @@
 ---
 title: "Sprint 1: Database & Models"
 description: "Database schema design with SQLAlchemy models and PostGIS for geospatial queries"
-status: pending
+status: completed
 priority: P1
 effort: 12h
 tags: [database, postgresql, postgis, models]
 created: 2026-04-06
+completed: 2026-04-07
 ---
 
 # Sprint 1: Database & Models
@@ -15,7 +16,9 @@ created: 2026-04-06
 Design and implement the complete database schema with SQLAlchemy ORM models, including PostGIS integration for venue location queries.
 
 **Priority:** P1 (Critical - blocks all data-dependent features)
-**Current Status:** Pending
+**Current Status:** Completed
+
+**Completed:** 2026-04-07
 
 ## Context Links
 

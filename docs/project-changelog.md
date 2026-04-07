@@ -9,6 +9,42 @@ All significant changes to the PickAlo platform are documented here.
 
 ---
 
+## [0.2.0] - April 7, 2026
+
+### Added
+- **Database Schema & Models**
+  - Complete SQLAlchemy models: User, Venue, Booking, Post, AdminAction
+  - PostGIS integration for geospatial venue location queries
+  - Dynamic pricing system with configurable time slot multipliers
+  - Soft delete support with audit logging
+  - Role-based access control foundation
+  - Comprehensive database relationships and constraints
+
+- **Database Infrastructure**
+  - Alembic migration system with GiST indexes for location searches
+  - Seed data script with 20+ Hanoi venues with real coordinates
+  - Database connection pooling and session management
+  - Transaction handling with proper error management
+  - Environment-specific database configurations
+
+- **Pricing System**
+  - Dynamic pricing formula: Total = (BasePrice × TimeSlotFactor) + ServiceFee
+  - Configurable time slot multipliers (off-peak 1.0x, peak 1.5x, +20% weekends)
+  - Holiday surcharge support per merchant settings
+  - Price calculation utilities and validation
+
+### Changed
+- Updated development roadmap to reflect Sprint 1 completion
+- Adjusted project timeline for subsequent sprints
+
+### Technical Debt
+- None - Sprint 1 focused on clean, production-ready database foundation
+
+### Known Issues
+- None - All Sprint 1 objectives completed successfully
+
+---
+
 ## [0.1.0] - April 6, 2026
 
 ### Added
@@ -59,6 +95,20 @@ All significant changes to the PickAlo platform are documented here.
 ---
 
 ## Version History
+
+### Version 0.2.0
+**Release Date:** April 7, 2026
+**Focus:** Database & Models completion
+
+**Milestones Achieved:**
+- ✅ Complete database schema with all models
+- ✅ PostGIS integration for geospatial queries
+- ✅ Dynamic pricing system implementation
+- ✅ Alembic migration system setup
+- ✅ Comprehensive seed data with real venues
+- ✅ Soft delete and audit logging features
+
+**Project Status:** Ready for Sprint 2 development
 
 ### Version 0.1.0
 **Release Date:** April 6, 2026

@@ -17,8 +17,17 @@ from app.core.config import settings
 from app.core.database import Base
 
 # Import all models so they are registered with SQLAlchemy
-# This will be updated in Sprint 1 when models are created
-# from app.models import user, venue, booking, payment, etc.
+from app.models import (
+    User,
+    Venue,
+    PricingTimeSlot,
+    VenueService,
+    Booking,
+    BookingService,
+    Post,
+    Comment,
+    AdminAction,
+)
 
 # Alembic Config object
 config = context.config

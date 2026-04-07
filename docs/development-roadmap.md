@@ -20,30 +20,44 @@ PickAlo is a sports facility booking platform connecting venue owners (Merchants
 
 ---
 
-### Sprint 1: Core Features Development 🔄 **IN PROGRESS**
-**Planned:** April 7-20, 2026
-**Status:** 0% Complete (Starting)
+### Sprint 1: Database & Models ✅ **COMPLETE**
+**Completed:** April 7, 2026
+**Status:** 100% Complete
 
-**Phase 1A: User Authentication & Profiles**
+**Accomplishments:**
+- ✅ Complete database schema with SQLAlchemy models (User, Venue, Booking, Post, AdminAction)
+- ✅ PostGIS integration for geospatial venue location queries with GiST indexes
+- ✅ Dynamic pricing time slots with configurable multipliers and merchant settings
+- ✅ Alembic migration system with full database schema setup
+- ✅ Seed data script with 20+ Hanoi venues with real coordinates
+- ✅ Soft delete support, audit logging, and role-based access control foundation
+- ✅ Comprehensive database relationships and constraints
+
+---
+
+### Sprint 2: User Authentication & Profiles ⏳ **PLANNED**
+**Planned:** April 8-21, 2026
+**Status:** 0% Complete
+
+**Key Features:**
 - [ ] User registration and login (JWT)
 - [ ] User profile management
 - [ ] Role-based access control (User/Merchant/Admin)
 - [ ] Password reset functionality
 - [ ] Email verification
 
-**Phase 1B: Venue Management**
+---
+
+### Sprint 3: Venue Management ⏳ **PLANNED**
+**Planned:** April 22-May 5, 2026
+**Status:** 0% Complete
+
+**Key Features:**
 - [ ] Merchant registration and venue creation
 - [ ] Venue listing with geospatial data
 - [ ] Venue detail pages with photos and services
 - [ ] Venue availability management
 - [ ] Pricing configuration
-
-**Phase 1C: Booking System**
-- [ ] Time slot selection and booking
-- [ ] Booking calendar and scheduling
-- [ ] Payment integration (VNPay/Momo/QR)
-- [ ] Booking confirmation and notifications
-- [ ] Cancellation and modification
 
 ---
 
@@ -84,6 +98,14 @@ PickAlo is a sports facility booking platform connecting venue owners (Merchants
 - [x] Frontend framework setup
 - [x] CI/CD pipeline basics in place
 
+### Sprint 1 Metrics
+- [x] Complete database schema implementation
+- [x] PostGIS integration for geospatial queries
+- [x] Dynamic pricing system with time slots
+- [x] Alembic migration system setup
+- [x] Seed data with real Hanoi venues
+- [x] Soft delete and audit logging features
+
 ### Overall Project Metrics
 - **Target Launch:** Q2 2026
 - **Code Coverage:** 80%+
@@ -105,7 +127,7 @@ PickAlo is a sports facility booking platform connecting venue owners (Merchants
 - [ ] Local market competition
 
 ## Next Steps
-1. Begin Sprint 1: User Authentication implementation
-2. Set up development environment for all team members
-3. Establish coding standards and review process
-4. Plan database migration strategy
+1. Begin Sprint 2: User Authentication implementation
+2. Set up API endpoints for user registration and authentication
+3. Implement role-based access control system
+4. Create frontend user interface components for login/register

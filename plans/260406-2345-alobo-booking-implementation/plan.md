@@ -1,7 +1,7 @@
 ---
 title: "ALOBO Booking - Comprehensive Implementation Plan"
 description: "Full implementation plan for sports facility booking platform with React Native, FastAPI, PostgreSQL+PostGIS"
-status: pending
+status: in_progress
 priority: P1
 effort: 120h
 branch: main
@@ -33,8 +33,8 @@ Sports facility booking platform connecting venue owners (Merchants) and players
 |--------|-------|--------|--------|
 | Sprint 0 | Infrastructure & Setup | Complete | 8h |
 Completed: 2026-04-07
-| Sprint 1 | Database & Models | Pending | 12h |
-| Sprint 2 | Authentication & Authorization | Pending | 10h |
+| Sprint 1 | Database & Models | Complete | 12h |
+| Sprint 2 | Authentication & Authorization | In Progress | 10h |
 | Sprint 3 | Venue Management APIs | Pending | 14h |
 | Sprint 4 | Booking & Pricing Engine | Pending | 16h |
 | Sprint 5 | Payment Integration | Pending | 12h |
