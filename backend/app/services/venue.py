@@ -20,7 +20,7 @@ from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTim
 from app.models.booking import Booking, BookingStatus
 
 
-class VenueService:
+class VenueManagementService:
     """
     Service for venue management operations.
 
@@ -725,7 +725,7 @@ class VenueService:
         return self.HANOI_DISTRICTS.copy()
 
 
-async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -> VenueService:
+async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -> VenueManagementService:
     """
     Dependency to get venue service instance.
 
@@ -733,6 +733,6 @@ async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -
         session: Database session
 
     Returns:
-        VenueService instance
+        VenueManagementService instance
     """
-    return VenueService(session)
+    return VenueManagementService(session)

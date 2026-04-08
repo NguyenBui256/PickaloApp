@@ -38,7 +38,7 @@ from app.schemas.venue import (
     PricingSlotResponse,
     Coordinates,
 )
-from app.services.venue import VenueService, get_venue_service
+from app.services.venue import VenueManagementService, get_venue_service
 
 router = APIRouter(prefix="/venues", tags=["venues"])
 
@@ -48,7 +48,7 @@ router = APIRouter(prefix="/venues", tags=["venues"])
 @router.get("", response_model=VenueListResponse)
 async def list_venues(
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     district: str | None = None,
     venue_type: VenueType | None = None,
     min_price: Decimal | None = None,
@@ -101,7 +101,7 @@ async def list_venues(
 @router.get("/search/nearby", response_model=VenueListResponse)
 async def search_venues_nearby(
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     lat: Annotated[float, Query(ge=-90, le=90)],
     lng: Annotated[float, Query(ge=-180, le=180)],
     radius: Annotated[float, Query(ge=100, le=50000)] = 5000,
@@ -159,7 +159,7 @@ async def search_venues_nearby(
 async def get_venue(
     venue_id: str,
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> VenueResponse:
     """
     Get venue details by ID.
@@ -200,7 +200,7 @@ async def get_venue_availability(
     venue_id: str,
     date: Annotated[str, Query(description="ISO 8601 date format")],
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> AvailabilityResponse:
     """
     Check venue availability for a given date.
@@ -225,7 +225,7 @@ async def get_venue_availability(
 
 @router.get("/districts/list")
 async def list_hanoi_districts(
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> dict[str, list[str]]:
     """
     Get list of Hanoi districts for filtering.
@@ -242,7 +242,7 @@ async def list_hanoi_districts(
 async def create_venue(
     venue_data: VenueCreate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> VenueResponse:
     """
@@ -292,7 +292,7 @@ async def update_venue(
     venue_id: str,
     venue_data: VenueUpdate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> VenueResponse:
     """
@@ -342,7 +342,7 @@ async def update_venue(
 async def deactivate_venue(
     venue_id: str,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> None:
     """
@@ -368,7 +368,7 @@ async def deactivate_venue(
 async def get_venue_services(
     venue_id: str,
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> list[VenueServiceResponse]:
     """
     Get venue services (public).
@@ -396,7 +396,7 @@ async def create_venue_service(
     venue_id: str,
     service_data: VenueServiceCreate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> VenueServiceResponse:
     """
@@ -427,7 +427,7 @@ async def create_venue_service(
 async def get_pricing_slots(
     venue_id: str,
     session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> list[PricingSlotResponse]:
     """
     Get venue pricing slots (public).
@@ -454,7 +454,7 @@ async def create_pricing_slot(
     venue_id: str,
     slot_data: PricingSlotCreate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> PricingSlotResponse:
     """
@@ -487,7 +487,7 @@ async def create_pricing_slot(
 async def verify_venue(
     venue_id: str,
     current_user: Annotated[User, Depends(get_admin)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> dict[str, str]:
     """
