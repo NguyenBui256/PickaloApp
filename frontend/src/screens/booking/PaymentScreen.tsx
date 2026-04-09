@@ -1,0 +1,425 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  Dimensions,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { COLORS } from '../../theme/colors';
+import { VENUES } from '../../constants/mock-data';
+import { InfoCard } from '../../components/InfoCard';
+
+const { width } = Dimensions.get('window');
+
+export const PaymentScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const { venueId, selectedSlots = [] } = route.params || {};
+
+  const venue = VENUES.find(v => v.id === venueId);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [note, setNote] = useState('');
+
+  const isFormValid = name.trim().length > 0 && phone.trim().length >= 10;
+  const totalPrice = selectedSlots.length * 95000;
+
+  const formatCurrency = (amount: number) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.headerArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Icon name="arrow-left" size={24} color={COLORS.WHITE} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Đặt lịch ngày trực quan</Text>
+          <View style={{ width: 40 }} />
+        </View>
+      </SafeAreaView>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Section 1: Venue Info */}
+          <InfoCard title="Thông tin sân" iconName="map-marker-radius">
+            <Text style={styles.venueName}>{venue?.name || 'Tên sân'}</Text>
+            <Text style={styles.venueAddress}>{venue?.fullAddress || venue?.address}</Text>
+          </InfoCard>
+
+          {/* Section 2: Booking Info */}
+          <InfoCard title="Thông tin lịch đặt" iconName="ticket-confirmation">
+            {selectedSlots.map((slot: string, index: number) => {
+              const [court, time] = slot.split('-');
+              return (
+                <View key={index} style={styles.slotRow}>
+                   <View style={styles.slotDetail}>
+                      <Text style={styles.courtText}>{court}</Text>
+                      <Text style={styles.timeText}>Khung giờ: {time}</Text>
+                   </View>
+                   <Text style={styles.slotPrice}>95.000 đ</Text>
+                </View>
+              );
+            })}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Tổng tiền</Text>
+              <Text style={styles.totalPriceText}>{formatCurrency(totalPrice)} đ</Text>
+            </View>
+          </InfoCard>
+
+          {/* Section 3: Offers */}
+          <View style={styles.offerRow}>
+            <View style={styles.offerLeft}>
+              <Icon name="tag-outline" size={20} color={COLORS.WHITE} />
+              <TouchableOpacity>
+                <Text style={styles.offerLink}>Chọn ưu đãi</Text>
+              </TouchableOpacity>
+            </View>
+            <Icon name="plus" size={24} color="#EAB308" />
+          </View>
+
+          {/* Section 4: Customer Details Form */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>HỌ TÊN</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nhập họ tên"
+                  placeholderTextColor={COLORS.GRAY_MEDIUM}
+                  value={name}
+                  onChangeText={setName}
+                />
+                {name.length > 0 && (
+                  <TouchableOpacity onPress={() => setName('')}>
+                    <Icon name="close-circle" size={20} color="#15803d" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>SỐ ĐIỆN THOẠI</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.flagContainer}>
+                   <Text style={styles.flag}>🇻🇳</Text>
+                   <Text style={styles.countryCode}>+84</Text>
+                   <Icon name="chevron-down" size={16} color={COLORS.BLACK} />
+                </View>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Nhập số điện thoại"
+                  placeholderTextColor={COLORS.GRAY_MEDIUM}
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                />
+                {phone.length > 0 && (
+                  <TouchableOpacity onPress={() => setPhone('')}>
+                    <Icon name="close-circle" size={20} color="#15803d" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>GHI CHÚ CHO CHỦ SÂN</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Nhập ghi chú"
+                placeholderTextColor={COLORS.GRAY_MEDIUM}
+                multiline
+                numberOfLines={4}
+                value={note}
+                onChangeText={setNote}
+              />
+            </View>
+          </View>
+
+          {/* Section 5: Notice Box */}
+          <View style={styles.noticeBox}>
+            <View style={styles.noticeHeader}>
+              <Icon name="alert-circle" size={20} color="#EAB308" />
+              <Text style={styles.noticeTitle}>Lưu ý</Text>
+            </View>
+            <View style={styles.bulletRow}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>Hủy hoặc dời lịch trước khi thi đấu ít nhất 24 tiếng được hoàn 100%.</Text>
+            </View>
+            <View style={styles.bulletRow}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bulletText}>Hủy lịch thi đấu trong 2 tiếng được hoàn 50% tiền sân vào ví.</Text>
+            </View>
+            
+            <View style={styles.noticeFooter}>
+              <TouchableOpacity>
+                <Text style={styles.noticeLink}>Điều khoản đặt sân</Text>
+              </TouchableOpacity>
+              <Text style={styles.pipe}>|</Text>
+              <TouchableOpacity>
+                <Text style={styles.noticeLink}>Chính sách hoàn tiền</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={{ height: 120 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Sticky Bottom Button */}
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={[styles.payBtn, !isFormValid && styles.disabledBtn]}
+          disabled={!isFormValid}
+          onPress={() => navigation.navigate('FinalPayment', { 
+            totalPrice: formatCurrency(totalPrice),
+            bookingId: 'ALOBO' + Math.floor(Math.random() * 100000)
+          })}
+        >
+          <Text style={styles.payBtnText}>XÁC NHẬN & THANH TOÁN</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#064e3b', // Solid Dark Green
+  },
+  headerArea: {
+    backgroundColor: 'transparent',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  backBtn: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  headerTitle: {
+    color: COLORS.WHITE,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  venueName: {
+    color: COLORS.WHITE,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  venueAddress: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+  },
+  slotRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 10,
+    borderRadius: 8,
+  },
+  slotDetail: {
+    flex: 1,
+  },
+  courtText: {
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  timeText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+  },
+  slotPrice: {
+    color: '#EAB308',
+    fontWeight: 'bold',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  totalLabel: {
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+  },
+  totalPriceText: {
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  offerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#053e30',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  offerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  offerLink: {
+    color: COLORS.WHITE,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  formContainer: {
+    gap: 20,
+    marginBottom: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    color: COLORS.WHITE,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 50,
+  },
+  input: {
+    flex: 1,
+    color: COLORS.BLACK,
+    fontSize: 16,
+  },
+  flagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: 10,
+    paddingRight: 10,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.BORDER,
+  },
+  flag: {
+    fontSize: 20,
+  },
+  countryCode: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.BLACK,
+  },
+  textArea: {
+    height: 100,
+    paddingTop: 12,
+    textAlignVertical: 'top',
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+  },
+  noticeBox: {
+    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(234, 179, 8, 0.3)',
+  },
+  noticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  noticeTitle: {
+    color: '#EAB308',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  bullet: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  bulletText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    flex: 1,
+  },
+  noticeFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+    justifyContent: 'center',
+  },
+  noticeLink: {
+    color: COLORS.WHITE,
+    textDecorationLine: 'underline',
+    fontSize: 12,
+  },
+  pipe: {
+    color: 'rgba(255,255,255,0.5)',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#064e3b',
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 10,
+  },
+  payBtn: {
+    backgroundColor: '#EAB308',
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  disabledBtn: {
+    backgroundColor: '#9CA3AF',
+  },
+  payBtnText: {
+    color: COLORS.WHITE,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
