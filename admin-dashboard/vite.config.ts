@@ -10,10 +10,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // Allow access from Docker network
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://backend:8000', // Use Docker service name
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
       },

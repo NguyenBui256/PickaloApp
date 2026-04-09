@@ -64,6 +64,26 @@ services:
     networks:
       - alogo-network
 
+  # Admin Dashboard Frontend (React + Vite)
+  admin-dashboard:
+    build:
+      context: ./admin-dashboard
+      dockerfile: Dockerfile
+      target: development
+    container_name: alogo-admin-dashboard-dev
+    environment:
+      VITE_API_BASE_URL: http://backend:8000/api/v1
+      VITE_APP_NAME: ALOBO Admin Dashboard
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin-dashboard:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - alogo-network
+
 volumes:
   postgres-data:
     driver: local
