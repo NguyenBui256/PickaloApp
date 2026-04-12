@@ -1,10 +1,10 @@
 export const CATEGORIES = [
-  { id: '1', name: 'Pickleball', icon: 'tennis-ball' },
-  { id: '2', name: 'Cầu lông', icon: 'badminton' },
-  { id: '3', name: 'Bóng đá', icon: 'soccer' },
-  { id: '4', name: 'Tennis', icon: 'tennis' },
-  { id: '5', name: 'B.Chuyền', icon: 'volleyball' },
-  { id: '6', name: 'Bóng rổ', icon: 'basketball' },
+  { id: '1', name: 'Pickleball', icon: 'tennis-ball' as const },
+  { id: '2', name: 'Cầu lông', icon: 'badminton' as const },
+  { id: '3', name: 'Bóng đá', icon: 'soccer' as const },
+  { id: '4', name: 'Tennis', icon: 'tennis' as const },
+  { id: '5', name: 'B.Chuyền', icon: 'volleyball' as const },
+  { id: '6', name: 'Bóng rổ', icon: 'basketball' as const },
 ];
 
 export const VENUES = [

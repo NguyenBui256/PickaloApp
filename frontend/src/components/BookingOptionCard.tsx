@@ -5,8 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 interface BookingOptionCardProps {
   title: string;
@@ -49,7 +49,7 @@ export const BookingOptionCard: React.FC<BookingOptionCardProps> = ({
 
       {/* Bottom right arrow button */}
       <View style={[styles.arrowBtn, { backgroundColor: textColor }]}>
-        <Icon name="arrow-right" size={16} color={COLORS.WHITE} />
+        <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.WHITE} />
       </View>
     </TouchableOpacity>
   );

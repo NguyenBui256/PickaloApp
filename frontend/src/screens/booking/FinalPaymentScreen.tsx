@@ -9,16 +9,16 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { BANK_DETAILS } from '../../constants/mock-data';
 
 // Internal Helper Component
-const InfoRow = ({ label, value, iconName }: { label: string, value: string, iconName: string }) => (
+const InfoRow = ({ label, value, iconName }: { label: string, value: string, iconName: any }) => (
   <View style={styles.infoRow}>
     <View style={styles.iconContainer}>
-      <Icon name={iconName} size={18} color="#15803d" />
+      <MaterialCommunityIcons name={iconName} size={18} color="#15803d" />
     </View>
     <View style={styles.rowText}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -60,7 +60,7 @@ export const FinalPaymentScreen: React.FC = () => {
         <SafeAreaView>
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Icon name="arrow-left" size={24} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Thanh toán</Text>
             <View style={{ width: 40 }} />
@@ -89,27 +89,27 @@ export const FinalPaymentScreen: React.FC = () => {
         <TouchableOpacity style={styles.gatewayBox}>
           <View style={styles.gatewayContent}>
             <View style={styles.bankLogoSmall}>
-              <Icon name="bank" size={20} color="#15803d" />
+              <MaterialCommunityIcons name="bank" size={20} color="#15803d" />
             </View>
             <Text style={styles.gatewayText}>Do dang du</Text>
           </View>
-          <Icon name="check-circle" size={24} color="#15803d" />
+          <MaterialCommunityIcons name="check-circle" size={24} color="#15803d" />
         </TouchableOpacity>
 
         {/* Bank Account Details */}
         <View style={styles.bankDetailsBox}>
           <View style={styles.logosRow}>
             <View style={styles.logoCircle}>
-              <Icon name="bank" size={30} color="#15803d" />
+              <MaterialCommunityIcons name="bank" size={30} color="#15803d" />
             </View>
-            <Icon name="transfer-right" size={20} color={COLORS.GRAY_MEDIUM} />
+            <MaterialCommunityIcons name="transfer-right" size={20} color={COLORS.GRAY_MEDIUM} />
             <View style={styles.logoCircle}>
-               <Icon name="alpha-a-box" size={30} color={COLORS.PRIMARY} />
+              <MaterialCommunityIcons name="alpha-a-box" size={30} color={COLORS.PRIMARY} />
             </View>
           </View>
 
           <Text style={styles.bankName}>{BANK_DETAILS.bankName}</Text>
-          
+
           <View style={styles.accountInfo}>
             <Text style={styles.accountLabel}>CHỦ TÀI KHOẢN</Text>
             <Text style={styles.accountValue}>{BANK_DETAILS.accountHolder}</Text>
@@ -130,7 +130,7 @@ export const FinalPaymentScreen: React.FC = () => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.verifyBtn}
           onPress={() => Alert.alert('Thông báo', 'Hệ thống đang kiểm tra giao dịch của bạn.')}
         >

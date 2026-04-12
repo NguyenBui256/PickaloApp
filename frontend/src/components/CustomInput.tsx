@@ -7,8 +7,8 @@ import {
   StyleSheet,
   TextInputProps,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 interface CustomInputProps extends TextInputProps {
   type: 'phone' | 'email' | 'password';
@@ -31,7 +31,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
         <TouchableOpacity style={styles.phonePrefix} activeOpacity={0.7}>
           <Text style={styles.flag}>🇻🇳</Text>
           <Text style={styles.prefixText}>+84</Text>
-          <Icon name="chevron-down" size={16} color={COLORS.GRAY_DARK} />
+          <MaterialCommunityIcons name="chevron-down" size={16} color={COLORS.GRAY_DARK} />
           <View style={styles.divider} />
         </TouchableOpacity>
       );
@@ -46,8 +46,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
           onPress={() => setIsPasswordVisible(!isPasswordVisible)}
           style={styles.rightIcon}
         >
-          <Icon
-            name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+          <MaterialCommunityIcons             name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
             size={22}
             color={COLORS.GRAY_MEDIUM}
           />
@@ -57,7 +56,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
     if (onClear && props.value && props.value.length > 0) {
       return (
         <TouchableOpacity onPress={onClear} style={styles.rightIcon}>
-          <Icon name="close-circle" size={20} color={COLORS.GRAY_MEDIUM} />
+          <MaterialCommunityIcons name="close-circle" size={20} color={COLORS.GRAY_MEDIUM} />
         </TouchableOpacity>
       );
     }

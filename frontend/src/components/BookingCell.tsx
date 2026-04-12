@@ -4,7 +4,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { COLORS } from '../theme/colors';
+import COLORS from '@theme/colors';
 
 interface BookingCellProps {
   status: string; // 'available', 'booked', 'locked', 'event', 'selected'

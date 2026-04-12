@@ -7,8 +7,8 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -45,15 +45,15 @@ export const BookingSummaryBar: React.FC<BookingSummaryBarProps> = ({
     >
       <View style={styles.content}>
         <View style={styles.topIcon}>
-          <Icon name="chevron-up" size={24} color={COLORS.WHITE} />
+          <MaterialCommunityIcons name="chevron-up" size={24} color={COLORS.WHITE} />
         </View>
-        
+
         <View style={styles.infoRow}>
           <View style={styles.leftInfo}>
             <Text style={styles.summaryLabel}>Tổng giờ: <Text style={styles.boldText}>{totalHours}</Text></Text>
             <Text style={styles.summaryLabel}>Tổng tiền: <Text style={styles.priceText}>{totalPrice} đ</Text></Text>
           </View>
-          
+
           <TouchableOpacity style={styles.nextBtn} onPress={onNext}>
             <Text style={styles.nextBtnText}>TIẾP THEO</Text>
           </TouchableOpacity>

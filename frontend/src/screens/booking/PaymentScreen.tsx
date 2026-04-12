@@ -11,13 +11,12 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
 import { InfoCard } from '../../components/InfoCard';
 
-const { width } = Dimensions.get('window');
 
 export const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -41,7 +40,7 @@ export const PaymentScreen: React.FC = () => {
       <SafeAreaView style={styles.headerArea}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Icon name="arrow-left" size={24} color={COLORS.WHITE} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.WHITE} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Đặt lịch ngày trực quan</Text>
           <View style={{ width: 40 }} />
@@ -52,7 +51,7 @@ export const PaymentScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -68,11 +67,11 @@ export const PaymentScreen: React.FC = () => {
               const [court, time] = slot.split('-');
               return (
                 <View key={index} style={styles.slotRow}>
-                   <View style={styles.slotDetail}>
-                      <Text style={styles.courtText}>{court}</Text>
-                      <Text style={styles.timeText}>Khung giờ: {time}</Text>
-                   </View>
-                   <Text style={styles.slotPrice}>95.000 đ</Text>
+                  <View style={styles.slotDetail}>
+                    <Text style={styles.courtText}>{court}</Text>
+                    <Text style={styles.timeText}>Khung giờ: {time}</Text>
+                  </View>
+                  <Text style={styles.slotPrice}>95.000 đ</Text>
                 </View>
               );
             })}
@@ -85,12 +84,12 @@ export const PaymentScreen: React.FC = () => {
           {/* Section 3: Offers */}
           <View style={styles.offerRow}>
             <View style={styles.offerLeft}>
-              <Icon name="tag-outline" size={20} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="tag-outline" size={20} color={COLORS.WHITE} />
               <TouchableOpacity>
                 <Text style={styles.offerLink}>Chọn ưu đãi</Text>
               </TouchableOpacity>
             </View>
-            <Icon name="plus" size={24} color="#EAB308" />
+            <MaterialCommunityIcons name="plus" size={24} color="#EAB308" />
           </View>
 
           {/* Section 4: Customer Details Form */}
@@ -107,7 +106,7 @@ export const PaymentScreen: React.FC = () => {
                 />
                 {name.length > 0 && (
                   <TouchableOpacity onPress={() => setName('')}>
-                    <Icon name="close-circle" size={20} color="#15803d" />
+                    <MaterialCommunityIcons name="close-circle" size={20} color="#15803d" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -117,9 +116,9 @@ export const PaymentScreen: React.FC = () => {
               <Text style={styles.label}>SỐ ĐIỆN THOẠI</Text>
               <View style={styles.inputWrapper}>
                 <View style={styles.flagContainer}>
-                   <Text style={styles.flag}>🇻🇳</Text>
-                   <Text style={styles.countryCode}>+84</Text>
-                   <Icon name="chevron-down" size={16} color={COLORS.BLACK} />
+                  <Text style={styles.flag}>🇻🇳</Text>
+                  <Text style={styles.countryCode}>+84</Text>
+                  <MaterialCommunityIcons name="chevron-down" size={16} color={COLORS.BLACK} />
                 </View>
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
@@ -131,7 +130,7 @@ export const PaymentScreen: React.FC = () => {
                 />
                 {phone.length > 0 && (
                   <TouchableOpacity onPress={() => setPhone('')}>
-                    <Icon name="close-circle" size={20} color="#15803d" />
+                    <MaterialCommunityIcons name="close-circle" size={20} color="#15803d" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -154,7 +153,7 @@ export const PaymentScreen: React.FC = () => {
           {/* Section 5: Notice Box */}
           <View style={styles.noticeBox}>
             <View style={styles.noticeHeader}>
-              <Icon name="alert-circle" size={20} color="#EAB308" />
+              <MaterialCommunityIcons name="alert-circle" size={20} color="#EAB308" />
               <Text style={styles.noticeTitle}>Lưu ý</Text>
             </View>
             <View style={styles.bulletRow}>
@@ -165,7 +164,7 @@ export const PaymentScreen: React.FC = () => {
               <Text style={styles.bullet}>•</Text>
               <Text style={styles.bulletText}>Hủy lịch thi đấu trong 2 tiếng được hoàn 50% tiền sân vào ví.</Text>
             </View>
-            
+
             <View style={styles.noticeFooter}>
               <TouchableOpacity>
                 <Text style={styles.noticeLink}>Điều khoản đặt sân</Text>
@@ -183,10 +182,10 @@ export const PaymentScreen: React.FC = () => {
 
       {/* Sticky Bottom Button */}
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.payBtn, !isFormValid && styles.disabledBtn]}
           disabled={!isFormValid}
-          onPress={() => navigation.navigate('FinalPayment', { 
+          onPress={() => navigation.navigate('FinalPayment', {
             totalPrice: formatCurrency(totalPrice),
             bookingId: 'ALOBO' + Math.floor(Math.random() * 100000)
           })}

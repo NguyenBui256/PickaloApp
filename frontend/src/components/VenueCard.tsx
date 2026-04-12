@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -44,13 +44,13 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       {/* Top Section with Image and Badges */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: image }} style={styles.image} />
-        
+
         <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
-            <View 
-              key={index} 
+            <View
+              key={index}
               style={[
-                styles.badge, 
+                styles.badge,
                 { backgroundColor: badge === 'Đơn ngày' ? COLORS.PRIMARY : COLORS.PURPLE }
               ]}
             >
@@ -61,14 +61,13 @@ export const VenueCard: React.FC<VenueCardProps> = ({
 
         <View style={styles.topActions}>
           <TouchableOpacity style={styles.actionCircle} onPress={onFavoriteToggle}>
-            <Icon 
-              name={isFavorite ? 'heart' : 'heart-outline'} 
-              size={20} 
-              color={isFavorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM} 
+            <MaterialCommunityIcons               name={isFavorite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFavorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionCircle}>
-            <Icon name="share-variant" size={20} color={COLORS.GRAY_MEDIUM} />
+            <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.GRAY_MEDIUM} />
           </TouchableOpacity>
         </View>
       </View>
@@ -82,12 +81,12 @@ export const VenueCard: React.FC<VenueCardProps> = ({
             <Text style={styles.distance}>{distance}</Text>
             <Text style={styles.address} numberOfLines={1}>{address}</Text>
             <View style={styles.hoursRow}>
-              <Icon name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.hoursText}>{hours}</Text>
             </View>
           </View>
         </View>
-        
+
         <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
           <Text style={styles.bookText}>ĐẶT LỊCH</Text>
         </TouchableOpacity>

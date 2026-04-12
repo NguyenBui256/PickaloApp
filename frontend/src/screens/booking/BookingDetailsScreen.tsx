@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { BOOKING_COURTS, TIME_SLOTS, MOCK_AVAILABILITY } from '../../constants/mock-data';
 import { BookingCell } from '../../components/BookingCell';
 import { BookingSummaryBar } from '../../components/BookingSummaryBar';
@@ -40,7 +40,7 @@ export const BookingDetailsScreen: React.FC = () => {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     const timeStr = hours > 0 ? `${hours}h${minutes > 0 ? minutes : '00'}` : `${minutes}ph`;
-    
+
     return {
       timeStr,
       totalPrice: formatCurrency(totalSlots * PRICE_PER_SLOT),
@@ -49,7 +49,7 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const toggleSlot = useCallback((court: string, slot: string) => {
     const slotId = `${court}-${slot}`;
-    setSelectedSlots(prev => 
+    setSelectedSlots(prev =>
       prev.includes(slotId) ? prev.filter(id => id !== slotId) : [...prev, slotId]
     );
   }, []);
@@ -61,14 +61,14 @@ export const BookingDetailsScreen: React.FC = () => {
         <SafeAreaView>
           <View style={styles.headerTop}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Icon name="chevron-left" size={30} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="chevron-left" size={30} color={COLORS.WHITE} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Chọn thời gian</Text>
             <View style={{ width: 30 }} />
           </View>
 
           <View style={styles.dateSelector}>
-            <Icon name="calendar-month" size={24} color={COLORS.WHITE} />
+            <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.WHITE} />
             <Text style={styles.dateText}>Thứ 4, 08/04/2026</Text>
           </View>
 
@@ -118,7 +118,7 @@ export const BookingDetailsScreen: React.FC = () => {
                   <View style={styles.courtNameCell}>
                     <Text style={styles.courtNameText}>{court}</Text>
                   </View>
-                  
+
                   {/* Row Cells */}
                   {TIME_SLOTS.map((slot) => {
                     const slotId = `${court}-${slot}`;

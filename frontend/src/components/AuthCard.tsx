@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { COLORS } from '../theme/colors';
+import COLORS from '@theme/colors';
 
 interface AuthCardProps {
   children: React.ReactNode;

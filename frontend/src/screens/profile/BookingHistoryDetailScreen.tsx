@@ -6,16 +6,13 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Image,
   StatusBar,
-  Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { Booking } from '../../constants/mock-data';
 
-const { width } = Dimensions.get('window');
 
 // Color constants from user specs
 const PRIMARY_GREEN = '#064e3b';
@@ -36,7 +33,7 @@ const InfoItem = ({ label, value, isYellow, isClickable }: InfoItemProps) => (
     <View style={styles.infoValueRow}>
       <Text style={[styles.infoValue, isYellow && styles.yellowText]}>{value}</Text>
       {isClickable && (
-        <Icon name="phone" size={16} color={COLORS.WHITE} style={styles.clickableIcon} />
+        <MaterialCommunityIcons name="phone" size={16} color={COLORS.WHITE} style={styles.clickableIcon} />
       )}
     </View>
   </View>
@@ -46,7 +43,7 @@ export const BookingHistoryDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { booking } = route.params as { booking: Booking };
-  
+
   const [activeTab, setActiveTab] = useState('Thông tin');
 
   const tabs = ['Thông tin', 'Dịch vụ', 'Đội nhóm'];
@@ -67,22 +64,22 @@ export const BookingHistoryDetailScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       {/* Header & Tabs */}
       <View style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerNav}>
-             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Icon name="chevron-left" size={32} color={COLORS.WHITE} />
-             </TouchableOpacity>
-             <Text style={styles.headerTitle}>Chi tiết đặt lịch</Text>
-             <View style={{ width: 40 }} />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <MaterialCommunityIcons name="chevron-left" size={32} color={COLORS.WHITE} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Chi tiết đặt lịch</Text>
+            <View style={{ width: 40 }} />
           </View>
-          
+
           <View style={styles.tabBar}>
             {tabs.map((tab) => (
-              <TouchableOpacity 
-                key={tab} 
+              <TouchableOpacity
+                key={tab}
                 style={styles.tabItem}
                 onPress={() => setActiveTab(tab)}
               >
@@ -98,9 +95,9 @@ export const BookingHistoryDetailScreen: React.FC = () => {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
-             <View style={styles.avatarCircle}>
-                <Icon name="account" size={30} color={COLORS.WHITE} />
-             </View>
+            <View style={styles.avatarCircle}>
+              <MaterialCommunityIcons name="account" size={30} color={COLORS.WHITE} />
+            </View>
           </View>
           <View style={styles.userDetail}>
             <Text style={styles.userName}>Phạm Ngọc Long</Text>
@@ -112,8 +109,8 @@ export const BookingHistoryDetailScreen: React.FC = () => {
         {activeTab === 'Thông tin' && (
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-               <Icon name="clipboard-text-outline" size={24} color={COLORS.WHITE} />
-               <Text style={styles.sectionTitle}>Thông tin</Text>
+              <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={COLORS.WHITE} />
+              <Text style={styles.sectionTitle}>Thông tin</Text>
             </View>
 
             <View style={styles.infoList}>
@@ -126,24 +123,24 @@ export const BookingHistoryDetailScreen: React.FC = () => {
               <InfoItem label="Số điện thoại" value="0333333333" isClickable />
               <InfoItem label="Địa chỉ" value={booking.address} />
               <View style={styles.noteBox}>
-                 <Text style={styles.noteText}>SÂN NGOÀI TRỜI</Text>
+                <Text style={styles.noteText}>SÂN NGOÀI TRỜI</Text>
               </View>
             </View>
 
             <View style={styles.customerNote}>
-               <Text style={styles.noteLabel}>Khách hàng ghi chú:</Text>
-               <View style={styles.noteContent}>
-                  <Text style={styles.noteValue}>Lấy thêm 2 chai nước suối lạnh.</Text>
-               </View>
+              <Text style={styles.noteLabel}>Khách hàng ghi chú:</Text>
+              <View style={styles.noteContent}>
+                <Text style={styles.noteValue}>Lấy thêm 2 chai nước suối lạnh.</Text>
+              </View>
             </View>
           </View>
         )}
 
         {activeTab !== 'Thông tin' && (
-           <View style={styles.emptyTab}>
-              <Icon name="dots-horizontal" size={40} color="rgba(255,255,255,0.3)" />
-              <Text style={styles.emptyText}>Đang cập nhật...</Text>
-           </View>
+          <View style={styles.emptyTab}>
+            <MaterialCommunityIcons name="dots-horizontal" size={40} color="rgba(255,255,255,0.3)" />
+            <Text style={styles.emptyText}>Đang cập nhật...</Text>
+          </View>
         )}
 
         <View style={{ height: 120 }} />
@@ -151,9 +148,9 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
       {/* Action Button */}
       <View style={styles.footer}>
-         <TouchableOpacity style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}>
-            <Text style={styles.actionBtnText}>{buttonConfig.text}</Text>
-         </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}>
+          <Text style={styles.actionBtnText}>{buttonConfig.text}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -251,7 +248,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   infoSection: {
-    
+
   },
   sectionHeader: {
     flexDirection: 'row',

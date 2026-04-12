@@ -2,15 +2,15 @@
  * Application color palette.
  */
 
-export const COLORS = {
+const COLORS = {
   // Primary colors
-  PRIMARY: '#0F6B3A', // Dark Green
-  SECONDARY: '#FF8C00', // Orange (starting point for gradient)
-  ACCENT: '#FFD700', // Yellow/Gold (banner border)
+  PRIMARY: '#0F6B3A',
+  SECONDARY: '#FF8C00',
+  ACCENT: '#FFD700',
 
   // Gradients
-  GRADIENT_ORANGE: ['#FF8C00', '#FFA500'],
-  GRADIENT_GREEN: ['#0F6B3A', '#1A8F51'],
+  GRADIENT_ORANGE: ['#FF8C00', '#FFA500'] as const,
+  GRADIENT_GREEN: ['#0F6B3A', '#1A8F51'] as const,
 
   // Badge Colors
   PURPLE: '#8E44AD',
@@ -30,3 +30,5 @@ export const COLORS = {
   TEXT_PRIMARY: '#212121',
   TEXT_SECONDARY: '#757575',
 };
+
+export default COLORS;

@@ -7,8 +7,8 @@ import {
   Dimensions,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 import { BookingOptionCard } from './BookingOptionCard';
 
 interface BookingModalProps {
@@ -42,7 +42,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <Text style={styles.title}>Chọn hình thức đặt</Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Icon name="close" size={24} color={COLORS.GRAY_MEDIUM} />
+            <MaterialCommunityIcons name="close" size={24} color={COLORS.GRAY_MEDIUM} />
           </TouchableOpacity>
         </View>
 

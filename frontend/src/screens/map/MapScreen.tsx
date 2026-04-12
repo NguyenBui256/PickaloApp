@@ -9,12 +9,12 @@ import {
   Dimensions,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const INITIAL_REGION = {
   latitude: 20.9845,
@@ -24,10 +24,10 @@ const INITIAL_REGION = {
 };
 
 const MAP_CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: 'apps' },
-  { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' },
-  { id: 'badminton', name: 'Sân Cầu lông', icon: 'badminton' },
-  { id: 'football', name: 'Sân Bóng đá', icon: 'soccer' },
+  { id: 'all', name: 'Tất cả', icon: 'apps' as const },
+  { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' as const },
+  { id: 'badminton', name: 'Sân Cầu lông', icon: 'racket' as const },
+  { id: 'football', name: 'Sân Bóng đá', icon: 'soccer-field' as const },
 ];
 
 export const MapScreen: React.FC = () => {
@@ -77,7 +77,7 @@ export const MapScreen: React.FC = () => {
       <View style={styles.searchOverlay}>
         <View style={styles.searchBar}>
           <View style={styles.logoContainer}>
-            <Icon name="alpha-a-box" size={32} color={COLORS.PRIMARY} />
+            <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.PRIMARY} />
           </View>
           <TextInput
             placeholder="Tìm kiếm sân quanh đây."
@@ -85,7 +85,7 @@ export const MapScreen: React.FC = () => {
             placeholderTextColor={COLORS.GRAY_MEDIUM}
           />
           <TouchableOpacity style={styles.searchIcon}>
-            <Icon name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
+            <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
           </TouchableOpacity>
         </View>
 
@@ -105,8 +105,7 @@ export const MapScreen: React.FC = () => {
                 activeCategory === cat.id && styles.activeChip,
               ]}
             >
-              <Icon
-                name={cat.icon}
+              <MaterialCommunityIcons name={cat.icon as any}
                 size={18}
                 color={activeCategory === cat.id ? COLORS.WHITE : COLORS.GRAY_MEDIUM}
               />
@@ -126,16 +125,16 @@ export const MapScreen: React.FC = () => {
       {/* Floating UI: Map Controls */}
       <View style={styles.controlsLeft}>
         <TouchableOpacity style={styles.circularControl}>
-          <Icon name="layers-outline" size={24} color={COLORS.TEXT_PRIMARY} />
+          <MaterialCommunityIcons name="layers-outline" size={24} color={COLORS.TEXT_PRIMARY} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.controlsRight}>
         <TouchableOpacity style={styles.circularAction}>
-          <Icon name="arrow-up" size={24} color={COLORS.WHITE} />
+          <MaterialCommunityIcons name="arrow-up" size={24} color={COLORS.WHITE} />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.circularAction, { marginTop: 12 }]}>
-          <Icon name="crosshairs-gps" size={24} color={COLORS.WHITE} />
+          <MaterialCommunityIcons name="crosshairs-gps" size={24} color={COLORS.WHITE} />
         </TouchableOpacity>
       </View>
     </View>

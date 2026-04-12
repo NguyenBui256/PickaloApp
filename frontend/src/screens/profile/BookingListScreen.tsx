@@ -8,9 +8,9 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { MOCK_BOOKINGS, Booking } from '../../constants/mock-data';
 
 const Ribbon = ({ text }: { text: string }) => (
@@ -19,7 +19,7 @@ const Ribbon = ({ text }: { text: string }) => (
       <Text style={styles.ribbonText}>{text}</Text>
     </View>
     <View style={styles.ribbonTail}>
-        <View style={styles.tailTriangle} />
+      <View style={styles.tailTriangle} />
     </View>
   </View>
 );
@@ -39,17 +39,17 @@ const BookingCard = ({ item }: { item: Booking }) => {
   const navigation = useNavigation<any>();
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
     >
       <Ribbon text={item.type} />
-      
+
       <View style={styles.cardHeader}>
         <Text style={styles.clubName} numberOfLines={2}>{item.clubName}</Text>
         <View style={styles.statusRow}>
-           <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
-           <Icon name={status.icon} size={18} color={status.color} />
+          <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
+          <MaterialCommunityIcons name={status.icon as any} size={18} color={status.color} />
         </View>
       </View>
 
@@ -65,13 +65,13 @@ const BookingCard = ({ item }: { item: Booking }) => {
       </View>
 
       <View style={styles.cardFooter}>
-         <Text style={styles.priceText}>{item.price} đ</Text>
-         <TouchableOpacity 
-            style={styles.detailBtn}
-            onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
-         >
-            <Text style={styles.detailBtnText}>Xem chi tiết</Text>
-         </TouchableOpacity>
+        <Text style={styles.priceText}>{item.price} đ</Text>
+        <TouchableOpacity
+          style={styles.detailBtn}
+          onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
+        >
+          <Text style={styles.detailBtnText}>Xem chi tiết</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -83,13 +83,13 @@ export const BookingListScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <SafeAreaView>
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Icon name="chevron-left" size={30} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="chevron-left" size={30} color={COLORS.WHITE} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Danh sách đặt lịch</Text>
             <View style={{ width: 30 }} />
@@ -101,7 +101,7 @@ export const BookingListScreen: React.FC = () => {
       <View style={styles.filterSection}>
         <TouchableOpacity style={styles.filterBar}>
           <Text style={styles.filterText}>Xem tất cả</Text>
-          <Icon name="calendar-month-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+          <MaterialCommunityIcons name="calendar-month-outline" size={20} color={COLORS.GRAY_MEDIUM} />
         </TouchableOpacity>
       </View>
 

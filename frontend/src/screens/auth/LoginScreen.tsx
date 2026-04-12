@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { AuthCard } from '../../components/AuthCard';
 import { TabSwitch } from '../../components/TabSwitch';
 import { CustomInput } from '../../components/CustomInput';
@@ -31,7 +31,7 @@ type AuthStackParamList = {
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  
+
   const [activeTab, setActiveTab] = useState<'phone' | 'email'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -57,24 +57,24 @@ export const LoginScreen: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={styles.backButton}
             >
-              <Icon name="arrow-left" size={28} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="arrow-left" size={28} color={COLORS.WHITE} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Đăng nhập</Text>
             <View style={styles.placeholder} />
           </View>
 
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
             {/* Auth Card */}
             <AuthCard style={styles.card}>
               <TabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
-              
+
               {activeTab === 'phone' ? (
                 <CustomInput
                   type="phone"
@@ -105,18 +105,18 @@ export const LoginScreen: React.FC = () => {
                 onChangeText={setPassword}
               />
 
-              <PrimaryButton 
-                text="ĐĂNG NHẬP" 
-                onPress={handleLogin} 
-                loading={isLoading} 
+              <PrimaryButton
+                text="ĐĂNG NHẬP"
+                onPress={handleLogin}
+                loading={isLoading}
                 style={styles.loginButton}
               />
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.biometricButton}
                 activeOpacity={0.7}
               >
-                <Icon name="fingerprint" size={20} color={COLORS.PRIMARY} />
+                <MaterialCommunityIcons name="fingerprint" size={20} color={COLORS.PRIMARY} />
                 <Text style={styles.biometricText}>Đăng nhập với sinh trắc học</Text>
               </TouchableOpacity>
 
@@ -138,16 +138,16 @@ export const LoginScreen: React.FC = () => {
 
             {/* Social Login */}
             <View style={styles.socialContainer}>
-              <SocialButton 
-                icon="google" 
-                text="Google" 
-                onPress={() => {}} 
+              <SocialButton
+                icon="google"
+                text="Google"
+                onPress={() => { }}
                 style={styles.socialMargin}
               />
-              <SocialButton 
-                icon="apple" 
-                text="Apple" 
-                onPress={() => {}} 
+              <SocialButton
+                icon="apple"
+                text="Apple"
+                onPress={() => { }}
               />
             </View>
 

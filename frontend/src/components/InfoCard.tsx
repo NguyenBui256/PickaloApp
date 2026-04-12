@@ -5,12 +5,12 @@ import {
   StyleSheet,
   ViewStyle,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 interface InfoCardProps {
   title: string;
-  iconName: string;
+  iconName: keyof typeof MaterialCommunityIcons.glyphMap;
   children: React.ReactNode;
   style?: ViewStyle;
 }
@@ -19,7 +19,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({ title, iconName, children, s
   return (
     <View style={[styles.card, style]}>
       <View style={styles.header}>
-        <Icon name={iconName} size={20} color="#EAB308" />
+        <MaterialCommunityIcons name={iconName} size={20} color="#EAB308" />
         <Text style={styles.title}>{title}</Text>
       </View>
       <View style={styles.content}>

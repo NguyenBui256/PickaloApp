@@ -6,18 +6,15 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  Dimensions,
   SafeAreaView,
   Share,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
 import { BookingModal } from '../../components/BookingModal';
-
-const { width } = Dimensions.get('window');
 
 type RootStackParamList = {
   VenueDetails: { venueId: string };
@@ -82,7 +79,7 @@ export const VenueDetailScreen: React.FC = () => {
                 {venue.bookingLink}
               </Text>
               <TouchableOpacity onPress={handleCopyLink} style={styles.copyBtn}>
-                <Icon name="content-copy" size={20} color={COLORS.PRIMARY} />
+                <MaterialCommunityIcons name="content-copy" size={20} color={COLORS.PRIMARY} />
               </TouchableOpacity>
             </View>
           </View>
@@ -102,33 +99,32 @@ export const VenueDetailScreen: React.FC = () => {
         {/* Cover Image & Overlays */}
         <View style={styles.imageSection}>
           <Image source={{ uri: venue.image }} style={styles.coverImage} />
-          
+
           <SafeAreaView style={styles.overlayArea}>
             <View style={styles.header}>
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={styles.circularBtn}
               >
-                <Icon name="chevron-left" size={28} color={COLORS.BLACK} />
+                <MaterialCommunityIcons name="chevron-left" size={28} color={COLORS.BLACK} />
               </TouchableOpacity>
 
               <View style={styles.headerRight}>
                 <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
-                  <Icon name="share-variant" size={22} color={COLORS.BLACK} />
+                  <MaterialCommunityIcons name="share-variant" size={22} color={COLORS.BLACK} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setIsFavorite(!isFavorite)}
                   style={styles.circularBtn}
                 >
-                  <Icon
-                    name={isFavorite ? 'heart' : 'heart-outline'}
+                  <MaterialCommunityIcons                     name={isFavorite ? 'heart' : 'heart-outline'}
                     size={22}
                     color={isFavorite ? COLORS.ERROR : COLORS.BLACK}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity 
-                   style={styles.bookNowBtn}
-                   onPress={handleBookPress}
+                <TouchableOpacity
+                  style={styles.bookNowBtn}
+                  onPress={handleBookPress}
                 >
                   <Text style={styles.bookNowText}>Đặt lịch</Text>
                 </TouchableOpacity>
@@ -138,7 +134,7 @@ export const VenueDetailScreen: React.FC = () => {
 
           {/* Rating Badge Overlay */}
           <View style={styles.ratingBadge}>
-            <Icon name="star" size={16} color={COLORS.WHITE} />
+            <MaterialCommunityIcons name="star" size={16} color={COLORS.WHITE} />
             <Text style={styles.ratingText}>{venue.rating || 'Chưa có đánh giá'}</Text>
           </View>
         </View>
@@ -157,19 +153,19 @@ export const VenueDetailScreen: React.FC = () => {
 
           <View style={styles.detailsList}>
             <View style={styles.detailRow}>
-              <Icon name="map-marker-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.detailText}>{venue.fullAddress || venue.address}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Icon name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.detailText}>{venue.hours}</Text>
             </View>
             <TouchableOpacity style={styles.detailRow} activeOpacity={0.7}>
-              <Icon name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />
               <Text style={[styles.detailText, styles.contactText]}>Liên hệ</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.divider} />
 
           {/* Inline Tabs */}

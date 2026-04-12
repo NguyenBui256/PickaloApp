@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { HIGHLIGHT_BANNERS } from '../../constants/mock-data';
 
 const { width } = Dimensions.get('window');

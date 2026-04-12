@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS } from '../theme/colors';
+import COLORS from '@theme/colors';
 
 interface TabSwitchProps {
   activeTab: 'phone' | 'email';

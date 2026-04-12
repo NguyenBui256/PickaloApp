@@ -4,12 +4,14 @@
  */
 
 import React from 'react';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import type { NavigatorScreenParams } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { PlaceholderScreen } from '@screens/PlaceholderScreen';
 import { LoginScreen } from '@screens/auth/LoginScreen';
+import { HomeScreen } from '@screens/home/HomeScreen';
 import { VenueDetailScreen } from '@screens/venue/VenueDetailScreen';
 import { MapVenueDetailOverlayScreen } from '@screens/venue/MapVenueDetailOverlayScreen';
 import { MapScreen } from '@screens/map/MapScreen';
@@ -21,8 +23,8 @@ import { PaymentScreen } from '@screens/booking/PaymentScreen';
 import { FinalPaymentScreen } from '@screens/booking/FinalPaymentScreen';
 import { BookingListScreen } from '@screens/profile/BookingListScreen';
 import { BookingHistoryDetailScreen } from '@screens/profile/BookingHistoryDetailScreen';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 /**
  * Screen types for type-safe navigation.
@@ -55,39 +57,50 @@ export type AuthStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const AuthNavStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-/**
- * Custom button for the central "Explore" tab.
- */
-const ExploreTabButton = ({ children, onPress }: any) => (
-  <TouchableOpacity
-    style={{
-      top: -20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      ...styles.shadow,
-    }}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
-    <View
+const ExploreTabButton = ({ children, onPress }: any) => {
+  const shadowStyle = {
+    shadowColor: COLORS.BLACK,
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5,
+  };
+
+  return (
+    <TouchableOpacity
       style={{
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: COLORS.WHITE,
-        borderWidth: 3,
-        borderColor: COLORS.PRIMARY,
+        ...shadowStyle,
+        top: -20,
         justifyContent: 'center',
         alignItems: 'center',
       }}
+      onPress={onPress}
+      activeOpacity={0.8}
     >
-      <Icon name="file-document-outline" size={32} color={COLORS.PRIMARY} />
-    </View>
-    <Text style={{ fontSize: 10, color: COLORS.PRIMARY, marginTop: 4, fontWeight: 'bold' }}>Khám phá</Text>
-  </TouchableOpacity>
-);
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          backgroundColor: COLORS.WHITE,
+          borderWidth: 3,
+          borderColor: COLORS.PRIMARY,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <MaterialCommunityIcons name="file-document-outline" size={32} color={COLORS.PRIMARY} />
+      </View>
+      <Text style={{ fontSize: 10, color: COLORS.PRIMARY, marginTop: 4, fontWeight: 'bold' }}>Khám phá</Text>
+    </TouchableOpacity>
+  );
+};
 
 /**
  * Main tab navigator (bottom tabs).
@@ -101,60 +114,47 @@ function MainTabs(): React.JSX.Element {
         tabBarActiveTintColor: COLORS.PRIMARY,
         tabBarInactiveTintColor: COLORS.GRAY_MEDIUM,
         tabBarIcon: ({ color, size }) => {
-          let iconName = '';
+          let iconName: keyof typeof MaterialCommunityIcons.glyphMap = 'home';
           if (route.name === 'Home') iconName = 'home';
           else if (route.name === 'Map') iconName = 'map-marker-radius';
           else if (route.name === 'Explore') iconName = 'compass-outline';
           else if (route.name === 'Highlights') iconName = 'fire';
           else if (route.name === 'Profile') iconName = 'account-circle';
-          return <Icon name={iconName} size={size} color={color} />;
+          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen} 
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
         options={{ tabBarLabel: 'Trang chủ' }}
       />
-      <Tab.Screen 
-        name="Map" 
-        component={MapScreen} 
+      <Tab.Screen
+        name="Map"
+        component={MapScreen}
         options={{ tabBarLabel: 'Bản đồ' }}
       />
-      <Tab.Screen 
-        name="Explore" 
-        component={ExploreScreen} 
-        options={{ 
+      <Tab.Screen
+        name="Explore"
+        component={ExploreScreen}
+        options={{
           tabBarLabel: 'Khám phá',
           tabBarButton: (props) => <ExploreTabButton {...props} />
         }}
       />
-      <Tab.Screen 
-        name="Highlights" 
-        component={HighlightsScreen} 
+      <Tab.Screen
+        name="Highlights"
+        component={HighlightsScreen}
         options={{ tabBarLabel: 'Nổi bật' }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
         options={{ tabBarLabel: 'Tài khoản' }}
       />
     </Tab.Navigator>
   );
 }
-
-const styles = {
-  shadow: {
-    shadowColor: COLORS.BLACK,
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
-  }
-};
 
 /**
  * Auth stack navigator.
@@ -162,18 +162,18 @@ const styles = {
  */
 function AuthStack(): React.JSX.Element {
   return (
-    <Stack.Navigator
+    <AuthNavStack.Navigator
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" getComponent={() => createPlaceholderScreen('Register')} />
-      <Stack.Screen
+      <AuthNavStack.Screen name="Login" component={LoginScreen} />
+      <AuthNavStack.Screen name="Register" getComponent={() => () => createPlaceholderScreen('Register')} />
+      <AuthNavStack.Screen
         name="ForgotPassword"
-        getComponent={() => createPlaceholderScreen('Forgot Password')}
+        getComponent={() => () => createPlaceholderScreen('Forgot Password')}
       />
-    </Stack.Navigator>
+    </AuthNavStack.Navigator>
   );
 }
 
@@ -209,19 +209,19 @@ export function AppNavigator(): React.JSX.Element {
             <Stack.Screen
               name="MapVenueDetailOverlay"
               component={MapVenueDetailOverlayScreen}
-              options={{ 
+              options={{
                 presentation: 'transparentModal',
                 animation: 'slide_from_bottom',
-                headerShown: false 
+                headerShown: false
               }}
             />
             <Stack.Screen
               name="BookingDetails"
               component={BookingDetailsScreen}
             />
-            <Stack.Screen 
-              name="Payment" 
-              component={PaymentScreen} 
+            <Stack.Screen
+              name="Payment"
+              component={PaymentScreen}
             />
             <Stack.Screen
               name="FinalPayment"

@@ -8,16 +8,18 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 const VERSION = '2.9.0';
+const { width } = Dimensions.get('window');
 
 interface MenuItemProps {
-  icon: string;
+  icon: any;
   label: string;
   value?: string;
   color?: string;
@@ -27,12 +29,12 @@ interface MenuItemProps {
 const MenuItem: React.FC<MenuItemProps> = ({ icon, label, value, color = COLORS.GRAY_MEDIUM, onPress }) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <View style={styles.menuLeft}>
-      <Icon name={icon} size={24} color={color} />
+      <MaterialCommunityIcons name={icon} size={24} color={color} />
       <Text style={styles.menuLabel}>{label}</Text>
     </View>
     <View style={styles.menuRight}>
       {value && <Text style={styles.menuValue}>{value}</Text>}
-      <Icon name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
+      <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
     </View>
   </TouchableOpacity>
 );
@@ -43,7 +45,7 @@ export const ProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header Section */}
         <LinearGradient
@@ -62,16 +64,16 @@ export const ProfileScreen: React.FC = () => {
                 <Text style={styles.userName}>Phạm Ngọc Long</Text>
                 <Text style={styles.userEmail}>long43872@gmail.com</Text>
               </View>
-              <Icon name="chevron-right" size={24} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
 
             {/* Membership Status Card */}
             <TouchableOpacity style={styles.membershipCard}>
               <View style={styles.membershipLeft}>
-                <Icon name="diamond-stone" size={20} color="#E3B129" />
+                <MaterialCommunityIcons name="diamond-stone" size={20} color="#E3B129" />
                 <Text style={styles.membershipText}>Hạng thành viên</Text>
               </View>
-              <Icon name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
             </TouchableOpacity>
           </SafeAreaView>
         </LinearGradient>
@@ -79,33 +81,33 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.mainContent}>
           {/* Quick Action Grid */}
           <View style={styles.quickActionGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickCard}
               onPress={() => navigation.navigate('BookingList')}
             >
               <View style={[styles.iconBox, { backgroundColor: 'rgba(15, 107, 58, 0.1)' }]}>
-                <Icon name="calendar-check" size={24} color={COLORS.PRIMARY} />
+                <MaterialCommunityIcons name="calendar-check" size={24} color={COLORS.PRIMARY} />
               </View>
               <Text style={styles.quickLabel}>Lịch đã đặt</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.quickCard}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(230, 126, 34, 0.1)' }]}>
-                <Icon name="bell-ring-outline" size={24} color="#E67E22" />
+                <MaterialCommunityIcons name="bell-ring-outline" size={24} color="#E67E22" />
               </View>
               <Text style={styles.quickLabel}>Thông báo</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.quickCard}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(241, 196, 15, 0.1)' }]}>
-                <Icon name="trophy-outline" size={24} color="#F1C40F" />
+                <MaterialCommunityIcons name="trophy-outline" size={24} color="#F1C40F" />
               </View>
               <Text style={styles.quickLabel}>Khoá học</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.quickCard}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(231, 76, 60, 0.1)' }]}>
-                <Icon name="gift-outline" size={24} color="#E74C3C" />
+                <MaterialCommunityIcons name="gift-outline" size={24} color="#E74C3C" />
               </View>
               <Text style={styles.quickLabel}>Ưu đãi</Text>
             </TouchableOpacity>
@@ -128,10 +130,10 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.menuCard}>
               <MenuItem icon="cog-outline" label="Cài đặt" />
               <View style={styles.divider} />
-              <MenuItem 
-                icon="information-outline" 
-                label="Thông tin phiên bản" 
-                value={VERSION} 
+              <MenuItem
+                icon="information-outline"
+                label="Thông tin phiên bản"
+                value={VERSION}
               />
               <View style={styles.divider} />
               <MenuItem icon="shield-check-outline" label="Điều khoản và chính sách" />

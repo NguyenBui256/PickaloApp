@@ -9,9 +9,9 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 import { MEMBERSHIPS, EXPLORE_FILTERS } from '../../constants/mock-data';
 
 const { width } = Dimensions.get('window');
@@ -55,7 +55,7 @@ export const ExploreScreen: React.FC = () => {
               <Text style={styles.dateText}>30/03/2026</Text>
             </View>
             <View style={styles.addressRow}>
-              <Icon name="map-marker" size={16} color={COLORS.GRAY_MEDIUM} />
+              <MaterialCommunityIcons name="map-marker" size={16} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.addressText} numberOfLines={1}>
                 B1 - Tòa nhà Ecogreen, 286 Nguyễn Xiển...
               </Text>
@@ -81,15 +81,15 @@ export const ExploreScreen: React.FC = () => {
                   {/* Icon details row */}
                   <View style={styles.detailIconsRow}>
                     <View style={styles.detailIconItem}>
-                      <Icon name="calendar-clock" size={18} color={COLORS.GRAY_MEDIUM} />
+                      <MaterialCommunityIcons name="calendar-clock" size={18} color={COLORS.GRAY_MEDIUM} />
                       <Text style={styles.detailIconText}>Thời hạn: {item.duration}</Text>
                     </View>
                     <View style={styles.detailIconItem}>
-                      <Icon name="ticket-percent-outline" size={18} color={COLORS.GRAY_MEDIUM} />
+                      <MaterialCommunityIcons name="ticket-percent-outline" size={18} color={COLORS.GRAY_MEDIUM} />
                       <Text style={styles.detailIconText}>Miễn phí: {item.freeTickets}</Text>
                     </View>
                     <View style={styles.detailIconItem}>
-                      <Icon name="tennis-ball" size={18} color={COLORS.GRAY_MEDIUM} />
+                      <MaterialCommunityIcons name="tennis-ball" size={18} color={COLORS.GRAY_MEDIUM} />
                       <Text style={styles.detailIconText}>Loại sân: {item.courtType}</Text>
                     </View>
                   </View>
@@ -117,7 +117,7 @@ export const ExploreScreen: React.FC = () => {
                 <Text style={styles.bannerHeading}>PICKLEBALL</Text>
                 <Text style={styles.bannerSub}>Khám phá ngay các ưu đãi mới nhất!</Text>
               </View>
-              <Icon name="rocket-launch" size={50} color="rgba(255,255,255,0.3)" style={styles.bannerGraphic} />
+              <MaterialCommunityIcons name="rocket-launch" size={50} color="rgba(255,255,255,0.3)" style={styles.bannerGraphic} />
             </LinearGradient>
           </View>
         </ScrollView>

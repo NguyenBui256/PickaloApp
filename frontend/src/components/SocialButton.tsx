@@ -1,10 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 interface SocialButtonProps {
-  icon: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
   text: string;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
@@ -18,7 +18,7 @@ export const SocialButton: React.FC<SocialButtonProps> = ({
 }) => {
   return (
     <TouchableOpacity style={[styles.button, style]} onPress={onPress} activeOpacity={0.7}>
-      <Icon name={icon} size={24} color={COLORS.WHITE} style={styles.icon} />
+      <MaterialCommunityIcons name={icon} size={24} color={COLORS.WHITE} style={styles.icon} />
       <Text style={styles.text}>{text}</Text>
     </TouchableOpacity>
   );

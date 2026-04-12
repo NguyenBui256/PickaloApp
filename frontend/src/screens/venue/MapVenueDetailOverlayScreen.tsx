@@ -13,12 +13,13 @@ import {
   StatusBar,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { VENUES, MAP_CATEGORIES } from '../../constants/mock-data';
+import { VENUES } from '../../constants/mock-data';
 import { BookingModal } from '../../components/BookingModal';
+import COLORS from '@theme/colors';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 const MAP_HEIGHT = 180;
 
 type RootStackParamList = {
@@ -70,7 +71,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
           <View style={styles.linkRow}>
             <Text style={styles.linkText} numberOfLines={1}>{venue.bookingLink}</Text>
             <TouchableOpacity onPress={handleCopyLink}>
-              <Icon name="content-copy" size={20} color={COLORS.PRIMARY} />
+              <MaterialCommunityIcons name="content-copy" size={20} color={COLORS.PRIMARY} />
             </TouchableOpacity>
           </View>
         </View>
@@ -112,11 +113,11 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
       <SafeAreaView style={styles.navbarOverlay}>
         <View style={styles.navbar}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
-            <Icon name="chevron-left" size={28} color={COLORS.TEXT_PRIMARY} />
+            <MaterialCommunityIcons name="chevron-left" size={28} color={COLORS.TEXT_PRIMARY} />
           </TouchableOpacity>
           <Text style={styles.navTitle} numberOfLines={1}>{venue.name}</Text>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
-            <Icon name="close" size={24} color={COLORS.TEXT_PRIMARY} />
+            <MaterialCommunityIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
           </TouchableOpacity>
         </View>
 
@@ -155,10 +156,10 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
             
             <View style={styles.coverActions}>
               <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
-                <Icon name="share-variant" size={20} color={COLORS.BLACK} />
+                <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
-                <Icon name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
+                <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.bookNowBtn}
@@ -170,7 +171,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
 
             {/* Rating Badge */}
             <View style={styles.ratingBadge}>
-              <Icon name="star" size={16} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="star" size={16} color={COLORS.WHITE} />
               <Text style={styles.ratingText}>{venue.rating}</Text>
             </View>
           </View>
@@ -191,15 +192,15 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
 
             <View style={styles.detailsList}>
               <View style={styles.detailRow}>
-                <Icon name="map-marker-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+                <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.GRAY_MEDIUM} />
                 <Text style={styles.detailText}>{venue.fullAddress}</Text>
               </View>
               <View style={styles.detailRow}>
-                <Icon name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+                <MaterialCommunityIcons name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
                 <Text style={styles.detailText}>{venue.hours}</Text>
               </View>
               <TouchableOpacity style={styles.detailRow}>
-                <Icon name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+                <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />
                 <Text style={[styles.detailText, styles.phoneText]}>Liên hệ</Text>
               </TouchableOpacity>
             </View>

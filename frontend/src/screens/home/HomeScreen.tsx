@@ -7,18 +7,18 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
   StatusBar,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { COLORS } from '../../theme/colors';
+import COLORS from '@theme/colors';
 import { CategoryItem } from '../../components/CategoryItem';
 import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
+import { VENUES, CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -29,7 +29,7 @@ export const HomeScreen: React.FC = () => {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
 
   const toggleFavorite = (id: string) => {
-    setFavoriteVenues(prev => 
+    setFavoriteVenues(prev =>
       prev.includes(id) ? prev.filter(vId => vId !== id) : [...prev, id]
     );
   };
@@ -48,8 +48,8 @@ export const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      <ScrollView 
+
+      <ScrollView
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]} // Keep search bar sticky or semi-sticky if desired
       >
@@ -59,28 +59,28 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.headerTop}>
               <View style={styles.userInfo}>
                 <View style={styles.logoContainer}>
-                  <Icon name="alpha-a-box" size={32} color={COLORS.WHITE} />
+                  <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
                 </View>
                 <View style={styles.textInfo}>
                   <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
                   <Text style={styles.userName}>Phạm Ngọc Long</Text>
                 </View>
               </View>
-              
+
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.notificationBtn}>
-                  <Icon name="bell-outline" size={26} color={COLORS.WHITE} />
+                  <MaterialCommunityIcons name="bell-outline" size={26} color={COLORS.WHITE} />
                   <View style={styles.flagBadge}>
                     <Text style={styles.flagEmoji}>🇻🇳</Text>
                   </View>
                 </TouchableOpacity>
               </View>
             </View>
-            
+
             {/* Silhouettes simulation */}
             <View style={styles.silhouettes}>
-              <Icon name="run-fast" size={80} color="rgba(255,255,255,0.1)" style={styles.silIcon1} />
-              <Icon name="tennis" size={60} color="rgba(255,255,255,0.1)" style={styles.silIcon2} />
+              <MaterialCommunityIcons name="run-fast" size={80} color="rgba(255,255,255,0.1)" style={styles.silIcon1} />
+              <MaterialCommunityIcons name="tennis" size={60} color="rgba(255,255,255,0.1)" style={styles.silIcon2} />
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -89,25 +89,25 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.searchSection}>
           <View style={styles.searchRow}>
             <View style={styles.searchBar}>
-              <Icon name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
-              <TextInput 
-                placeholder="Tìm kiếm" 
+              <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
+              <TextInput
+                placeholder="Tìm kiếm"
                 style={styles.searchInput}
                 placeholderTextColor={COLORS.GRAY_MEDIUM}
                 onFocus={() => navigation.navigate('Search')}
               />
               <TouchableOpacity>
-                <Icon name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
+                <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.favFloatingBtn}>
-              <Icon name="heart-outline" size={24} color={COLORS.PRIMARY} />
+              <MaterialCommunityIcons name="heart-outline" size={24} color={COLORS.PRIMARY} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.quickFilters}
           >
             {QUICK_FILTERS.map((filter, index) => (
@@ -121,17 +121,17 @@ export const HomeScreen: React.FC = () => {
         {/* Main Content Area */}
         <View style={styles.content}>
           {/* Sports Categories */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesContainer}
           >
             {CATEGORIES.map((cat) => (
-              <CategoryItem 
+              <CategoryItem
                 key={cat.id}
                 name={cat.name}
                 iconName={cat.icon}
-                onPress={() => {}}
+                onPress={() => { }}
               />
             ))}
           </ScrollView>
@@ -142,14 +142,14 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.bannerText}>
                 Tìm sân trống, sự kiện xé vé, ghép đội
               </Text>
-              <Icon name="tune-variant" size={24} color={COLORS.WHITE} />
+              <MaterialCommunityIcons name="tune-variant" size={24} color={COLORS.WHITE} />
             </View>
           </TouchableOpacity>
 
           {/* Venue List */}
           <View style={styles.venueList}>
             {VENUES.map((venue) => (
-              <VenueCard 
+              <VenueCard
                 key={venue.id}
                 {...venue}
                 isFavorite={favoriteVenues.includes(venue.id)}

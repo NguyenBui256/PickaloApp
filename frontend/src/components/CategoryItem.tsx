@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 
 interface CategoryItemProps {
   name: string;
-  iconName: string;
+  iconName: keyof typeof MaterialCommunityIcons.glyphMap;
   onPress: () => void;
 }
 
@@ -17,7 +17,7 @@ export const CategoryItem: React.FC<CategoryItemProps> = ({
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.iconContainer}>
-        <Icon name={iconName} size={30} color={COLORS.PRIMARY} />
+        <MaterialCommunityIcons name={iconName} size={30} color={COLORS.PRIMARY} />
       </View>
       <Text style={styles.label}>{name}</Text>
     </TouchableOpacity>
