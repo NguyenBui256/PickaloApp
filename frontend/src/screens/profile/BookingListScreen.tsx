@@ -25,8 +25,8 @@ const Ribbon = ({ text }: { text: string }) => (
 );
 
 const BookingCard = ({ item }: { item: Booking }) => {
-  const isCanceled = item.status === 'canceled';
-  const isSuccess = item.status === 'success';
+  const isCanceled = item.status === 'CANCELLED' || item.status === 'canceled';
+  const isSuccess = item.status === 'CONFIRMED' || item.status === 'success';
 
   const getStatusConfig = () => {
     if (isCanceled) return { label: 'Đã hủy', color: '#EA580C', icon: 'close-circle' };
@@ -43,10 +43,10 @@ const BookingCard = ({ item }: { item: Booking }) => {
       style={styles.card}
       onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
     >
-      <Ribbon text={item.type} />
+      <Ribbon text={item.type || 'Đơn ngày'} />
 
       <View style={styles.cardHeader}>
-        <Text style={styles.clubName} numberOfLines={2}>{item.clubName}</Text>
+        <Text style={styles.clubName} numberOfLines={2}>{item.venue_name || item.clubName}</Text>
         <View style={styles.statusRow}>
           <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
           <MaterialCommunityIcons name={status.icon as any} size={18} color={status.color} />
@@ -56,16 +56,16 @@ const BookingCard = ({ item }: { item: Booking }) => {
       <View style={styles.cardBody}>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Chi tiết:</Text>
-          <Text style={styles.infoValue}>{item.time} | {item.date}</Text>
+          <Text style={styles.infoValue}>{item.start_time && item.end_time ? `${item.start_time} - ${item.end_time}` : item.time} | {item.booking_date ? new Date(item.booking_date).toLocaleDateString('vi-VN') : item.date}</Text>
         </View>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Địa chỉ:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>{item.address}</Text>
+          <Text style={styles.infoValue} numberOfLines={2}>{item.venue_address || item.address}</Text>
         </View>
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.priceText}>{item.price} đ</Text>
+        <Text style={styles.priceText}>{item.total_price ? `${Number(item.total_price).toLocaleString('vi-VN')} đ` : `${item.price} đ`}</Text>
         <TouchableOpacity
           style={styles.detailBtn}
           onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}

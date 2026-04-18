@@ -1,3 +1,8 @@
+// ==========================================
+// MOCK DATA BASED ON BACKEND API SCHEMAS
+// ==========================================
+
+// Chưa có API danh sách Categories riêng (Backend hiện tại sử dụng enum VenueType)
 export const CATEGORIES = [
   { id: '1', name: 'Pickleball', icon: 'tennis-ball' as const },
   { id: '2', name: 'Cầu lông', icon: 'badminton' as const },
@@ -7,51 +12,68 @@ export const CATEGORIES = [
   { id: '6', name: 'Bóng rổ', icon: 'basketball' as const },
 ];
 
+// Map với Schema: VenueListItem
+// Các properties backend trả về: id, name, district, venue_type, location (lat/lng), base_price_per_hour, is_verified, images, amenities, rating
+// Các properties frontend cần thêm/xử lý: logo, distance, hours, badges, isFavorite, bookingLink, category, fullAddress, phone
 export const VENUES = [
   {
     id: '1',
     name: 'LVK Pickleball Club',
+    district: 'Hà Đông', // Từ backend (VenueListItem)
     address: 'Sân Pickleball LVK, Hà Đông, Hà Nội',
-    distance: '0.8 km',
-    image: 'https://images.unsplash.com/photo-1626224580174-3239b6267317?w=800',
-    logo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-    hours: '06:00 - 22:00',
-    badges: ['Đơn ngày', 'Sự kiện'],
-    isFavorite: false,
-    fullAddress: 'Vườn hoa trung tâm Làng Việt Kiều Châu Âu, Phường Hà Đông, Hà Nội (SÂN NGOÀI TRỜI)',
-    phone: '0987.654.321',
+    distance: '0.8 km', // Front end tự tính toán theo location
+    images: ['https://images.unsplash.com/photo-1626224580174-3239b6267317?w=800'], // Từ backend
+    image: 'https://images.unsplash.com/photo-1626224580174-3239b6267317?w=800', // FE field (fallback)
+    logo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100', // FE field
+    hours: '06:00 - 22:00', // Frontend field
+    operating_hours: { open: '06:00', close: '22:00' }, // Backend dict
+    badges: ['Đơn ngày', 'Sự kiện'], // Chưa có API trả về badges
+    isFavorite: false, // Chưa có API (lưu offline hoặc chưa implement)
+    fullAddress: 'Vườn hoa trung tâm Làng Việt Kiều Châu Âu, Phường Hà Đông, Hà Nội (SÂN NGOÀI TRỜI)', // FE field
+    phone: '0987.654.321', // Chờ update model backend
     bookingLink: 'https://datlich.alobo.vn/san/sport_lvk_pickleball_club',
-    category: 'Pickleball',
-    rating: 'Chưa có đánh giá',
-    lat: 20.9845,
+    category: 'Pickleball', // Map với venue_type Backend
+    venue_type: 'Pickleball', // Backend Enum
+    rating: 0, // Backend là float
+    is_verified: true, // Backend boolean
+    base_price_per_hour: 150000, // Backend Decimal
+    lat: 20.9845,   // Backend từ location (Coordinates schema)
     lng: 105.7925,
   },
   {
     id: '2',
     name: 'Clb Pickleballs Cung Văn Quán',
+    district: 'Hà Đông', 
     address: 'Văn Quán, Hà Đông, Hà Nội',
     distance: '1.2 km',
-    image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800',
+    images: ['https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800'], 
+    image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800', 
     logo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100',
     hours: '05:30 - 23:00',
+    operating_hours: { open: '05:30', close: '23:00' },
     badges: ['Đơn ngày'],
     isFavorite: true,
     fullAddress: 'Khu đô thị Văn Quán, Hà Đông, Hà Nội',
     phone: '0123.456.789',
     bookingLink: 'https://datlich.alobo.vn/san/van_quan_pickleball',
     category: 'Pickleball',
-    rating: '4.5 (12 đánh giá)',
+    venue_type: 'Pickleball',
+    rating: 4.5,
+    is_verified: false,
+    base_price_per_hour: 100000,
     lat: 20.9785,
     lng: 105.7885,
   },
 ];
 
+// Chưa có API filters
 export const QUICK_FILTERS = [
   'Cầu lông gần tôi',
   'Pickleball gần tôi',
   'Xé vé gần tôi',
 ];
 
+// Chưa có API filters
 export const EXPLORE_FILTERS = [
   'Tất cả',
   'Gói hội viên',
@@ -59,6 +81,7 @@ export const EXPLORE_FILTERS = [
   'Ưu đãi',
 ];
 
+// Chưa có API Memberships/Packages riêng hiện hành trong BE, đang mượn VenueServices
 export const MEMBERSHIPS = [
   {
     id: '1',
@@ -82,6 +105,7 @@ export const MEMBERSHIPS = [
   },
 ];
 
+// Chưa có API Highlights/Banners
 export const HIGHLIGHT_BANNERS = [
   {
     id: '1',
@@ -118,6 +142,7 @@ export const HIGHLIGHT_BANNERS = [
   },
 ];
 
+// Trong Backend, chia court không là 1 model tĩnh ở model venue (không có field courts, Venue thay cho Sân)
 export const BOOKING_COURTS = [
   'Pickleball 1',
   'Pickleball 2',
@@ -127,6 +152,8 @@ export const BOOKING_COURTS = [
   'Pickleball 6',
 ];
 
+
+// Backend dùng AvailabilityResponse & BookingTimelineResponse
 export const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 0; hour < 24; hour++) {
@@ -140,20 +167,20 @@ export const generateTimeSlots = () => {
 
 export const TIME_SLOTS = generateTimeSlots();
 
-// Generate a randomized availability matrix for demo purposes
+// Theo backend BookingTimelineResponse -> có slots (array TimeSlot {hour, available, status})
 export const MOCK_AVAILABILITY: Record<string, string> = {}; 
-// Key format: "courtName-time"
 BOOKING_COURTS.forEach(court => {
   TIME_SLOTS.forEach(slot => {
     const rand = Math.random();
-    let status = 'available';
-    if (rand < 0.1) status = 'booked';
-    else if (rand < 0.15) status = 'locked';
-    else if (rand < 0.18) status = 'event';
+    let status = 'available'; // backend "available" (available=true)
+    if (rand < 0.1) status = 'booked'; // backend status = "CONFIRMED"
+    else if (rand < 0.15) status = 'locked'; 
+    else if (rand < 0.18) status = 'event'; 
     MOCK_AVAILABILITY[`${court}-${slot}`] = status;
   });
 });
 
+// Chưa có API GET payment gateway/settings của từng merchant hay hệ thống
 export const BANK_DETAILS = {
   bankName: 'MB BANK',
   accountHolder: 'NGUYEN VAN A',
@@ -161,11 +188,25 @@ export const BANK_DETAILS = {
   qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ALOBO-PAYMENT',
 };
 
+// Map với Schema: BookingListItem / BookingResponse
 export interface Booking {
-  id: string;
+  // --- Backend mapping fields ---
+  id: string; // Từ backend id
+  venue_id?: string; // Mới thêm theo mapping
+  venue_name?: string; // Mới thêm từ backend, backend trả về venue_name nếu join
+  venue_address?: string; // Mới thêm từ backend
+  booking_date?: string; // Mới thêm
+  start_time?: string; // Mới thêm
+  end_time?: string; // Mới thêm
+  total_price?: number | string; // Mới thêm
+  is_paid?: boolean; // Mới thêm
+  is_cancelable?: boolean; // Mới thêm
+  created_at?: string; // Mới thêm
+  
+  // --- Frontend legacy mock fields ---
+  status: 'CANCELLED' | 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'EXPIRED' | 'canceled' | 'success' | 'pending'; // Backend dùng Uppercase
   type: string;
   clubName: string;
-  status: 'canceled' | 'success' | 'pending';
   time: string;
   date: string;
   address: string;
@@ -174,33 +215,96 @@ export interface Booking {
 
 export const MOCK_BOOKINGS: Booking[] = [
   {
+    // Backend API mapping fields
     id: '1',
+    venue_id: 'v-1234',
+    venue_name: 'ALOBO CLUB - VINHOMES OCEAN PARK',
+    venue_address: 'Sân Pickleball, Phân khu Hải Âu, Vinhomes Ocean Park, Gia Lâm, Hà Nội',
+    booking_date: '2026-03-30',
+    start_time: '18:00',
+    end_time: '19:00',
+    total_price: 190000,
+    is_paid: false,
+    is_cancelable: false,
+    created_at: '2026-03-20T10:00:00Z',
+    
+    // Legacy Frontend mapping
     type: 'Đơn ngày',
     clubName: 'ALOBO CLUB - VINHOMES OCEAN PARK',
-    status: 'canceled',
+    status: 'canceled', // Sẽ match logic FE cũ. BE chuẩn sẽ là "CANCELLED"
     time: '18:00 - 19:00',
     date: '30/03/2026',
     address: 'Sân Pickleball, Phân khu Hải Âu, Vinhomes Ocean Park, Gia Lâm, Hà Nội',
     price: '190.000',
   },
   {
+    // Backend API mapping fields
     id: '2',
+    venue_id: 'v-1235',
+    venue_name: 'SWIN PICKLEBALL - HAI BA TRUNG',
+    venue_address: '458 Minh Khai, Vĩnh Tuy, Hai Bà Trưng, Hà Nội',
+    booking_date: '2026-03-28',
+    start_time: '20:00',
+    end_time: '21:00',
+    total_price: 150000,
+    is_paid: true,
+    is_cancelable: true,
+    created_at: '2026-03-21T14:30:00Z',
+
+    // Legacy Frontend mapping
     type: 'Đơn ngày',
     clubName: 'SWIN PICKLEBALL - HAI BA TRUNG',
-    status: 'success',
+    status: 'success', // BE chuẩn sẽ là "CONFIRMED"
     time: '20:00 - 21:00',
     date: '28/03/2026',
     address: '458 Minh Khai, Vĩnh Tuy, Hai Bà Trưng, Hà Nội',
     price: '150.000',
   },
   {
+    // Backend API mapping fields
     id: '3',
+    venue_id: 'v-1236',
+    venue_name: 'COCO PICKLECLUB - TAN BINH',
+    venue_address: '18E Cộng Hòa, Phường 4, Tân Bình, TP.HCM',
+    booking_date: '2026-03-25',
+    start_time: '08:00',
+    end_time: '10:00',
+    total_price: 280000,
+    is_paid: false,
+    is_cancelable: false,
+    created_at: '2026-03-22T09:15:00Z',
+
+    // Legacy Frontend mapping
     type: 'Đơn ngày',
     clubName: 'COCO PICKLECLUB - TAN BINH',
-    status: 'canceled',
+    status: 'canceled', // BE: "CANCELLED"
     time: '08:00 - 10:00',
     date: '25/03/2026',
     address: '18E Cộng Hòa, Phường 4, Tân Bình, TP.HCM',
     price: '280.000',
   },
 ];
+
+// Mock Data cho User Registration (Map với UserResponse / UserProfileResponse)
+export const MOCK_USER = {
+  id: "u-999-123",
+  full_name: "Phạm Ngọc Long", // Từ Auth UI
+  email: "long.pn@example.com",
+  phone: "+84987654321",
+  role: "USER",
+  avatar_url: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
+  date_of_birth: "1998-05-15",
+  is_active: true,
+  is_verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+// Theo backend schema, mật khẩu chỉ xuất hiện lúc GỬI request đi (UserCreate Payload)
+// Tuyệt đối KHÔNG BAO GIỜ được trả về từ API Response sau khi đăng ký/đăng nhập.
+export const MOCK_REGISTER_PAYLOAD = {
+  full_name: "Phạm Ngọc Long",
+  phone: "+84987654321",
+  password: "Password123!", // Frontend chỉ dùng ở Form
+  role: "USER"
+};

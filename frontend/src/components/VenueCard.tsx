@@ -16,9 +16,11 @@ interface VenueCardProps {
   name: string;
   address: string;
   distance: string;
-  image: string;
+  images?: string[];
+  image?: string;
   logo: string;
   hours: string;
+  operating_hours?: { open: string; close: string };
   badges: string[];
   isFavorite: boolean;
   onPress: () => void;
@@ -30,9 +32,11 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   name,
   address,
   distance,
+  images,
   image,
   logo,
   hours,
+  operating_hours,
   badges,
   isFavorite,
   onPress,
@@ -43,7 +47,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       {/* Top Section with Image and Badges */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: image }} style={styles.image} />
+        <Image source={{ uri: images?.[0] || image }} style={styles.image} />
 
         <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
@@ -82,7 +86,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
             <Text style={styles.address} numberOfLines={1}>{address}</Text>
             <View style={styles.hoursRow}>
               <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
-              <Text style={styles.hoursText}>{hours}</Text>
+              <Text style={styles.hoursText}>{operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : hours}</Text>
             </View>
           </View>
         </View>

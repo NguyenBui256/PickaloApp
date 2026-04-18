@@ -98,7 +98,7 @@ export const VenueDetailScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[]}>
         {/* Cover Image & Overlays */}
         <View style={styles.imageSection}>
-          <Image source={{ uri: venue.image }} style={styles.coverImage} />
+          <Image source={{ uri: venue.images?.[0] || venue.image }} style={styles.coverImage} />
 
           <SafeAreaView style={styles.overlayArea}>
             <View style={styles.header}>
@@ -146,7 +146,7 @@ export const VenueDetailScreen: React.FC = () => {
             <View style={styles.venueTitle}>
               <Text style={styles.name}>{venue.name}</Text>
               <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{venue.category}</Text>
+                <Text style={styles.categoryText}>{venue.venue_type || venue.category}</Text>
               </View>
             </View>
           </View>
@@ -154,11 +154,11 @@ export const VenueDetailScreen: React.FC = () => {
           <View style={styles.detailsList}>
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.GRAY_MEDIUM} />
-              <Text style={styles.detailText}>{venue.fullAddress || venue.address}</Text>
+              <Text style={styles.detailText}>{venue.fullAddress || (venue.district ? `${venue.address}, ${venue.district}` : venue.address)}</Text>
             </View>
             <View style={styles.detailRow}>
               <MaterialCommunityIcons name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
-              <Text style={styles.detailText}>{venue.hours}</Text>
+              <Text style={styles.detailText}>{venue.operating_hours ? `${venue.operating_hours.open} - ${venue.operating_hours.close}` : venue.hours}</Text>
             </View>
             <TouchableOpacity style={styles.detailRow} activeOpacity={0.7}>
               <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />

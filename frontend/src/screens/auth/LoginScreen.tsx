@@ -21,6 +21,8 @@ import { TabSwitch } from '../../components/TabSwitch';
 import { CustomInput } from '../../components/CustomInput';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { SocialButton } from '../../components/SocialButton';
+import { useAuthStore } from '../../store/auth-store';
+import { MOCK_USER, MOCK_REGISTER_PAYLOAD } from '../../constants/mock-data';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -39,13 +41,31 @@ export const LoginScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = () => {
+    const login = useAuthStore.getState().login;
     setIsLoading(true);
+
+    // Chuẩn hóa số điện thoại để khớp với mock data (+84...)
+    let normalizedPhone = phoneNumber;
+    if (normalizedPhone.startsWith('0')) {
+      normalizedPhone = '+84' + normalizedPhone.slice(1);
+    } else if (normalizedPhone.length > 0 && !normalizedPhone.startsWith('+')) {
+      normalizedPhone = '+84' + normalizedPhone;
+    }
+
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      // navigation.navigate('Main'); // Navigate to home
-      Alert.alert('Success', 'Logged in successfully!');
-    }, 2000);
+      
+      if (
+        (activeTab === 'phone' && normalizedPhone === MOCK_REGISTER_PAYLOAD.phone && password === MOCK_REGISTER_PAYLOAD.password) ||
+        (activeTab === 'email' && email === MOCK_USER.email && password === MOCK_REGISTER_PAYLOAD.password)
+      ) {
+        login(MOCK_USER, 'mock-jwt-token');
+        // Lưu ý: AppNavigator sẽ tự động re-render và chuyển sang màn chính khi isAuthenticated thay đổi
+      } else {
+        Alert.alert('Đăng nhập thất bại', 'Số điện thoại/Email hoặc mật khẩu không chính xác.');
+      }
+    }, 1500);
   };
 
   return (

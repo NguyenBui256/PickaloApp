@@ -25,6 +25,7 @@ import { BookingListScreen } from '@screens/profile/BookingListScreen';
 import { BookingHistoryDetailScreen } from '@screens/profile/BookingHistoryDetailScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
+import { useAuthStore } from '../store/auth-store';
 
 /**
  * Screen types for type-safe navigation.
@@ -188,8 +189,7 @@ function createPlaceholderScreen(name: string): React.JSX.Element {
  * Root navigator with auth flow and main app tabs.
  */
 export function AppNavigator(): React.JSX.Element {
-  // TODO: Implement auth state checking and conditional navigation
-  const isAuthenticated = false; // Will come from auth store
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <NavigationContainer>
