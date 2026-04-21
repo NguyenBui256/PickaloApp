@@ -87,10 +87,6 @@ class PriceBreakdown(BaseModel):
     duration_hours: Decimal
     price_factor: Decimal
     hourly_price: Decimal
-    subtotal: Decimal
-    service_fee: Decimal
-    total: Decimal
-    currency: Annotated[str, Field(default="VND")]
 
 
 class BookingServiceItem(BaseModel):
