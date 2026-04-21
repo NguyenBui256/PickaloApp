@@ -5,7 +5,7 @@ Handles venue CRUD, search, availability, and management for merchants.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from typing import Annotated
 
@@ -78,13 +78,19 @@ async def list_venues(
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
+            address=venue.address,
             district=venue.district,
+            fullAddress=venue.address,
             venue_type=venue.venue_type,
-            location=Coordinates(lat=0, lng=0),  # Will be populated from model
+            category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
+            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
+            logo=None,
+            bookingLink=None,
+            rating=None
         ))
 
     pages = (total + limit - 1) // limit
@@ -135,13 +141,19 @@ async def search_venues_nearby(
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
+            address=venue.address,
             district=venue.district,
+            fullAddress=venue.address,
             venue_type=venue.venue_type,
-            location=Coordinates(lat=0, lng=0),
+            category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
+            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
+            logo=None,
+            bookingLink=None,
+            rating=None
         ))
 
     pages = (total + limit - 1) // limit
@@ -181,11 +193,16 @@ async def get_venue(
         name=venue.name,
         address=venue.address,
         district=venue.district,
-        location=Coordinates(lat=0, lng=0),
+        fullAddress=venue.address,
+        location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
         venue_type=venue.venue_type,
+        category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
+        logo=None,
+        rating=None,
+        bookingLink=None,
         images=venue.images,
-        operating_hours=venue.operating_hours,
+        operating_hours={"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
         base_price_per_hour=venue.base_price_per_hour,
         is_active=venue.is_active,
@@ -198,7 +215,7 @@ async def get_venue(
 @router.get("/{venue_id}/availability", response_model=AvailabilityResponse)
 async def get_venue_availability(
     venue_id: str,
-    date: Annotated[str, Query(description="ISO 8601 date format")],
+    date: Annotated[date, Query(description="ISO 8601 date format (YYYY-MM-DD)")],
     session: DBSession,
     venue_service: Annotated[VenueService, Depends(get_venue_service)],
 ) -> AvailabilityResponse:
@@ -207,13 +224,8 @@ async def get_venue_availability(
 
     Returns hourly slots showing available/booked status.
     """
-    try:
-        date_obj = datetime.fromisoformat(date)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid date format. Use ISO 8601 format (YYYY-MM-DD).",
-        )
+    # Create datetime from date for service compatibility
+    date_obj = datetime.combine(date, datetime.min.time())
 
     availability = await venue_service.get_venue_availability(
         uuid.UUID(venue_id),
@@ -273,15 +285,20 @@ async def create_venue(
         name=venue.name,
         address=venue.address,
         district=venue.district,
-        location=Coordinates(lat=0, lng=0),
+        fullAddress=venue.address,
+        location=venue_data.coordinates,
         venue_type=venue.venue_type,
+        category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
         images=venue.images,
-        operating_hours=venue.operating_hours,
+        operating_hours={"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
-        base_price_per_hour=venue.base_price_per_hour,
+        base_price_per_hour=float(venue.base_price_per_hour),
         is_active=venue.is_active,
         is_verified=venue.is_verified,
+        logo=None,
+        bookingLink=None,
+        rating=None,
         created_at=venue.created_at.isoformat(),
         updated_at=venue.updated_at.isoformat(),
     )

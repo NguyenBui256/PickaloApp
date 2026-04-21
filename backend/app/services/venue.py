@@ -649,17 +649,13 @@ class VenueService:
         close_time = hours.get("close", "23:00")
 
         # Get existing bookings for the date
-        start_of_day = datetime.combine(date.date(), time.min)
-        end_of_day = datetime.combine(date.date(), time.max)
-
         booking_result = await self.session.execute(
             select(Booking).where(
                 Booking.venue_id == venue_id,
-                Booking.start_time >= start_of_day,
-                Booking.start_time < end_of_day,
+                Booking.booking_date == date.date(),
                 Booking.status.in_([
                     BookingStatus.PENDING,
-                    BookingStatus.APPROVED,
+                    BookingStatus.CONFIRMED,
                     BookingStatus.COMPLETED,
                 ]),
             )
@@ -677,7 +673,8 @@ class VenueService:
 
             # Check if slot is booked
             is_booked = any(
-                b.start_time < slot_end and b.start_time + timedelta(hours=b.duration_hours) > slot_start
+                b.start_time < slot_end.time() and 
+                (datetime.combine(date.date(), b.start_time) + timedelta(hours=b.duration_hours)).time() > slot_start.time()
                 for b in bookings
             )
 

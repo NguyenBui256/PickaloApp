@@ -163,19 +163,23 @@ class Venue(BaseModel):
     @property
     def latitude(self) -> float | None:
         """Extract latitude from PostGIS location."""
-        if self.location:
-            # PostGIS ST_Y returns latitude
-            from sqlalchemy import func
-            return float(func.ST_Y(self.location).as_scalar())
+        if self.location is not None:
+            from geoalchemy2.shape import to_shape
+            try:
+                return to_shape(self.location).y
+            except Exception:
+                return None
         return None
 
     @property
     def longitude(self) -> float | None:
         """Extract longitude from PostGIS location."""
-        if self.location:
-            # PostGIS ST_X returns longitude
-            from sqlalchemy import func
-            return float(func.ST_X(self.location).as_scalar())
+        if self.location is not None:
+            from geoalchemy2.shape import to_shape
+            try:
+                return to_shape(self.location).x
+            except Exception:
+                return None
         return None
 
     def to_dict(self) -> dict[str, Any]:

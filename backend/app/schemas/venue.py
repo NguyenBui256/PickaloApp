@@ -99,6 +99,11 @@ class VenueResponse(VenueBase):
     base_price_per_hour: Decimal
     is_active: bool
     is_verified: bool
+    fullAddress: str | None = None
+    logo: str | None = None
+    rating: float | None = None
+    bookingLink: str | None = None
+    category: str | None = None
     created_at: str
     updated_at: str
 
@@ -110,14 +115,19 @@ class VenueListItem(BaseModel):
 
     id: str
     name: str
-    district: str | None
+    district: str | None = None
+    address: str | None = None
+    fullAddress: str | None = None
     venue_type: VenueType
     location: Coordinates
     base_price_per_hour: Decimal
     is_verified: bool
     images: list[str] | None = None
     amenities: list[str] | None = None
-    rating: float | None = None  # Future: from reviews
+    logo: str | None = None
+    bookingLink: str | None = None
+    category: str | None = None
+    rating: float | None = None
 
 
 class VenueServiceCreate(BaseModel):
