@@ -23,9 +23,17 @@ import { PaymentScreen } from '@screens/booking/PaymentScreen';
 import { FinalPaymentScreen } from '@screens/booking/FinalPaymentScreen';
 import { BookingListScreen } from '@screens/profile/BookingListScreen';
 import { BookingHistoryDetailScreen } from '@screens/profile/BookingHistoryDetailScreen';
+import { SearchScreen } from '@screens/search/SearchScreen';
+import { EditProfileScreen } from '@screens/profile/EditProfileScreen';
+import { SettingsScreen } from '@screens/profile/SettingsScreen';
+import { VenueRegistrationScreen } from '@screens/owner/venue/VenueRegistrationScreen';
+import { MaintenanceSchedulerScreen } from '@screens/owner/venue/MaintenanceSchedulerScreen';
+import { OwnerBookingDetailScreen } from '@screens/profile/OwnerBookingDetailScreen';
+import { OwnerRevenueReportScreen } from '@screens/profile/OwnerRevenueReportScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
+import { OwnerNavigator } from './OwnerNavigator';
 
 /**
  * Screen types for type-safe navigation.
@@ -41,6 +49,13 @@ export type RootStackParamList = {
   BookingList: undefined;
   BookingHistoryDetail: { booking: any };
   PaymentResult: { bookingId: string };
+  Search: undefined;
+  EditProfile: undefined;
+  Settings: undefined;
+  VenueRegistration: undefined;
+  MaintenanceScheduler: { venueId: string };
+  OwnerBookingDetail: { booking: any };
+  OwnerRevenueReport: undefined;
 };
 
 export type MainTabParamList = {
@@ -189,7 +204,7 @@ function createPlaceholderScreen(name: string): React.JSX.Element {
  * Root navigator with auth flow and main app tabs.
  */
 export function AppNavigator(): React.JSX.Element {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, user } = useAuthStore();
 
   return (
     <NavigationContainer>
@@ -200,7 +215,11 @@ export function AppNavigator(): React.JSX.Element {
       >
         {isAuthenticated ? (
           <>
-            <Stack.Screen name="Main" component={MainTabs} />
+            {user?.role === 'OWNER' ? (
+              <Stack.Screen name="Main" component={OwnerNavigator} />
+            ) : (
+              <Stack.Screen name="Main" component={MainTabs} />
+            )}
             <Stack.Screen
               name="VenueDetails"
               component={VenueDetailScreen}
@@ -212,7 +231,8 @@ export function AppNavigator(): React.JSX.Element {
               options={{
                 presentation: 'transparentModal',
                 animation: 'slide_from_bottom',
-                headerShown: false
+                headerShown: false,
+                gestureEnabled: false, // Use our custom swipe gesture
               }}
             />
             <Stack.Screen
@@ -234,6 +254,34 @@ export function AppNavigator(): React.JSX.Element {
             <Stack.Screen
               name="BookingHistoryDetail"
               component={BookingHistoryDetailScreen}
+            />
+            <Stack.Screen
+              name="Search"
+              component={SearchScreen}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+            />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+            />
+            <Stack.Screen
+              name="VenueRegistration"
+              component={VenueRegistrationScreen}
+            />
+            <Stack.Screen
+              name="MaintenanceScheduler"
+              component={MaintenanceSchedulerScreen}
+            />
+            <Stack.Screen
+              name="OwnerBookingDetail"
+              component={OwnerBookingDetailScreen}
+            />
+            <Stack.Screen
+              name="OwnerRevenueReport"
+              component={OwnerRevenueReportScreen}
             />
           </>
         ) : (

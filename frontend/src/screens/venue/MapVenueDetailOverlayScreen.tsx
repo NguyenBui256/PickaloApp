@@ -3,18 +3,25 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Image,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
   Alert,
   Share,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
+import Animated, { 
+  useAnimatedStyle, 
+  useSharedValue, 
+  withSpring, 
+  runOnJS,
+  withTiming 
+} from 'react-native-reanimated';
 import { VENUES } from '../../constants/mock-data';
 import { BookingModal } from '../../components/BookingModal';
 import COLORS from '@theme/colors';
@@ -40,6 +47,42 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Thông tin');
   const [isFavorite, setIsFavorite] = useState(venue?.isFavorite || false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
+  const [selectedBookingType, setSelectedBookingType] = useState<'normal' | 'event' | null>(null);
+
+  // Gesture handling
+  const translateY = useSharedValue(0);
+  const contextY = useSharedValue(0);
+
+  const closeScreen = () => {
+    navigation.goBack();
+  };
+  
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      contextY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        translateY.value = contextY.value + event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        // Dismiss screen
+        translateY.value = withTiming(height, { duration: 300 }, (isFinished) => {
+          if (isFinished) {
+            runOnJS(closeScreen)();
+          }
+        });
+      } else {
+        // Snap back
+        translateY.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const handleBookPress = () => {
     setBookingModalVisible(true);
@@ -47,7 +90,9 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
 
   const handleSelectBookingOption = (type: 'normal' | 'event') => {
     setBookingModalVisible(false);
-    navigation.navigate('BookingDetails', { venueId: venue?.id, type });
+    // Replace the transparent modal overlay with the booking details screen
+    // This prevents React Navigation issues where pushing on top of a transparent modal fails
+    navigation.replace('BookingDetails', { venueId: venue?.id, type });
   };
 
   if (!venue) return null;
@@ -142,16 +187,24 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
       </SafeAreaView>
 
       {/* 3. Main Detail Overlay Panel */}
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        style={styles.contentScrollView}
-        contentContainerStyle={styles.scrollContainer}
-      >
-        <View style={styles.paddingForMap} />
-        
-        <View style={styles.overlayPanel}>
-          {/* Venue Cover Image */}
-          <View style={styles.coverSection}>
+      <Animated.View style={[styles.gestureContainer, animatedStyle]}>
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            style={styles.contentScrollView}
+            contentContainerStyle={styles.scrollContainer}
+            stickyHeaderIndices={[1]}
+          >
+            <View style={styles.paddingForMap} />
+            
+            <GestureDetector gesture={panGesture}>
+              <View>
+                {/* Draggable Handle Indicator */}
+                <View style={styles.handleContainer}>
+                  <View style={styles.handle} />
+                </View>
+
+                {/* Venue Cover Image */}
+                <View style={[styles.coverSection, { borderTopLeftRadius: 0, borderTopRightRadius: 0 }]}>
             <Image source={{ uri: venue.image }} style={styles.coverImage} />
             
             <View style={styles.coverActions}>
@@ -174,8 +227,11 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               <MaterialCommunityIcons name="star" size={16} color={COLORS.WHITE} />
               <Text style={styles.ratingText}>{venue.rating}</Text>
             </View>
+            </View>
           </View>
+          </GestureDetector>
 
+          <View style={[styles.overlayPanel, { minHeight: Dimensions.get('window').height - 180 - 200 }]}>
           {/* Venue Info Card */}
           <View style={styles.infoCard}>
             <View style={styles.infoHeader}>
@@ -227,8 +283,9 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               {renderTabContent()}
             </View>
           </View>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </Animated.View>
 
       <BookingModal
         isVisible={isBookingModalVisible}
@@ -320,19 +377,30 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingBottom: 40,
   },
+  gestureContainer: {
+    flex: 1,
+  },
   paddingForMap: {
     height: MAP_HEIGHT,
   },
-  overlayPanel: {
+  handleContainer: {
     backgroundColor: COLORS.WHITE,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: -1, // overlap to prevent gap
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: COLORS.BORDER,
+  },
+  overlayPanel: {
+    backgroundColor: COLORS.WHITE,
     minHeight: height - MAP_HEIGHT,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
   },
   coverSection: {
     height: 200,

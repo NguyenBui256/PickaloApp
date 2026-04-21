@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   TextInput,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -27,6 +27,8 @@ export const HomeScreen: React.FC = () => {
   );
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
 
   const toggleFavorite = (id: string) => {
     setFavoriteVenues(prev =>
@@ -57,7 +59,10 @@ export const HomeScreen: React.FC = () => {
         <LinearGradient colors={COLORS.GRADIENT_GREEN} style={styles.header}>
           <SafeAreaView>
             <View style={styles.headerTop}>
-              <View style={styles.userInfo}>
+              <TouchableOpacity 
+                style={styles.userInfo}
+                onPress={() => navigation.navigate('Profile')}
+              >
                 <View style={styles.logoContainer}>
                   <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
                 </View>
@@ -65,7 +70,7 @@ export const HomeScreen: React.FC = () => {
                   <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
                   <Text style={styles.userName}>Phạm Ngọc Long</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.notificationBtn}>
@@ -111,8 +116,18 @@ export const HomeScreen: React.FC = () => {
             contentContainerStyle={styles.quickFilters}
           >
             {QUICK_FILTERS.map((filter, index) => (
-              <TouchableOpacity key={index} style={styles.filterPill}>
-                <Text style={styles.filterText}>{filter}</Text>
+              <TouchableOpacity 
+                key={index} 
+                style={[
+                  styles.filterPill,
+                  activeQuickFilter === filter && { backgroundColor: COLORS.PRIMARY }
+                ]}
+                onPress={() => setActiveQuickFilter(filter)}
+              >
+                <Text style={[
+                  styles.filterText,
+                  activeQuickFilter === filter && { color: COLORS.WHITE }
+                ]}>{filter}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -131,13 +146,18 @@ export const HomeScreen: React.FC = () => {
                 key={cat.id}
                 name={cat.name}
                 iconName={cat.icon}
-                onPress={() => { }}
+                isActive={selectedCategory === cat.name}
+                onPress={() => setSelectedCategory(prev => prev === cat.name ? 'Tất cả' : cat.name)}
               />
             ))}
           </ScrollView>
 
           {/* Filter Banner */}
-          <TouchableOpacity style={styles.filterBanner} activeOpacity={0.9}>
+          <TouchableOpacity 
+            style={styles.filterBanner} 
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('Search')}
+          >
             <View style={styles.bannerContent}>
               <Text style={styles.bannerText}>
                 Tìm sân trống, sự kiện xé vé, ghép đội
@@ -148,7 +168,12 @@ export const HomeScreen: React.FC = () => {
 
           {/* Venue List */}
           <View style={styles.venueList}>
-            {VENUES.map((venue) => (
+            {VENUES.filter(venue => {
+              const matchesCategory = selectedCategory === 'Tất cả' || venue.category.toLowerCase().includes(selectedCategory.toLowerCase());
+              // For simplicity, just filtering by category for now. 
+              // Quick filters like "Gần đây" would normally involve location calc.
+              return matchesCategory;
+            }).map((venue) => (
               <VenueCard
                 key={venue.id}
                 {...venue}

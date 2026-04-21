@@ -4,6 +4,7 @@
  * @format
  */
 
+import './polyfill';
 import { registerRootComponent } from 'expo';
 import App from './App';
 

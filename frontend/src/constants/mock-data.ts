@@ -43,11 +43,11 @@ export const VENUES = [
   {
     id: '2',
     name: 'Clb Pickleballs Cung Văn Quán',
-    district: 'Hà Đông', 
+    district: 'Hà Đông',
     address: 'Văn Quán, Hà Đông, Hà Nội',
     distance: '1.2 km',
-    images: ['https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800'], 
-    image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800', 
+    images: ['https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800'],
+    image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800',
     logo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100',
     hours: '05:30 - 23:00',
     operating_hours: { open: '05:30', close: '23:00' },
@@ -167,15 +167,19 @@ export const generateTimeSlots = () => {
 
 export const TIME_SLOTS = generateTimeSlots();
 
+// ==========================================
+// CÓ API ĐÃ ĐỊNH NGHĨA BookingTimelineResponse nhưng THIẾU API THIẾT LẬP BẢO TRÌ (OWNER)
 // Theo backend BookingTimelineResponse -> có slots (array TimeSlot {hour, available, status})
-export const MOCK_AVAILABILITY: Record<string, string> = {}; 
+// Với Owner, cần thêm endpoint PATCH/PUT để ghim trạng thái "maintenance" cho 1 loạt slot.
+// ==========================================
+export const MOCK_AVAILABILITY: Record<string, string> = {};
 BOOKING_COURTS.forEach(court => {
   TIME_SLOTS.forEach(slot => {
     const rand = Math.random();
     let status = 'available'; // backend "available" (available=true)
     if (rand < 0.1) status = 'booked'; // backend status = "CONFIRMED"
-    else if (rand < 0.15) status = 'locked'; 
-    else if (rand < 0.18) status = 'event'; 
+    else if (rand < 0.15) status = 'locked';
+    else if (rand < 0.18) status = 'event';
     MOCK_AVAILABILITY[`${court}-${slot}`] = status;
   });
 });
@@ -202,7 +206,7 @@ export interface Booking {
   is_paid?: boolean; // Mới thêm
   is_cancelable?: boolean; // Mới thêm
   created_at?: string; // Mới thêm
-  
+
   // --- Frontend legacy mock fields ---
   status: 'CANCELLED' | 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'EXPIRED' | 'canceled' | 'success' | 'pending'; // Backend dùng Uppercase
   type: string;
@@ -227,7 +231,7 @@ export const MOCK_BOOKINGS: Booking[] = [
     is_paid: false,
     is_cancelable: false,
     created_at: '2026-03-20T10:00:00Z',
-    
+
     // Legacy Frontend mapping
     type: 'Đơn ngày',
     clubName: 'ALOBO CLUB - VINHOMES OCEAN PARK',
@@ -300,6 +304,19 @@ export const MOCK_USER = {
   updated_at: new Date().toISOString(),
 };
 
+export const MOCK_OWNER = {
+  id: "o-111-456",
+  full_name: "Chủ Sân ALOBO",
+  email: "owner@alobo.vn",
+  phone: "0333444555",
+  role: "OWNER",
+  avatar_url: "https://i.pravatar.cc/150?u=owner",
+  is_active: true,
+  is_verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 // Theo backend schema, mật khẩu chỉ xuất hiện lúc GỬI request đi (UserCreate Payload)
 // Tuyệt đối KHÔNG BAO GIỜ được trả về từ API Response sau khi đăng ký/đăng nhập.
 export const MOCK_REGISTER_PAYLOAD = {
@@ -308,3 +325,82 @@ export const MOCK_REGISTER_PAYLOAD = {
   password: "Password123!", // Frontend chỉ dùng ở Form
   role: "USER"
 };
+
+export const MOCK_OWNER_REGISTER_PAYLOAD = {
+  full_name: "Chủ Sân ALOBO",
+  phone: "+84123456789",
+  password: "123456",
+  role: "OWNER"
+};
+
+// ==========================================
+// THIẾU API: Chủ sân quản lý thống kê & danh sách sân của mình (Owner Venue List & Stats API)
+// BE Backend cần bổ sung GET /api/v1/owner/venues trả về mảng các sân thuộc quyền quản lý của user ID (role OWNER).
+// Schema cần thiết (Front-end mong muốn):
+// { id, name, status (ACTIVE/PENDING), total_bookings (tính trong tháng), revenue_mtd (doanh thu tháng), rating }
+// ==========================================
+// Owner Side: Venue stats and management
+export const OWNER_VENUES = [
+  {
+    id: 'ov-1',
+    name: 'Sân Pickleball LVK Hà Đông',
+    status: 'ACTIVE',
+    total_bookings: 156,
+    revenue_mtd: 12500000,
+    rating: 4.8,
+  },
+  {
+    id: 'ov-2',
+    name: 'Sân Pickleball LVK Vạn Phúc (Mới)',
+    status: 'PENDING',
+    total_bookings: 0,
+    revenue_mtd: 0,
+    rating: 0,
+  }
+];
+
+// ==========================================
+// THIẾU API: Quản lý yêu cầu đặt lịch của hệ thống Chủ sân (Owner Booking Management API)
+// BE Backend cần API: GET /api/v1/owner/bookings (kèm filter trạng thái: Đợi xếp lịch, Đã duyệt, Hủy)
+// BE Schema cần bổ sung các fields liên quan đến dịch vụ đi kèm:
+// { id, customerName, phone, venueName, court, time, date, status (PENDING/CONFIRMED/CANCELLED), services: string[], totalPrice: number }
+// ==========================================
+export const OWNER_BOOKING_REQUESTS = [
+  {
+    id: 'req-1',
+    customerName: 'Nguyễn Văn A',
+    phone: '0912345678',
+    venueName: 'Sân Pickleball LVK Hà Đông',
+    court: 'Pickleball 1',
+    time: '18:00 - 19:30',
+    date: '2026-04-22',
+    status: 'PENDING',
+    services: ['Nước suối x2', 'Thuê vợt x1'],
+    totalPrice: 245000,
+  },
+  {
+    id: 'req-2',
+    customerName: 'Trần Thị B',
+    phone: '0988777666',
+    venueName: 'Sân Pickleball LVK Hà Đông',
+    court: 'Pickleball 2',
+    time: '20:00 - 21:00',
+    date: '2026-04-22',
+    status: 'PENDING',
+    services: [],
+    totalPrice: 150000,
+  }
+];
+
+// ==========================================
+// CHƯA RÕ API: Cần API quản lý (CRUD) dành cho Owner với VenueServices
+// BE Backend cần API CRUD: GET/POST/PUT/DELETE /api/v1/owner/venues/{venueId}/services
+// Frontend cần dữ liệu: { id, name, price, unit (Đơn vị tính: Chai/Lon...) }
+// ==========================================
+export const OWNER_SERVICES = [
+  { id: 's1', name: 'Nước suối', price: 10000, unit: 'Chai' },
+  { id: 's2', name: 'Nước tăng lực', price: 15000, unit: 'Lon' },
+  { id: 's3', name: 'Thuê vợt Pickleball', price: 30000, unit: 'Cái/buổi' },
+  { id: 's4', name: 'Thuê giày thể thao', price: 20000, unit: 'Đôi/buổi' },
+  { id: 's5', name: 'Thuê áo Bib', price: 10000, unit: 'Cái/buổi' },
+];

@@ -40,9 +40,13 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, value, color = COLORS.
   </TouchableOpacity>
 );
 
-export const ProfileScreen: React.FC = () => {
+export const OwnerProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const logout = useAuthStore(state => state.logout);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <View style={styles.container}>
@@ -51,7 +55,7 @@ export const ProfileScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header Section */}
         <LinearGradient
-          colors={[COLORS.PRIMARY, '#165c36']}
+          colors={['#1976D2', '#1565C0']}
           style={styles.header}
         >
           <SafeAreaView>
@@ -61,22 +65,21 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.avatarContainer}>
                 <Image
-                  source={{ uri: 'https://i.pravatar.cc/150?u=red-haired-boy' }}
+                  source={{ uri: 'https://i.pravatar.cc/150?u=owner' }}
                   style={styles.avatar}
                 />
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.userName}>Phạm Ngọc Long</Text>
-                <Text style={styles.userEmail}>long43872@gmail.com</Text>
+                <Text style={styles.userName}>Chủ Sân ALOBO</Text>
+                <Text style={styles.userEmail}>owner@alobo.vn</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
 
-            {/* Membership Status Card */}
             <TouchableOpacity style={styles.membershipCard}>
               <View style={styles.membershipLeft}>
-                <MaterialCommunityIcons name="diamond-stone" size={20} color="#E3B129" />
-                <Text style={styles.membershipText}>Hạng thành viên</Text>
+                <MaterialCommunityIcons name="shield-check" size={20} color="#E3B129" />
+                <Text style={styles.membershipText}>Đối tác thân thiết</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
             </TouchableOpacity>
@@ -86,47 +89,30 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.mainContent}>
           {/* Quick Action Grid */}
           <View style={styles.quickActionGrid}>
-            <TouchableOpacity
-              style={styles.quickCard}
-              onPress={() => navigation.navigate('BookingList')}
-            >
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(15, 107, 58, 0.1)' }]}>
-                <MaterialCommunityIcons name="calendar-check" size={24} color={COLORS.PRIMARY} />
+            <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('MyVenues')}>
+              <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
+                <MaterialCommunityIcons name="storefront-outline" size={24} color="#1976D2" />
               </View>
-              <Text style={styles.quickLabel}>Lịch đã đặt</Text>
+              <Text style={styles.quickLabel}>Quản lý sân</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickCard}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(230, 126, 34, 0.1)' }]}>
-                <MaterialCommunityIcons name="bell-ring-outline" size={24} color="#E67E22" />
+            <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Services')}>
+              <View style={[styles.iconBox, { backgroundColor: '#FFF3E0' }]}>
+                <MaterialCommunityIcons name="room-service-outline" size={24} color="#F57C00" />
               </View>
-              <Text style={styles.quickLabel}>Thông báo</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickCard}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(241, 196, 15, 0.1)' }]}>
-                <MaterialCommunityIcons name="trophy-outline" size={24} color="#F1C40F" />
-              </View>
-              <Text style={styles.quickLabel}>Khoá học</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickCard}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(231, 76, 60, 0.1)' }]}>
-                <MaterialCommunityIcons name="gift-outline" size={24} color="#E74C3C" />
-              </View>
-              <Text style={styles.quickLabel}>Ưu đãi</Text>
+              <Text style={styles.quickLabel}>Dịch vụ</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Menu Groups */}
+          {/* Cấu hình hệ thống thanh toán / liên lạc */}
           <View style={styles.menuGroup}>
-            <Text style={styles.groupTitle}>Hoạt động</Text>
+            <Text style={styles.groupTitle}>Thông tin liên hệ</Text>
             <View style={styles.menuCard}>
-              <MenuItem icon="account-group-outline" label="Nhóm của tôi" />
+              <MenuItem icon="phone-outline" label="Hotline hỗ trợ khách hàng" value="0333 444 555" />
               <View style={styles.divider} />
-              <MenuItem icon="format-list-bulleted" label="Danh sách lịch học" />
+              <MenuItem icon="email-outline" label="Email kinh doanh" value="owner@alobo.vn" />
               <View style={styles.divider} />
-              <MenuItem icon="card-account-details-outline" label="Gói hội viên" />
+              <MenuItem icon="credit-card-outline" label="Tài khoản nhận tiền" value="MB BANK" />
             </View>
           </View>
 
@@ -135,7 +121,7 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.menuCard}>
               <MenuItem 
                 icon="cog-outline" 
-                label="Cài đặt" 
+                label="Cài đặt chung" 
                 onPress={() => navigation.navigate('Settings')}
               />
               <View style={styles.divider} />
@@ -145,18 +131,13 @@ export const ProfileScreen: React.FC = () => {
                 value={VERSION}
               />
               <View style={styles.divider} />
-              <MenuItem icon="shield-check-outline" label="Điều khoản và chính sách" />
-              <View style={styles.divider} />
-              <MenuItem icon="new-box" label="Ứng dụng có gì mới" />
-              <View style={styles.divider} />
-              <MenuItem 
-                icon="logout" 
-                label="Đăng xuất" 
-                color={COLORS.ERROR}
-                onPress={logout}
-              />
+              <MenuItem icon="shield-check-outline" label="Chính sách cho đối tác" />
             </View>
           </View>
+
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Đăng xuất</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -166,21 +147,21 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 40,
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 10,
     marginBottom: 20,
   },
   avatarContainer: {
@@ -188,104 +169,106 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: COLORS.WHITE,
+    borderColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
     overflow: 'hidden',
-    backgroundColor: COLORS.GRAY_LIGHT,
   },
   avatar: {
-    width: '100%',
-    height: '100%',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 16,
   },
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.WHITE,
+    marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: COLORS.WHITE,
-    opacity: 0.8,
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.8)',
   },
   membershipCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginHorizontal: 20,
+    padding: 12,
     borderRadius: 12,
-    marginTop: 10,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   membershipLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   membershipText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.TEXT_PRIMARY,
+    fontWeight: 'bold',
+    color: '#333',
   },
   mainContent: {
     paddingHorizontal: 20,
-    marginTop: -20,
+    paddingTop: 24,
   },
   quickActionGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 25,
+    flexWrap: 'wrap',
+    gap: 15,
+    marginBottom: 24,
   },
   quickCard: {
-    width: (width - 60) / 4,
+    flex: 1,
+    minWidth: (width - 55) / 2,
     backgroundColor: COLORS.WHITE,
+    padding: 16,
     borderRadius: 16,
-    paddingVertical: 12,
     alignItems: 'center',
-    shadowColor: COLORS.BLACK,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   quickLabel: {
-    fontSize: 11,
-    color: COLORS.TEXT_PRIMARY,
+    fontSize: 13,
     fontWeight: '600',
+    color: '#333',
     textAlign: 'center',
   },
   menuGroup: {
-    marginBottom: 25,
+    marginBottom: 24,
   },
   groupTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.GRAY_MEDIUM,
-    marginBottom: 10,
+    color: '#333',
+    marginBottom: 12,
     marginLeft: 4,
   },
   menuCard: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: COLORS.BLACK,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -295,8 +278,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 60,
+    padding: 16,
+    backgroundColor: COLORS.WHITE,
   },
   menuLeft: {
     flexDirection: 'row',
@@ -304,8 +287,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuLabel: {
-    fontSize: 14,
-    color: COLORS.TEXT_PRIMARY,
+    fontSize: 15,
+    color: '#333',
     fontWeight: '500',
   },
   menuRight: {
@@ -314,12 +297,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   menuValue: {
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.GRAY_MEDIUM,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.BORDER,
+    backgroundColor: '#F0F0F0',
     marginLeft: 52,
+  },
+  logoutBtn: {
+    height: 56,
+    backgroundColor: '#FFF0F0',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE0E0',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  logoutText: {
+    color: '#E53935',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

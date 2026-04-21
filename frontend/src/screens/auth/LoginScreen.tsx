@@ -22,7 +22,7 @@ import { CustomInput } from '../../components/CustomInput';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { SocialButton } from '../../components/SocialButton';
 import { useAuthStore } from '../../store/auth-store';
-import { MOCK_USER, MOCK_REGISTER_PAYLOAD } from '../../constants/mock-data';
+import { MOCK_USER, MOCK_REGISTER_PAYLOAD, MOCK_OWNER, MOCK_OWNER_REGISTER_PAYLOAD } from '../../constants/mock-data';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -61,7 +61,11 @@ export const LoginScreen: React.FC = () => {
         (activeTab === 'email' && email === MOCK_USER.email && password === MOCK_REGISTER_PAYLOAD.password)
       ) {
         login(MOCK_USER, 'mock-jwt-token');
-        // Lưu ý: AppNavigator sẽ tự động re-render và chuyển sang màn chính khi isAuthenticated thay đổi
+      } else if (
+        (activeTab === 'phone' && normalizedPhone === MOCK_OWNER_REGISTER_PAYLOAD.phone && password === MOCK_OWNER_REGISTER_PAYLOAD.password) ||
+        (activeTab === 'email' && email === MOCK_OWNER.email && password === MOCK_OWNER_REGISTER_PAYLOAD.password)
+      ) {
+        login(MOCK_OWNER, 'mock-jwt-token-owner');
       } else {
         Alert.alert('Đăng nhập thất bại', 'Số điện thoại/Email hoặc mật khẩu không chính xác.');
       }
