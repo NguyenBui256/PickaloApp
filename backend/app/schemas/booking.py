@@ -21,14 +21,10 @@ class BookingServiceRequest(BaseModel):
     quantity: Annotated[int, Field(ge=1, le=100)] = 1
 
 
-class BookingCreate(BaseModel):
-    """Schema for creating a new booking."""
+class BookingSlotInfo(BaseModel):
+    """Specific slot in a multi-court booking."""
 
-    venue_id: uuid.UUID
-    booking_date: Annotated[
-        date,
-        Field(description="Booking date (ISO 8601 format)"),
-    ]
+    court_id: uuid.UUID
     start_time: Annotated[
         str,
         Field(pattern=r"^\d{2}:\d{2}$", description="Start time (HH:MM format)"),
@@ -37,14 +33,6 @@ class BookingCreate(BaseModel):
         str,
         Field(pattern=r"^\d{2}:\d{2}$", description="End time (HH:MM format)"),
     ]
-    services: Annotated[
-        list[BookingServiceRequest] | None,
-        Field(description="Additional services to book"),
-    ] = None
-    notes: Annotated[
-        str | None,
-        Field(max_length=1000, description="Special requests or notes"),
-    ] = None
 
     @field_validator("end_time")
     @classmethod
@@ -55,6 +43,26 @@ class BookingCreate(BaseModel):
             raise ValueError("end_time must be after start_time")
         return v
 
+
+class BookingCreate(BaseModel):
+    """Schema for creating a new booking with multiple slots."""
+
+    venue_id: uuid.UUID
+    booking_date: Annotated[
+        date,
+        Field(description="Booking date (ISO 8601 format)"),
+    ]
+    slots: list[BookingSlotInfo]
+    services: Annotated[
+        list[BookingServiceRequest] | None,
+        Field(description="Additional services to book"),
+    ] = None
+    notes: Annotated[
+        str | None,
+        Field(max_length=1000, description="Special requests or notes"),
+    ] = None
+
+
     @field_validator("booking_date")
     @classmethod
     def date_not_in_past(cls, v: date) -> date:
@@ -64,19 +72,19 @@ class BookingCreate(BaseModel):
         return v
 
 
+class BookingPriceSlot(BaseModel):
+    """Specific slot for price calculation."""
+    court_id: uuid.UUID | None = None
+    start_time: str
+    end_time: str
+
+
 class BookingPricePreview(BaseModel):
-    """Schema for price preview request."""
+    """Schema for price calculation requests."""
 
     venue_id: uuid.UUID
     booking_date: date
-    start_time: Annotated[
-        str,
-        Field(pattern=r"^\d{2}:\d{2}$"),
-    ]
-    end_time: Annotated[
-        str,
-        Field(pattern=r"^\d{2}:\d{2}$"),
-    ]
+    slots: list[BookingPriceSlot]
     services: list[BookingServiceRequest] | None = None
 
 
@@ -87,6 +95,9 @@ class PriceBreakdown(BaseModel):
     duration_hours: Decimal
     price_factor: Decimal
     hourly_price: Decimal
+    subtotal: Decimal
+    service_fee: Decimal
+    total: Decimal
 
 
 class BookingServiceItem(BaseModel):
@@ -99,16 +110,38 @@ class BookingServiceItem(BaseModel):
     total: Decimal
 
 
-class BookingPriceResponse(BaseModel):
-    """Price calculation response."""
+class BookingPriceSlotResponse(BaseModel):
+    """Price breakdown for a specific slot."""
+    start_time: str
+    end_time: str
+    court_id: uuid.UUID | None = None
+    pricing: PriceBreakdown
 
-    venue_pricing: PriceBreakdown
-    services: list[BookingServiceItem]
+
+class BookingPriceResponse(BaseModel):
+    """Full price breakdown response for multiple slots."""
+
+    booking_date: date
+    slots: list[BookingPriceSlotResponse]
+    services: list[BookingServiceItem] | None = None
     services_total: Decimal
     subtotal: Decimal
     service_fee: Decimal
     total: Decimal
-    currency: Annotated[str, Field(default="VND")]
+    currency: str = "VND"
+
+
+class BookingSlotResponse(BaseModel):
+    """Schema for a specific slot in a booking."""
+
+    id: str
+    court_id: str
+    court_name: str | None = None
+    start_time: str
+    end_time: str
+    price: Decimal
+
+    model_config = {"from_attributes": True}
 
 
 class BookingResponse(BaseModel):
@@ -118,14 +151,8 @@ class BookingResponse(BaseModel):
     user_id: str
     venue_id: str
     booking_date: str
-    start_time: str
-    end_time: str
-    duration_minutes: int
 
     # Pricing
-    base_price: Decimal
-    price_factor: Decimal
-    service_fee: Decimal
     total_price: Decimal
 
     # Status
@@ -148,9 +175,10 @@ class BookingResponse(BaseModel):
     created_at: str
     updated_at: str
 
-    # Relations (simplified)
+    # Relations
     venue_name: str | None = None
     venue_address: str | None = None
+    slots: list[BookingSlotResponse] = []
     services: list[BookingServiceItem] = []
 
     model_config = {"from_attributes": True}
@@ -164,8 +192,6 @@ class BookingListItem(BaseModel):
     venue_name: str | None
     venue_address: str | None
     booking_date: str
-    start_time: str
-    end_time: str
     total_price: Decimal
     status: BookingStatus
     is_paid: bool
@@ -210,31 +236,21 @@ class BookingListResponse(BaseModel):
     pages: int
 
 
-class TimeSlot(BaseModel):
-    """Available time slot."""
-
-    hour: Annotated[int, Field(ge=5, le=23)]
-    available: bool
-    booking_id: str | None = None
-    status: str | None = None  # PENDING, CONFIRMED if booked
 
 
-class BookingTimelineResponse(BaseModel):
-    """Venue availability timeline for a date."""
+class MerchantVenueStats(BaseModel):
+    """Stats for a specific venue owned by the merchant."""
 
-    venue_id: str
-    date: str
-    open_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")]
-    close_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")]
-    slots: list[TimeSlot]
+    id: str
+    name: str
+    status: str # ACTIVE, PENDING
+    total_bookings: int # Bốn tuần gần nhất hoặc tháng hiện tại
+    revenue_mtd: Decimal
+    rating: float
 
 
 class MerchantStatsResponse(BaseModel):
-    """Merchant booking revenue statistics response."""
+    """Response containing a list of venue statistics."""
 
-    total_bookings: int
-    pending_bookings: int
-    confirmed_bookings: int
-    cancelled_bookings: int
-    total_revenue: Decimal
+    venues: list[MerchantVenueStats]
     currency: str = "VND"

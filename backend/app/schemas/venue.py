@@ -101,11 +101,24 @@ class VenueResponse(VenueBase):
     is_verified: bool
     fullAddress: str | None = None
     logo: str | None = None
-    rating: float | None = None
+    rating: float | None = 0.0
+    review_count: int | None = 0
     bookingLink: str | None = None
     category: str | None = None
     created_at: str
     updated_at: str
+    courts: list["CourtResponse"] | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class CourtResponse(BaseModel):
+    """Court response schema."""
+
+    id: str
+    venue_id: str
+    name: str
+    is_active: bool
 
     model_config = {"from_attributes": True}
 
@@ -127,7 +140,8 @@ class VenueListItem(BaseModel):
     logo: str | None = None
     bookingLink: str | None = None
     category: str | None = None
-    rating: float | None = None
+    rating: float | None = 0.0
+    review_count: int | None = 0
 
 
 class VenueServiceCreate(BaseModel):
@@ -163,6 +177,20 @@ class VenueServiceResponse(BaseModel):
     price_per_unit: Decimal
     is_available: bool
     created_at: str
+
+
+class CourtCreate(BaseModel):
+    """Schema for creating a new court."""
+
+    name: Annotated[str, Field(min_length=1, max_length=100)]
+    is_active: bool = True
+
+
+class CourtUpdate(BaseModel):
+    """Schema for updating a court."""
+
+    name: Annotated[str | None, Field(min_length=1, max_length=100)] = None
+    is_active: bool | None = None
 
 
 class PricingSlotCreate(BaseModel):
@@ -261,19 +289,28 @@ class AvailabilityRequest(BaseModel):
     date: str  # ISO 8601 date format
 
 
-class TimeSlot(BaseModel):
-    """Available time slot."""
+class SlotAvailability(BaseModel):
+    """Available time slot for a court."""
 
     start_time: str  # HH:MM format
     end_time: str  # HH:MM format
     available: bool
+    price: float
+
+
+class CourtAvailability(BaseModel):
+    """Availability per court."""
+
+    court_id: str
+    court_name: str
+    slots: list[SlotAvailability]
 
 
 class AvailabilityResponse(BaseModel):
-    """Venue availability response."""
+    """Venue availability response (Refactored for multi-court)."""
 
     venue_id: str
     date: str
-    slots: list[TimeSlot]
     open_time: str
     close_time: str
+    courts: list[CourtAvailability]
