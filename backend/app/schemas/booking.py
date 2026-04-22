@@ -229,12 +229,12 @@ class BookingTimelineResponse(BaseModel):
     slots: list[TimeSlot]
 
 
-class MerchantBookingStats(BaseModel):
-    """Merchant booking statistics."""
+class MerchantStatsResponse(BaseModel):
+    """Merchant booking revenue statistics response."""
 
     total_bookings: int
     pending_bookings: int
     confirmed_bookings: int
     cancelled_bookings: int
-    completed_bookings: int
     total_revenue: Decimal
+    currency: str = "VND"

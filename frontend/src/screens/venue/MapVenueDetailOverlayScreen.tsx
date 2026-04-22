@@ -87,7 +87,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* 1. Map Background Header */}
       <View style={styles.mapContainer}>
         <MapView
@@ -122,14 +122,14 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
         </View>
 
         {/* Category Chips below Navbar */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.chipsScroll}
           contentContainerStyle={styles.chipsContent}
         >
           {['Pickleball', 'Cầu lông', 'Bóng đá'].map((name) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={name}
               style={[styles.chip, venue.category === name && styles.activeChip]}
             >
@@ -142,18 +142,18 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
       </SafeAreaView>
 
       {/* 3. Main Detail Overlay Panel */}
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.contentScrollView}
         contentContainerStyle={styles.scrollContainer}
       >
         <View style={styles.paddingForMap} />
-        
+
         <View style={styles.overlayPanel}>
           {/* Venue Cover Image */}
           <View style={styles.coverSection}>
             <Image source={{ uri: venue.image }} style={styles.coverImage} />
-            
+
             <View style={styles.coverActions}>
               <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
                 <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
@@ -161,7 +161,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
                 <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.bookNowBtn}
                 onPress={handleBookPress}
               >
@@ -182,8 +182,8 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               <Image source={{ uri: venue.logo }} style={styles.logo} />
               <View style={styles.titleArea}>
                 <Text style={styles.venueName}>{venue.name}</Text>
-                <View style={[styles.catBadge, {borderColor: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>
-                  <Text style={[styles.catText, {color: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>
+                <View style={[styles.catBadge, { borderColor: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>
+                  <Text style={[styles.catText, { color: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>
                     {venue.category}
                   </Text>
                 </View>

@@ -20,10 +20,23 @@ from app.schemas.booking import (
     BookingListResponse,
     BookingApproveReject,
     BookingCancel,
+    MerchantStatsResponse,
 )
 from app.services.booking import BookingService, get_booking_service
 
 router = APIRouter(prefix="/merchant/bookings", tags=["merchant-bookings"])
+
+
+@router.get("/stats", response_model=MerchantStatsResponse)
+async def get_merchant_booking_stats(
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+) -> MerchantStatsResponse:
+    """
+    Get booking statistics and revenue for all merchant's venues.
+    """
+    stats = await booking_service.get_merchant_stats(merchant_id=current_user.id)
+    return MerchantStatsResponse(**stats)
 
 
 @router.get("", response_model=BookingListResponse)

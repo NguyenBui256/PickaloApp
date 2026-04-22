@@ -595,6 +595,77 @@ class BookingService:
             "slots": slots,
         }
 
+    async def get_merchant_stats(
+        self,
+        merchant_id: uuid.UUID,
+    ) -> dict[str, Any]:
+        """
+        Get booking statistics and revenue for a merchant.
+
+        Args:
+            merchant_id: Merchant UUID
+
+        Returns:
+            Dict with total_bookings, pending_bookings, total_revenue
+        """
+        # Get merchant's venue IDs
+        venue_result = await self.session.execute(
+            select(Venue.id).where(Venue.merchant_id == merchant_id)
+        )
+        venue_ids = [row[0] for row in venue_result.all()]
+
+        if not venue_ids:
+            return {
+                "total_bookings": 0,
+                "pending_bookings": 0,
+                "confirmed_bookings": 0,
+                "cancelled_bookings": 0,
+                "total_revenue": Decimal("0"),
+                "currency": "VND",
+            }
+
+        # Count total bookings
+        total_count_result = await self.session.execute(
+            select(func.count(Booking.id)).where(Booking.venue_id.in_(venue_ids))
+        )
+        total_bookings = total_count_result.scalar() or 0
+
+        # Count bookings by status
+        async def count_status(status_enum):
+            res = await self.session.execute(
+                select(func.count(Booking.id)).where(
+                    and_(
+                        Booking.venue_id.in_(venue_ids),
+                        Booking.status == status_enum
+                    )
+                )
+            )
+            return res.scalar() or 0
+
+        pending_bookings = await count_status(BookingStatus.PENDING)
+        confirmed_bookings = await count_status(BookingStatus.CONFIRMED)
+        cancelled_bookings = await count_status(BookingStatus.CANCELLED)
+
+        # Calculate total revenue (confirmed/completed bookings)
+        revenue_result = await self.session.execute(
+            select(func.sum(Booking.total_price)).where(
+                and_(
+                    Booking.venue_id.in_(venue_ids),
+                    Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                )
+            )
+        )
+        total_revenue = revenue_result.scalar() or Decimal("0")
+
+        return {
+            "total_bookings": total_bookings,
+            "pending_bookings": pending_bookings,
+            "confirmed_bookings": confirmed_bookings,
+            "cancelled_bookings": cancelled_bookings,
+            "total_revenue": total_revenue,
+            "currency": "VND",
+        }
+
     async def expire_pending_bookings(self, timeout_minutes: int = 15) -> int:
         """
         Mark pending bookings as expired if unpaid beyond timeout.
