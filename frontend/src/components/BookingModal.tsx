@@ -15,12 +15,14 @@ interface BookingModalProps {
   isVisible: boolean;
   onClose: () => void;
   onSelectOption: (type: 'normal' | 'event') => void;
+  onModalHide?: () => void;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   isVisible,
   onClose,
   onSelectOption,
+  onModalHide,
 }) => {
   return (
     <Modal
@@ -34,6 +36,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       animationOut="slideOutDown"
       useNativeDriver
       propagateSwipe
+      onModalHide={onModalHide}
     >
       <View style={styles.container}>
         {/* Header */}

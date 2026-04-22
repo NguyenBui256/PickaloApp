@@ -67,7 +67,7 @@ export const ExploreScreen: React.FC = () => {
 
           {/* Membership List */}
           <View style={styles.membershipList}>
-            {MEMBERSHIPS.map((item) => (
+            {MEMBERSHIPS.filter(item => activeFilter === 'Tất cả' || item.courtType.includes(activeFilter)).map((item) => (
               <View key={item.id} style={styles.membershipCard}>
                 {/* Numeric Badge */}
                 <View style={styles.numericBadge}>

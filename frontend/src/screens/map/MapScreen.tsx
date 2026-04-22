@@ -26,7 +26,7 @@ const INITIAL_REGION = {
 const MAP_CATEGORIES = [
   { id: 'all', name: 'Tất cả', icon: 'apps' as const },
   { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' as const },
-  { id: 'badminton', name: 'Sân Cầu lông', icon: 'racket' as const },
+  { id: 'badminton', name: 'Sân Cầu lông', icon: 'badminton' as const },
   { id: 'football', name: 'Sân Bóng đá', icon: 'soccer-field' as const },
 ];
 
@@ -61,14 +61,14 @@ export const MapScreen: React.FC = () => {
         showsUserLocation
         showsMyLocationButton={false}
       >
-        {VENUES.map((venue) => (
+        {VENUES.filter(v => activeCategory === 'all' || v.category.toLowerCase().includes(activeCategory.toLowerCase())).map((venue) => (
           <Marker
             key={venue.id}
             coordinate={{ latitude: venue.lat, longitude: venue.lng }}
             title={venue.name}
             description={venue.address}
             pinColor={getMarkerColor(venue.category)}
-            onCalloutPress={() => navigation.navigate('MapVenueDetailOverlay', { venueId: venue.id })}
+            onPress={() => navigation.navigate('MapVenueDetailOverlay', { venueId: venue.id })}
           />
         ))}
       </MapView>

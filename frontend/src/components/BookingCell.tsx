@@ -10,9 +10,10 @@ interface BookingCellProps {
   status: string; // 'available', 'booked', 'locked', 'event', 'selected'
   isSelected: boolean;
   onPress: () => void;
+  isMaintenanceMode?: boolean;
 }
 
-export const BookingCell: React.FC<BookingCellProps> = React.memo(({ status, isSelected, onPress }) => {
+export const BookingCell: React.FC<BookingCellProps> = React.memo(({ status, isSelected, onPress, isMaintenanceMode }) => {
   const getBackgroundColor = () => {
     if (isSelected) return '#dcfce7'; // Light Green
     switch (status) {
@@ -23,7 +24,7 @@ export const BookingCell: React.FC<BookingCellProps> = React.memo(({ status, isS
     }
   };
 
-  const isClickable = status === 'available';
+  const isClickable = isMaintenanceMode ? true : status === 'available';
 
   return (
     <TouchableOpacity
