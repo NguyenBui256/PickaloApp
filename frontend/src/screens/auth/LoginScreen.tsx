@@ -22,8 +22,7 @@ import { CustomInput } from '../../components/CustomInput';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { SocialButton } from '../../components/SocialButton';
 import { useAuthStore } from '../../store/auth-store';
-import { MOCK_USER, MOCK_REGISTER_PAYLOAD, MOCK_OWNER, MOCK_OWNER_REGISTER_PAYLOAD } from '../../constants/mock-data';
-import { login as loginApi } from '../../services/auth-service'; // TODO: gọi loginApi thay vì mock trực tiếp
+import { login as loginApi } from '../../services/auth-service';
 
 type AuthStackParamList = {
   Login: undefined;

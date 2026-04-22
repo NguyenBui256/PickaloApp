@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,8 +12,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { VENUES } from '../../constants/mock-data';
-import { fetchVenues, searchVenuesNearby } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES trực tiếp
+import { fetchVenues } from '../../services/venue-service';
 
 const { height } = Dimensions.get('window');
 
@@ -34,6 +33,13 @@ const MAP_CATEGORIES = [
 export const MapScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [activeCategory, setActiveCategory] = useState('all');
+  const [venues, setVenues] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchVenues().then(res => {
+      if (res?.items) setVenues(res.items);
+    });
+  }, []);
 
   const getMarkerColor = (category: string) => {
     switch (category.toLowerCase()) {
@@ -62,7 +68,7 @@ export const MapScreen: React.FC = () => {
         showsUserLocation
         showsMyLocationButton={false}
       >
-        {VENUES.filter(v => activeCategory === 'all' || v.category.toLowerCase().includes(activeCategory.toLowerCase())).map((venue) => (
+        {venues.filter(v => activeCategory === 'all' || (v.category || '').toLowerCase().includes(activeCategory.toLowerCase())).map((venue) => (
           <Marker
             key={venue.id}
             coordinate={{ latitude: venue.lat, longitude: venue.lng }}

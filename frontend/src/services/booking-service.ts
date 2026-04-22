@@ -22,8 +22,6 @@ import type {
   BookingPricePreviewRequest,
   BookingPriceResponse,
   BookingCancelRequest,
-  BookingTimelineResponse,
-  BookingTimeSlot,
 } from '../types/api-types';
 
 // ==========================================
@@ -50,15 +48,20 @@ export const calculateBookingPrice = async (
   data: BookingPricePreviewRequest,
 ): Promise<BookingPriceResponse> => {
   console.log('[MOCK] calculateBookingPrice:', data);
-  const startH = parseInt(data.start_time.split(':')[0]);
-  const endH = parseInt(data.end_time.split(':')[0]);
-  const hours = endH - startH;
+
+  let totalHours = 0;
+  data.slots.forEach(slot => {
+    const startH = parseInt(slot.start_time.split(':')[0]);
+    const endH = parseInt(slot.end_time.split(':')[0]);
+    totalHours += (endH - startH);
+  });
+
   const basePrice = 150000;
-  const subtotal = basePrice * hours;
+  const subtotal = basePrice * totalHours;
   const serviceFee = Math.round(subtotal * 0.05);
 
   return {
-    venue_pricing: { base_price: basePrice, duration_hours: hours, price_factor: 1.0, hourly_price: basePrice },
+    venue_pricing: { base_price: basePrice, duration_hours: totalHours, price_factor: 1.0, hourly_price: basePrice },
     services: [], services_total: 0,
     subtotal, service_fee: serviceFee,
     total: subtotal + serviceFee, currency: 'VND',
@@ -82,21 +85,37 @@ export const calculateBookingPrice = async (
 // ===== MOCK FALLBACK =====
 export const createBooking = async (data: BookingCreateRequest): Promise<BookingResponse> => {
   console.log('[MOCK] createBooking:', data);
-  const startH = parseInt(data.start_time.split(':')[0]);
-  const endH = parseInt(data.end_time.split(':')[0]);
-  const duration = (endH - startH) * 60;
-  const total = 150000 * (endH - startH);
+
+  let totalMinutes = 0;
+  const slotsResponse = data.slots.map((slot, idx) => {
+    const startH = parseInt(slot.start_time.split(':')[0]);
+    const endH = parseInt(slot.end_time.split(':')[0]);
+    const duration = (endH - startH) * 60;
+    totalMinutes += duration;
+
+    return {
+      id: `slot-${idx}`,
+      court_id: slot.court_id,
+      court_name: `Sân con ${idx + 1}`,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      price: (endH - startH) * 150000,
+    };
+  });
+
+  const subtotal = (totalMinutes / 60) * 150000;
+  const serviceFee = Math.round(subtotal * 0.05);
 
   return {
     id: `mock-booking-${Date.now()}`, user_id: 'mock-user-id', venue_id: data.venue_id,
-    booking_date: data.booking_date, start_time: data.start_time, end_time: data.end_time,
-    duration_minutes: duration, base_price: 150000, price_factor: 1.0,
-    service_fee: Math.round(total * 0.05), total_price: total + Math.round(total * 0.05),
-    status: 'PENDING', is_paid: false, is_cancelable: true, is_active: true,
-    payment_method: null, payment_id: null, paid_at: null,
-    notes: data.notes || null, cancelled_at: null, cancelled_by: null,
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    venue_name: 'Mock Venue', venue_address: 'Mock Address', services: [],
+    booking_date: data.booking_date, total_price: subtotal + serviceFee,
+    status: 'PENDING', is_paid: false, is_cancelable: true,
+    notes: data.notes || null,
+    cancelled_at: null, cancelled_by: null,
+    created_at: new Date().toISOString(),
+    venue_name: 'Mock Venue',
+    services: [],
+    slots: slotsResponse,
   };
 };
 
@@ -123,8 +142,8 @@ export const fetchMyBookings = async (
   let items = MOCK_BOOKINGS.map(b => ({
     id: b.id,
     venue_id: b.venue_id || '',
-    venue_name: b.venue_name || b.clubName,
-    venue_address: b.venue_address || b.address,
+    venue_name: b.venue_name,
+    venue_address: b.venue_address,
     booking_date: b.booking_date || '',
     start_time: b.start_time || '',
     end_time: b.end_time || '',
@@ -166,21 +185,17 @@ export const fetchBookingById = async (bookingId: string): Promise<BookingRespon
 
   return {
     id: booking.id, user_id: 'mock-user-id', venue_id: booking.venue_id || '',
-    booking_date: booking.booking_date || '', start_time: booking.start_time || '',
-    end_time: booking.end_time || '', duration_minutes: 60,
-    base_price: typeof booking.total_price === 'number' ? booking.total_price : 0,
-    price_factor: 1.0, service_fee: 0,
+    booking_date: booking.booking_date || '',
     total_price: typeof booking.total_price === 'number' ? booking.total_price : 0,
     status: _normalizeBookingStatus(booking.status),
     is_paid: booking.is_paid ?? false, is_cancelable: booking.is_cancelable ?? false,
-    is_active: ['PENDING', 'CONFIRMED'].includes(_normalizeBookingStatus(booking.status)),
-    payment_method: null, payment_id: null, paid_at: null, notes: null,
+    notes: null,
     cancelled_at: null, cancelled_by: null,
     created_at: booking.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    venue_name: booking.venue_name || booking.clubName,
-    venue_address: booking.venue_address || booking.address,
+    venue_name: booking.venue_name,
+    venue_address: booking.venue_address,
     services: [],
+    slots: [],
   };
 };
 
@@ -207,43 +222,13 @@ export const cancelBooking = async (
   console.log('[MOCK] cancelBooking:', bookingId, data);
   const existing = await fetchBookingById(bookingId);
   return {
-    ...existing!, status: 'CANCELLED', is_cancelable: false, is_active: false,
+    ...existing!, status: 'CANCELLED', is_cancelable: false,
     cancelled_at: new Date().toISOString(), cancelled_by: 'USER',
   };
 };
 
 
-/**
- * Lấy timeline availability của sân theo ngày.
- * ┌─────────────────────────────────────────────────────┐
- * │ BE: GET /bookings/venues/{venue_id}/timeline        │
- * │ File: bookings.py:L252 → get_venue_timeline()       │
- * └─────────────────────────────────────────────────────┘
- */
-// ===== API THẬT (bookings.py:L252) =====
-// export const fetchVenueTimeline = async (
-//   venueId: string, date: string,
-// ): Promise<BookingTimelineResponse> => {
-//   const response = await apiClient.get(`/bookings/venues/${venueId}/timeline`, { params: { date } });
-//   return response.data;
-// };
 
-// ===== MOCK FALLBACK =====
-export const fetchVenueTimeline = async (
-  venueId: string, date: string,
-): Promise<BookingTimelineResponse> => {
-  console.log('[MOCK] fetchVenueTimeline:', venueId, date);
-  const slots: BookingTimeSlot[] = [];
-  for (let hour = 5; hour <= 22; hour++) {
-    const rand = Math.random();
-    slots.push({
-      hour, available: rand > 0.25,
-      booking_id: rand <= 0.25 ? `mock-bid-${hour}` : null,
-      status: rand <= 0.15 ? 'CONFIRMED' : rand <= 0.25 ? 'PENDING' : null,
-    });
-  }
-  return { venue_id: venueId, date, open_time: '05:00', close_time: '23:00', slots };
-};
 
 
 // ==========================================

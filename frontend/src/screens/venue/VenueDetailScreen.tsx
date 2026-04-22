@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { VENUES } from '../../constants/mock-data';
-import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
+import { fetchVenueById } from '../../services/venue-service';
 import { BookingModal } from '../../components/BookingModal';
 
 type RootStackParamList = {
@@ -31,10 +30,20 @@ export const VenueDetailScreen: React.FC = () => {
   const route = useRoute<VenueDetailsRouteProp>();
   const { venueId } = route.params;
 
-  const venue = VENUES.find((v) => v.id === venueId);
+  const [venue, setVenue] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('Thông tin');
-  const [isFavorite, setIsFavorite] = useState(venue?.isFavorite || false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
+
+  useEffect(() => {
+    fetchVenueById(venueId).then(res => {
+      if (res) {
+        setVenue(res);
+        // @ts-ignore - isFavorite là field mở rộng của FE mock
+        setIsFavorite((res as any).isFavorite || false);
+      }
+    });
+  }, [venueId]);
 
   const handleBookPress = () => {
     setBookingModalVisible(true);

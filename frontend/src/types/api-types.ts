@@ -51,6 +51,13 @@ export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
 // COMMON SCHEMAS
 // ==========================================
 
+/** API Error Response structure */
+export interface ApiError {
+  detail: string;
+  status?: number;
+  code?: string;
+}
+
 /** Backend: app/schemas/venue.py → Coordinates */
 export interface Coordinates {
   lat: number;
@@ -214,11 +221,18 @@ export interface VenueTimeSlot {
   available: boolean;
 }
 
+/** Backend: CourtAvailability — lịch trống của một sân con */
+export interface CourtAvailability {
+  court_id: string;
+  court_name: string;
+  slots: VenueTimeSlot[];
+}
+
 /** Backend: AvailabilityResponse — GET /venues/{id}/availability */
 export interface AvailabilityResponse {
   venue_id: string;
   date: string;
-  slots: VenueTimeSlot[];
+  courts: CourtAvailability[];
   open_time: string;
   close_time: string;
 }
@@ -233,12 +247,18 @@ export interface BookingServiceRequest {
   quantity: number; // 1-100
 }
 
+/** Backend: BookingSlotInfo — thông tin sân con và giờ đặt */
+export interface BookingSlotInfo {
+  court_id: string;
+  start_time: string;
+  end_time: string;
+}
+
 /** Backend: BookingCreate — POST /bookings */
 export interface BookingCreateRequest {
   venue_id: string;
   booking_date: string; // YYYY-MM-DD
-  start_time: string;   // HH:MM
-  end_time: string;     // HH:MM
+  slots: BookingSlotInfo[];
   services?: BookingServiceRequest[] | null;
   notes?: string | null; // max 1000 chars
 }
@@ -247,8 +267,7 @@ export interface BookingCreateRequest {
 export interface BookingPricePreviewRequest {
   venue_id: string;
   booking_date: string;
-  start_time: string;
-  end_time: string;
+  slots: BookingSlotInfo[];
   services?: BookingServiceRequest[] | null;
 }
 
@@ -258,6 +277,15 @@ export interface PriceBreakdown {
   duration_hours: number;
   price_factor: number;
   hourly_price: number;
+}
+
+export interface BookingSlotResponse {
+  id: string;
+  court_id: string;
+  court_name: string;
+  start_time: string;
+  end_time: string;
+  price: number;
 }
 
 /** Backend: BookingServiceItem — dịch vụ trong response booking */
@@ -280,34 +308,24 @@ export interface BookingPriceResponse {
   currency: string; // "VND"
 }
 
-/** Backend: BookingResponse — GET /bookings/{id}, POST /bookings */
+/** Backend: BookingResponse — GET /bookings/{id} hoặc POST /bookings */
 export interface BookingResponse {
   id: string;
   user_id: string;
   venue_id: string;
   booking_date: string;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  base_price: number;
-  price_factor: number;
-  service_fee: number;
   total_price: number;
   status: BookingStatus;
   is_paid: boolean;
   is_cancelable: boolean;
-  is_active: boolean;
-  payment_method: string | null;
-  payment_id: string | null;
-  paid_at: string | null;
   notes: string | null;
   cancelled_at: string | null;
   cancelled_by: string | null;
   created_at: string;
-  updated_at: string;
   venue_name?: string | null;
   venue_address?: string | null;
   services: BookingServiceItem[];
+  slots: BookingSlotResponse[];
 }
 
 /** Backend: BookingListItem — item trong BookingListResponse */
@@ -372,13 +390,19 @@ export interface BookingTimelineResponse {
   slots: BookingTimeSlot[];
 }
 
+/** Backend: MerchantVenueStats — item trong MerchantStatsResponse */
+export interface MerchantVenueStats {
+  id: string;
+  name: string;
+  status: string;
+  total_bookings: number;
+  revenue_mtd: number;
+  rating: number;
+}
+
 /** Backend: MerchantStatsResponse — GET /merchant/bookings/stats */
 export interface MerchantStatsResponse {
-  total_bookings: number;
-  pending_bookings: number;
-  confirmed_bookings: number;
-  cancelled_bookings: number;
-  total_revenue: number;
+  venues: MerchantVenueStats[];
   currency: string;
 }
 

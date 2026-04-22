@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,8 +17,7 @@ import { LineChart } from 'react-native-chart-kit';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { differenceInDays, format, addDays } from 'date-fns';
 import COLORS from '@theme/colors';
-import { OWNER_VENUES } from '../../constants/mock-data';
-import { fetchMyVenues } from '../../services/merchant-service'; // TODO: gọi service thay vì OWNER_VENUES trực tiếp
+import { fetchMyVenues } from '../../services/merchant-service';
 
 export const OwnerRevenueReportScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -29,7 +28,15 @@ export const OwnerRevenueReportScreen: React.FC = () => {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  const ownerVenue = OWNER_VENUES[0];
+  const [ownerVenue, setOwnerVenue] = useState<any>({
+    revenue_mtd: 0, total_bookings: 0, name: 'Đang tải...', rating: 0, status: 'ACTIVE',
+  });
+
+  useEffect(() => {
+    fetchMyVenues().then(res => {
+      if (res?.length > 0) setOwnerVenue(res[0]);
+    });
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";

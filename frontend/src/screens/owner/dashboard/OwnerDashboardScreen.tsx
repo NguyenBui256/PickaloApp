@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,32 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { OWNER_VENUES } from '../../../constants/mock-data';
-import { fetchMyVenues, fetchMerchantStats } from '../../../services/merchant-service'; // TODO: gọi service thay vì OWNER_VENUES trực tiếp
+import { fetchMerchantStats, OwnerVenueItem } from '../../../services/merchant-service';
 
 export const OwnerDashboardScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const ownerVenue = OWNER_VENUES[0];
+  const [ownerVenue, setOwnerVenue] = useState<OwnerVenueItem>({
+    id: '', name: 'Đang tải...', status: 'ACTIVE', total_bookings: 0, revenue_mtd: 0, rating: 0,
+  });
+
+  useEffect(() => {
+    fetchMerchantStats().then(res => {
+      if (res?.venues?.length > 0) {
+        const v = res.venues[0];
+        setOwnerVenue({
+          id: v.id, name: v.name, status: v.status as 'ACTIVE' | 'PENDING',
+          total_bookings: v.total_bookings, revenue_mtd: v.revenue_mtd, rating: v.rating,
+        });
+      }
+    });
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
@@ -130,7 +144,7 @@ export const OwnerDashboardScreen: React.FC = () => {
             <Text style={styles.actionLabel}>Dịch vụ</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard} onPress={() => alert('Tính năng đang phát triển')}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Thông báo', 'Tính năng đang phát triển')}>
             <View style={[styles.iconContainer, { backgroundColor: '#F3E5F5' }]}>
               <MaterialCommunityIcons name="chart-bar" size={28} color="#7B1FA2" />
             </View>

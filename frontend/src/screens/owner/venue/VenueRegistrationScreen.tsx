@@ -49,16 +49,19 @@ export const VenueRegistrationScreen: React.FC = () => {
         <View style={styles.formSection}>
           <Text style={styles.label}>Thông tin cơ bản</Text>
           <CustomInput
+            type="email"
             placeholder="Tên sân (*)"
             value={formData.name}
             onChangeText={(text) => setFormData({ ...formData, name: text })}
           />
           <CustomInput
+            type="email"
             placeholder="Địa chỉ chi tiết (*)"
             value={formData.address}
             onChangeText={(text) => setFormData({ ...formData, address: text })}
           />
           <CustomInput
+            type="email"
             placeholder="Giá thuê cơ bản (vnđ/giờ) (*)"
             keyboardType="numeric"
             value={formData.price}

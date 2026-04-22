@@ -13,7 +13,7 @@ import axios, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { APP_CONFIG } from '@constants/app-config';
-import type { ApiError } from '@types/api.types';
+import type { ApiError } from '@api-types/api-types';
 
 /**
  * Custom request config with auth flag.
@@ -98,8 +98,11 @@ class ApiClient {
               await AsyncStorage.setItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN, access_token);
 
               // Update auth header and retry
+              if (!originalRequest.headers) {
+                originalRequest.headers = {};
+              }
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
-              return this.client(originalRequest);
+              return this.client(originalRequest as AxiosRequestConfig);
             }
           } catch (refreshError) {
             // Refresh failed - clear tokens and redirect to login

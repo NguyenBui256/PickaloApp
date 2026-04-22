@@ -121,7 +121,7 @@ export const MaintenanceSchedulerScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: COLORS.GRAY_LIGHT,
   },
   header: {
     backgroundColor: '#FF9800',

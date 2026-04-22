@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,15 +15,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
-import { OWNER_SERVICES } from '../../../constants/mock-data';
-// @ts-ignore — TODO: gọi service khi chuyển sang API thật
 import { fetchVenueServices, createVenueService, deleteVenueService } from '../../../services/venue-service';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 
 export const ServiceManagementScreen: React.FC = () => {
-  const [services, setServices] = useState(OWNER_SERVICES);
+  const [services, setServices] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
+
+  useEffect(() => {
+    // venueId cần được truyền từ route params khi tích hợp thật
+    fetchVenueServices('default-venue-id').then(res => {
+      if (res) setServices(res);
+    });
+  }, []);
 
   const handleDelete = (id: string) => {
     Alert.alert('Xác nhận', 'Bạn có chắc chắn muốn xóa dịch vụ này?', [
@@ -32,7 +37,7 @@ export const ServiceManagementScreen: React.FC = () => {
     ]);
   };
 
-  const renderItem = ({ item }: { item: typeof OWNER_SERVICES[0] }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.serviceCard}>
       <View style={styles.serviceInfo}>
         <Text style={styles.serviceName}>{item.name}</Text>

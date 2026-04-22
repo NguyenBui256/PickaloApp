@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,8 +22,7 @@ import Animated, {
   runOnJS,
   withTiming 
 } from 'react-native-reanimated';
-import { VENUES } from '../../constants/mock-data';
-import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
+import { fetchVenueById } from '../../services/venue-service';
 import { BookingModal } from '../../components/BookingModal';
 import COLORS from '@theme/colors';
 
@@ -44,11 +43,21 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const route = useRoute<RouteProps>();
   const { venueId } = route.params;
 
-  const venue = VENUES.find((v) => v.id === venueId);
+  const [venue, setVenue] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('Thông tin');
-  const [isFavorite, setIsFavorite] = useState(venue?.isFavorite || false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedBookingType, setSelectedBookingType] = useState<'normal' | 'event' | null>(null);
+
+  useEffect(() => {
+    fetchVenueById(venueId).then(res => {
+      if (res) {
+        setVenue(res);
+        // @ts-ignore - isFavorite là field mở rộng của FE mock
+        setIsFavorite((res as any).isFavorite || false);
+      }
+    });
+  }, [venueId]);
 
   // Gesture handling
   const translateY = useSharedValue(0);

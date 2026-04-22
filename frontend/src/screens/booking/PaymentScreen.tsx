@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { VENUES } from '../../constants/mock-data';
-import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
+import { fetchVenueById } from '../../services/venue-service';
 import { InfoCard } from '../../components/InfoCard';
 
 
@@ -24,10 +23,16 @@ export const PaymentScreen: React.FC = () => {
   const route = useRoute<any>();
   const { venueId, selectedSlots = [] } = route.params || {};
 
-  const venue = VENUES.find(v => v.id === venueId);
+  const [venue, setVenue] = useState<any>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
+
+  useEffect(() => {
+    if (venueId) {
+      fetchVenueById(venueId).then(res => setVenue(res));
+    }
+  }, [venueId]);
 
   const isFormValid = name.trim().length > 0 && phone.trim().length >= 10;
   const totalPrice = selectedSlots.length * 95000;

@@ -194,13 +194,22 @@ export const fetchVenueAvailability = async (
   date: string,
 ): Promise<AvailabilityResponse> => {
   console.log('[MOCK] fetchVenueAvailability:', venueId, date);
-  const slots = [];
-  for (let h = 5; h < 23; h++) {
-    const start = `${h.toString().padStart(2, '0')}:00`;
-    const end = `${(h + 1).toString().padStart(2, '0')}:00`;
-    slots.push({ start_time: start, end_time: end, available: Math.random() > 0.2 });
-  }
-  return { venue_id: venueId, date, slots, open_time: '05:00', close_time: '23:00' };
+  
+  const courts = ['Sân 1', 'Sân 2', 'Sân 3'].map((name, idx) => {
+    const slots = [];
+    for (let h = 5; h < 23; h++) {
+      const start = `${h.toString().padStart(2, '0')}:00`;
+      const end = `${(h + 1).toString().padStart(2, '0')}:00`;
+      slots.push({ start_time: start, end_time: end, available: Math.random() > 0.3 });
+    }
+    return {
+      court_id: `court-${idx}`,
+      court_name: name,
+      slots
+    };
+  });
+
+  return { venue_id: venueId, date, courts, open_time: '05:00', close_time: '23:00' };
 };
 
 
@@ -242,7 +251,7 @@ export const fetchDistrictsList = async (): Promise<{ districts: string[] }> => 
  */
 // ===== API THẬT (venues.py:L253) =====
 // export const createVenue = async (data: VenueCreateRequest): Promise<VenueResponse> => {
-//   const response = await apiClient.post('/venues/merchant', data);
+//   const response = await apiClient.post('/venues', data);
 //   return response.data;
 // };
 
@@ -272,7 +281,7 @@ export const createVenue = async (data: VenueCreateRequest): Promise<VenueRespon
  */
 // ===== API THẬT (venues.py:L307) =====
 // export const updateVenue = async (venueId: string, data: VenueUpdateRequest): Promise<VenueResponse> => {
-//   const response = await apiClient.put(`/venues/merchant/${venueId}`, data);
+//   const response = await apiClient.put(`/venues/${venueId}`, data);
 //   return response.data;
 // };
 
@@ -293,7 +302,7 @@ export const updateVenue = async (venueId: string, data: VenueUpdateRequest): Pr
  */
 // ===== API THẬT (venues.py:L358) =====
 // export const deactivateVenue = async (venueId: string): Promise<void> => {
-//   await apiClient.delete(`/venues/merchant/${venueId}`);
+//   await apiClient.delete(`/venues/${venueId}`);
 // };
 
 // ===== MOCK FALLBACK =====

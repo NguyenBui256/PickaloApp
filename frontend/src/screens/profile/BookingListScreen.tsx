@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { MOCK_BOOKINGS, Booking, formatBookingTime, formatBookingDate, formatBookingPrice } from '../../constants/mock-data';
-import { fetchMyBookings } from '../../services/booking-service'; // TODO: gọi service thay vì MOCK_BOOKINGS trực tiếp
+import { Booking, formatBookingTime, formatBookingDate, formatBookingPrice } from '../../constants/mock-data';
+import { fetchMyBookings } from '../../services/booking-service';
 
 const Ribbon = ({ text }: { text: string }) => (
   <View style={styles.ribbonContainer}>
@@ -80,6 +80,15 @@ const BookingCard = ({ item }: { item: Booking }) => {
 
 export const BookingListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    fetchMyBookings().then(res => {
+      if (res?.items) {
+        setBookings(res.items as any);
+      }
+    });
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -108,7 +117,7 @@ export const BookingListScreen: React.FC = () => {
 
       {/* List */}
       <FlatList
-        data={MOCK_BOOKINGS}
+        data={bookings}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <BookingCard item={item} />}
         contentContainerStyle={styles.listContent}

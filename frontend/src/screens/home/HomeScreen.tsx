@@ -18,27 +18,23 @@ import COLORS from '@theme/colors';
 import { CategoryItem } from '../../components/CategoryItem';
 import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
-import { CATEGORIES, QUICK_FILTERS, VENUES } from '../../constants/mock-data';
+import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const [venues, setVenues] = useState(VENUES); // Fallback ban đầu
-  const [favoriteVenues, setFavoriteVenues] = useState<string[]>(
-    VENUES.filter(v => v.isFavorite).map(v => v.id)
-  );
+  const [venues, setVenues] = useState<any[]>([]);
+  const [favoriteVenues, setFavoriteVenues] = useState<string[]>([]);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
 
-  // Load venues từ service (hiện trả về mock, sau bỏ comment sẽ gọi BE)
   useEffect(() => {
     fetchVenues().then(res => {
-      // Map lại cho đúng format component cần
       if (res?.items) {
-        // Khi dùng API thật, cần transform response sang UI format
-        // Hiện tại vẫn dùng VENUES trực tiếp vì mock trả đủ fields
+        setVenues(res.items);
+        setFavoriteVenues(res.items.filter((v: any) => v.isFavorite).map((v: any) => v.id));
       }
     });
   }, []);
@@ -181,7 +177,7 @@ export const HomeScreen: React.FC = () => {
 
           {/* Venue List */}
           <View style={styles.venueList}>
-            {VENUES.filter(venue => {
+            {venues.filter(venue => {
               const matchesCategory = selectedCategory === 'Tất cả' || venue.category.toLowerCase().includes(selectedCategory.toLowerCase());
               // For simplicity, just filtering by category for now. 
               // Quick filters like "Gần đây" would normally involve location calc.

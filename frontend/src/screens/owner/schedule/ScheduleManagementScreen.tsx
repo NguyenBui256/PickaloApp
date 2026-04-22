@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { OWNER_BOOKING_REQUESTS } from '../../../constants/mock-data';
-import { fetchMerchantBookings, approveBooking, rejectBooking } from '../../../services/merchant-service'; // TODO: gọi service thay vì mock trực tiếp
+import { fetchMerchantBookings, approveBooking, rejectBooking } from '../../../services/merchant-service';
 
 export const ScheduleManagementScreen: React.FC = () => {
   const navigation = useNavigation<any>();

@@ -19,7 +19,7 @@ export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const user = useAuthStore(state => state.user);
   
-  const [name, setName] = useState(user?.name || 'Phạm Ngọc Long');
+  const [name, setName] = useState(user?.full_name || 'Phạm Ngọc Long');
   const [email, setEmail] = useState(user?.email || 'long43872@gmail.com');
   const [avatar, setAvatar] = useState('https://i.pravatar.cc/150?u=red-haired-boy');
 

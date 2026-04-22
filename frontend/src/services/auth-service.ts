@@ -227,9 +227,7 @@ export const updateMyProfile = async (data: UserUpdateRequest): Promise<UserResp
  */
 // ===== API THẬT (auth.py:L218) =====
 // export const changePassword = async (data: ChangePasswordRequest): Promise<{ message: string }> => {
-//   const response = await apiClient.post('/auth/me/change-password', null, {
-//     params: { old_password: data.old_password, new_password: data.new_password },
-//   });
+//   const response = await apiClient.post('/auth/me/change-password', data);
 //   return response.data;
 // };
 
@@ -241,53 +239,8 @@ export const changePassword = async (data: ChangePasswordRequest): Promise<{ mes
 
 
 // ==========================================
-// USER PROFILE (Extended — /users prefix)
+// USER ASSETS
 // ==========================================
-
-/**
- * Lấy full profile (có created_at, updated_at).
- * ┌─────────────────────────────────────────────────────┐
- * │ BE: GET /users/me                                   │
- * │ File: users.py:L21 → get_my_profile()               │
- * └─────────────────────────────────────────────────────┘
- */
-// ===== API THẬT (users.py:L21) =====
-// export const getMyFullProfile = async (): Promise<UserProfileResponse> => {
-//   const response = await apiClient.get('/users/me');
-//   return response.data;
-// };
-
-// ===== MOCK FALLBACK =====
-export const getMyFullProfile = async (): Promise<UserProfileResponse> => {
-  return {
-    id: MOCK_USER.id, phone: MOCK_USER.phone, full_name: MOCK_USER.full_name,
-    email: MOCK_USER.email, avatar_url: MOCK_USER.avatar_url,
-    date_of_birth: MOCK_USER.date_of_birth || null,
-    role: MOCK_USER.role as UserRole, is_active: MOCK_USER.is_active,
-    is_verified: MOCK_USER.is_verified,
-    created_at: MOCK_USER.created_at, updated_at: MOCK_USER.updated_at, deleted_at: null,
-  };
-};
-
-
-/**
- * Xem profile user khác.
- * ┌─────────────────────────────────────────────────────┐
- * │ BE: GET /users/{user_id}                            │
- * │ File: users.py:L33 → get_user_profile()             │
- * └─────────────────────────────────────────────────────┘
- */
-// ===== API THẬT (users.py:L33) =====
-// export const getUserProfile = async (userId: string): Promise<UserProfileResponse> => {
-//   const response = await apiClient.get(`/users/${userId}`);
-//   return response.data;
-// };
-
-// ===== MOCK FALLBACK =====
-export const getUserProfile = async (userId: string): Promise<UserProfileResponse> => {
-  console.log('[MOCK] getUserProfile:', userId);
-  return getMyFullProfile();
-};
 
 
 /**

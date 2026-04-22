@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,18 +12,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { VENUES } from '../../constants/mock-data';
-import { fetchVenues } from '../../services/venue-service'; // TODO: gọi service thay vì dùng VENUES trực tiếp
+import { fetchVenues } from '../../services/venue-service';
 import { VenueCard } from '../../components/VenueCard';
 
 export const SearchScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const filteredVenues = VENUES.filter(v => 
+  const [venues, setVenues] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchVenues().then(res => {
+      if (res?.items) setVenues(res.items);
+    });
+  }, []);
+
+  const filteredVenues = venues.filter(v =>
     v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.category.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.address || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.category || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

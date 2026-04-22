@@ -57,13 +57,49 @@ import type {
 // ===== MOCK FALLBACK =====
 export const fetchMerchantStats = async (): Promise<MerchantStatsResponse> => {
   return {
-    total_bookings: 156,
-    pending_bookings: OWNER_BOOKING_REQUESTS.filter(b => b.status === 'PENDING').length,
-    confirmed_bookings: 120, cancelled_bookings: 12,
-    total_revenue: 12500000, currency: 'VND',
+    venues: OWNER_VENUES.map(v => ({
+      id: v.id,
+      name: v.name,
+      status: v.status,
+      total_bookings: v.total_bookings,
+      revenue_mtd: v.revenue_mtd,
+      rating: v.rating,
+    })),
+    currency: 'VND',
   };
 };
 
+// ==========================================
+// OWNER VENUE TYPE & LIST
+// ==========================================
+
+/** Type dùng cho danh sách sân của chủ sân */
+export interface OwnerVenueItem {
+  id: string;
+  name: string;
+  status: 'ACTIVE' | 'PENDING';
+  total_bookings: number;
+  revenue_mtd: number;
+  rating: number;
+}
+
+/**
+ * Lấy danh sách sân của chủ sân hiện tại.
+ * ┌─────────────────────────────────────────────────────┐
+ * │ BE: GET /merchant/venues (chưa có — GAP)            │
+ * └─────────────────────────────────────────────────────┘
+ */
+// ===== MOCK FALLBACK =====
+export const fetchMyVenues = async (): Promise<OwnerVenueItem[]> => {
+  return OWNER_VENUES.map(v => ({
+    id: v.id,
+    name: v.name,
+    status: v.status as 'ACTIVE' | 'PENDING',
+    total_bookings: v.total_bookings,
+    revenue_mtd: v.revenue_mtd,
+    rating: v.rating,
+  }));
+};
 
 // ==========================================
 // BOOKING MANAGEMENT
@@ -126,15 +162,13 @@ export const fetchMerchantBookingById = async (bookingId: string): Promise<Booki
   if (!req) return null;
   return {
     id: req.id, user_id: 'mock-customer-id', venue_id: 'ov-1',
-    booking_date: req.date, start_time: req.time.split(' - ')[0],
-    end_time: req.time.split(' - ')[1] || '', duration_minutes: 90,
-    base_price: req.totalPrice, price_factor: 1.0, service_fee: 0,
+    booking_date: req.date,
     total_price: req.totalPrice, status: req.status as any,
-    is_paid: false, is_cancelable: req.status === 'PENDING', is_active: req.status === 'PENDING',
-    payment_method: null, payment_id: null, paid_at: null,
+    is_paid: false, is_cancelable: req.status === 'PENDING',
     notes: null, cancelled_at: null, cancelled_by: null,
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
     venue_name: req.venueName, venue_address: null, services: [],
+    slots: [],
   };
 };
 
@@ -185,7 +219,7 @@ export const rejectBooking = async (
 ): Promise<BookingResponse> => {
   console.log('[MOCK] rejectBooking:', bookingId, data);
   const existing = await fetchMerchantBookingById(bookingId);
-  return { ...existing!, status: 'CANCELLED', is_cancelable: false, is_active: false };
+  return { ...existing!, status: 'CANCELLED', is_cancelable: false };
 };
 
 
@@ -211,7 +245,7 @@ export const merchantCancelBooking = async (
   console.log('[MOCK] merchantCancelBooking:', bookingId, data);
   const existing = await fetchMerchantBookingById(bookingId);
   return {
-    ...existing!, status: 'CANCELLED', is_cancelable: false, is_active: false,
+    ...existing!, status: 'CANCELLED', is_cancelable: false,
     cancelled_at: new Date().toISOString(), cancelled_by: 'MERCHANT',
   };
 };
@@ -250,41 +284,4 @@ export const fetchVenueBookings = async (
 };
 
 
-// ==========================================
-// OWNER VENUES
-// ==========================================
 
-/**
- * Lấy danh sách sân thuộc chủ sân.
- * ┌─────────────────────────────────────────────────────┐
- * │ ⚠️ BE CHƯA CÓ endpoint riêng GET /merchant/venues  │
- * │ Hiện BE chỉ có GET /venues (public, filter chung). │
- * │                                                     │
- * │ YÊU CẦU BỔ SUNG BE:                                │
- * │   - GET /merchant/venues                            │
- * │   - Tự filter theo merchant_id = current_user.id   │
- * │   - Response bổ sung: total_bookings, revenue_mtd  │
- * └─────────────────────────────────────────────────────┘
- */
-export interface OwnerVenueItem {
-  id: string;
-  name: string;
-  status: 'ACTIVE' | 'PENDING';
-  total_bookings: number;
-  revenue_mtd: number;
-  rating: number;
-}
-
-// ===== API THẬT (⚠️ CHƯA CÓ BE — cần tạo endpoint) =====
-// export const fetchMyVenues = async (): Promise<OwnerVenueItem[]> => {
-//   const response = await apiClient.get('/merchant/venues');
-//   return response.data;
-// };
-
-// ===== MOCK FALLBACK =====
-export const fetchMyVenues = async (): Promise<OwnerVenueItem[]> => {
-  return OWNER_VENUES.map(v => ({
-    id: v.id, name: v.name, status: v.status as 'ACTIVE' | 'PENDING',
-    total_bookings: v.total_bookings, revenue_mtd: v.revenue_mtd, rating: v.rating,
-  }));
-};
