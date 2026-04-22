@@ -101,8 +101,8 @@ class VenueResponse(VenueBase):
     is_verified: bool
     fullAddress: str | None = None
     logo: str | None = None
-    rating: float = 0.0
-    review_count: int = 0
+    rating: float | None = 0.0
+    review_count: int | None = 0
     bookingLink: str | None = None
     category: str | None = None
     created_at: str
@@ -128,8 +128,8 @@ class VenueListItem(BaseModel):
     logo: str | None = None
     bookingLink: str | None = None
     category: str | None = None
-    rating: float = 0.0
-    review_count: int = 0
+    rating: float | None = 0.0
+    review_count: int | None = 0
 
 
 class VenueServiceCreate(BaseModel):

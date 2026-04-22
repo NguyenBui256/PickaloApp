@@ -90,7 +90,8 @@ async def list_venues(
             amenities=venue.amenities,
             logo=None,
             bookingLink=None,
-            rating=None
+            rating=venue.rating,
+            review_count=venue.review_count
         ))
 
     pages = (total + limit - 1) // limit
@@ -153,7 +154,8 @@ async def search_venues_nearby(
             amenities=venue.amenities,
             logo=None,
             bookingLink=None,
-            rating=None
+            rating=venue.rating,
+            review_count=venue.review_count
         ))
 
     pages = (total + limit - 1) // limit
@@ -199,7 +201,8 @@ async def get_venue(
         category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
         logo=None,
-        rating=None,
+        rating=venue.rating,
+        review_count=venue.review_count,
         bookingLink=None,
         images=venue.images,
         operating_hours={"open": "06:00", "close": "22:00"},
