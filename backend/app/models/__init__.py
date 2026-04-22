@@ -7,7 +7,8 @@ Exports all ORM models for use in the application.
 from app.models.base import Base, BaseModel, TimestampMixin, SoftDeleteMixin
 from app.models.user import User, UserRole
 from app.models.venue import Venue, VenueType, PricingTimeSlot, VenueService, DayType
-from app.models.booking import Booking, BookingService, BookingStatus
+from app.models.booking import Booking, BookingService, BookingStatus, BookingSlot
+from app.models.court import Court
 from app.models.post import Post, Comment, PostType, PostStatus, SportType
 from app.models.admin import AdminAction, ActionType, TargetType
 from app.models.review import VenueReview
@@ -31,6 +32,9 @@ __all__ = [
     "Booking",
     "BookingService",
     "BookingStatus",
+    "BookingSlot",
+    # Court
+    "Court",
     # Post
     "Post",
     "Comment",

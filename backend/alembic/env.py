@@ -23,7 +23,9 @@ from app.models import (
     PricingTimeSlot,
     VenueService,
     Booking,
+    BookingSlot,
     BookingService,
+    Court,
     Post,
     Comment,
     AdminAction,
@@ -61,7 +63,8 @@ def include_object(object, name, type_, reflected, compare_to):
             "zip_state_loc", "state", "county", "tract", "bg",
             "faces", "edges", "addr", "addrfeat", "place", "cousub",
             "zcta5", "featnames", "place_lookup", "county_lookup",
-            "secondary_unit_lookup", "street_type_lookup"
+            "secondary_unit_lookup", "street_type_lookup",
+            "state_lookup", "direction_lookup", "countysub_lookup"
         ]
         if name in exclude_tables:
             return False

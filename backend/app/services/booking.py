@@ -16,8 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.models.booking import Booking, BookingStatus, BookingService
+from app.models.booking import Booking, BookingStatus, BookingService, BookingSlot
 from app.models.venue import Venue, VenueService
+from app.models.court import Court
 from app.models.user import User
 from app.services.pricing import PricingService
 
@@ -46,27 +47,14 @@ class BookingService:
 
     async def check_availability(
         self,
-        venue_id: uuid.UUID,
+        court_id: uuid.UUID,
         booking_date: date,
         start_time: str,
         end_time: str,
         exclude_booking_id: uuid.UUID | None = None,
     ) -> bool:
         """
-        Check if time slot is available for booking.
-
-        Args:
-            venue_id: Venue UUID
-            booking_date: Date to check
-            start_time: Start time (HH:MM format)
-            end_time: End time (HH:MM format)
-            exclude_booking_id: Exclude this booking (for updates)
-
-        Returns:
-            True if slot is available
-
-        Raises:
-            ValueError: If time range is invalid
+        Check if time slot is available for a specific court.
         """
         # Parse times
         try:
@@ -78,24 +66,26 @@ class BookingService:
         if end <= start:
             raise ValueError("end_time must be after start_time")
 
-        # Find overlapping active bookings
-        # Overlap condition: (StartA < EndB) and (EndA > StartB)
+        # Find overlapping slots in active bookings
         conditions = [
-            Booking.venue_id == venue_id,
-            Booking.booking_date == booking_date,
+            BookingSlot.court_id == court_id,
+            BookingSlot.booking_date == booking_date,
             Booking.status.in_([
                 BookingStatus.PENDING,
                 BookingStatus.CONFIRMED,
             ]),
-            Booking.start_time < end,
-            Booking.end_time > start,
+            BookingSlot.start_time < end,
+            BookingSlot.end_time > start,
         ]
 
         if exclude_booking_id:
-            conditions.append(Booking.id != exclude_booking_id)
+            conditions.append(BookingSlot.booking_id != exclude_booking_id)
 
         result = await self.session.execute(
-            select(func.count()).select_from(Booking).where(and_(*conditions))
+            select(func.count())
+            .select_from(BookingSlot)
+            .join(Booking)
+            .where(and_(*conditions))
         )
         conflict_count = result.scalar()
 
@@ -106,60 +96,31 @@ class BookingService:
         user_id: uuid.UUID,
         venue_id: uuid.UUID,
         booking_date: date,
-        start_time: str,
-        end_time: str,
-        pricing_result: dict[str, Any],
+        slots_data: list[dict[str, Any]],  # List of {court_id, start_time, end_time, price}
+        total_price: Decimal,
         services: list[dict] | None = None,
         notes: str | None = None,
     ) -> Booking:
         """
-        Create a new booking.
-
-        Args:
-            user_id: User making the booking
-            venue_id: Venue to book
-            booking_date: Date of booking
-            start_time: Start time (HH:MM)
-            end_time: End time (HH:MM)
-            pricing_result: Price calculation from PricingService
-            services: Optional list of service dicts
-            notes: Optional special requests
-
-        Returns:
-            Created booking instance
-
-        Raises:
-            ValueError: If slot not available or invalid input
+        Create a new booking with multiple slots.
         """
-        # Check availability
-        available = await self.check_availability(
-            venue_id, booking_date, start_time, end_time
-        )
+        # 1. Validate all slots concurrently or sequentially
+        for slot in slots_data:
+            available = await self.check_availability(
+                slot["court_id"], 
+                booking_date, 
+                slot["start_time"], 
+                slot["end_time"]
+            )
+            if not available:
+                raise ValueError(f"Slot {slot['start_time']}-{slot['end_time']} on court {slot['court_id']} is not available")
 
-        if not available:
-            raise ValueError("Time slot is not available")
-
-        # Parse times
-        start = datetime.strptime(start_time, "%H:%M").time()
-        end = datetime.strptime(end_time, "%H:%M").time()
-        duration_minutes = int((datetime.combine(date.today(), end) -
-                                datetime.combine(date.today(), start)).total_seconds() / 60)
-
-        # Extract pricing data
-        venue_pricing = pricing_result["venue_pricing"]
-
-        # Create booking
+        # 2. Create the master booking
         booking = Booking(
             user_id=user_id,
             venue_id=venue_id,
             booking_date=booking_date,
-            start_time=start,
-            end_time=end,
-            duration_minutes=duration_minutes,
-            base_price=venue_pricing["base_price"],
-            price_factor=venue_pricing["price_factor"],
-            service_fee=venue_pricing["service_fee"],
-            total_price=pricing_result["total"],
+            total_price=total_price,
             status=BookingStatus.PENDING,
             notes=notes,
         )
@@ -167,7 +128,22 @@ class BookingService:
         self.session.add(booking)
         await self.session.flush()
 
-        # Add services if provided
+        # 3. Create booking slots
+        for slot in slots_data:
+            start = datetime.strptime(slot["start_time"], "%H:%M").time()
+            end = datetime.strptime(slot["end_time"], "%H:%M").time()
+            
+            booking_slot = BookingSlot(
+                booking_id=booking.id,
+                court_id=slot["court_id"],
+                booking_date=booking_date,
+                start_time=start,
+                end_time=end,
+                price=slot["price"],
+            )
+            self.session.add(booking_slot)
+
+        # 4. Add services if provided
         if services:
             for service_data in services:
                 booking_service = BookingService(
@@ -462,7 +438,7 @@ class BookingService:
                 selectinload(Booking.booking_services),
             )
             .where(and_(*conditions))
-            .order_by(Booking.booking_date, Booking.start_time)
+            .order_by(Booking.booking_date, Booking.created_at)
         )
         return list(result.scalars().all())
 
@@ -527,7 +503,7 @@ class BookingService:
                 selectinload(Booking.booking_services),
             )
             .where(and_(*conditions))
-            .order_by(Booking.booking_date.desc(), Booking.start_time.desc())
+            .order_by(Booking.booking_date.desc(), Booking.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
@@ -541,78 +517,87 @@ class BookingService:
         booking_date: date,
     ) -> dict[str, Any]:
         """
-        Get hourly availability timeline for a venue on a date.
-
-        Args:
-            venue_id: Venue UUID
-            booking_date: Date to check
-
-        Returns:
-            Dict with venue_id, date, open_time, close_time, slots (hourly)
+        Get availability grid grouped by court.
         """
-        # Get venue
+        # 1. Get venue and its courts
         venue_result = await self.session.execute(
-            select(Venue).where(Venue.id == venue_id)
+            select(Venue)
+            .options(selectinload(Venue.courts))
+            .where(Venue.id == venue_id)
         )
         venue = venue_result.scalar_one_or_none()
-
         if not venue:
             raise ValueError("Venue not found")
 
-        # Get operating hours
+        # 2. Get operating hours
         hours = venue.operating_hours or {}
-        open_time = hours.get("open", "05:00")
-        close_time = hours.get("close", "23:00")
-
-        open_hour = int(open_time.split(":")[0])
-        close_hour = int(close_time.split(":")[0])
-
-        # Get bookings for the date
-        start_of_day = datetime.combine(booking_date, time.min)
-        end_of_day = datetime.combine(booking_date, time.max)
-
+        open_time_str = hours.get("open", "05:00")
+        close_time_str = hours.get("close", "23:00")
+        
+        # 3. Get bookings for the date (to check availability)
         booking_result = await self.session.execute(
-            select(Booking).where(
+            select(BookingSlot)
+            .join(Booking)
+            .where(
                 Booking.venue_id == venue_id,
-                Booking.booking_date == booking_date,
-                Booking.status.in_([
-                    BookingStatus.PENDING,
-                    BookingStatus.CONFIRMED,
-                ]),
+                BookingSlot.booking_date == booking_date,
+                Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED])
             )
         )
-        bookings = list(booking_result.scalars().all())
+        existing_slots = list(booking_result.scalars().all())
 
-        # Generate hourly slots
-        slots = []
-        for hour in range(open_hour, close_hour):
-            slot_start = datetime.combine(booking_date, time(hour=hour))
-            slot_end = datetime.combine(booking_date, time(hour=hour + 1))
+        # 4. Prepare pricing service
+        pricing_service = PricingService(self.session)
 
-            # Check if slot is booked
-            booked = None
-            for booking in bookings:
-                booking_start = datetime.combine(booking_date, booking.start_time)
-                booking_end = datetime.combine(booking_date, booking.end_time)
-
-                # Check overlap
-                if booking_start < slot_end and booking_end > slot_start:
-                    booked = booking
-                    break
-
-            slots.append({
-                "hour": hour,
-                "available": booked is None,
-                "booking_id": str(booked.id) if booked else None,
-                "status": booked.status.value if booked else None,
+        # 5. Build grid
+        open_hour = int(open_time_str.split(":")[0])
+        close_hour = int(close_time_str.split(":")[0])
+        
+        courts_data = []
+        for court in venue.courts:
+            if not court.is_active:
+                continue
+                
+            court_slots = []
+            # Generate 30-min or 60-min slots. For now, let's keep it hourly as per old form
+            for hour in range(open_hour, close_hour):
+                start_t = f"{hour:02d}:00"
+                end_t = f"{hour + 1:02d}:00"
+                
+                # Check if this court is booked at this time
+                is_available = True
+                for booked_slot in existing_slots:
+                    if booked_slot.court_id == court.id:
+                        b_start = booked_slot.start_time.strftime("%H:%M")
+                        b_end = booked_slot.end_time.strftime("%H:%M")
+                        if b_start < end_t and b_end > start_t:
+                            is_available = False
+                            break
+                
+                # Calculate price for this specific slot
+                price_info = await pricing_service.calculate_slot_price(
+                    venue_id, booking_date, start_t, end_t
+                )
+                
+                court_slots.append({
+                    "start_time": start_t,
+                    "end_time": end_t,
+                    "available": is_available,
+                    "price": float(price_info["total"])
+                })
+                
+            courts_data.append({
+                "court_id": str(court.id),
+                "court_name": court.name,
+                "slots": court_slots
             })
 
         return {
             "venue_id": str(venue_id),
             "date": booking_date.isoformat(),
-            "open_time": open_time,
-            "close_time": close_time,
-            "slots": slots,
+            "open_time": open_time_str,
+            "close_time": close_time_str,
+            "courts": courts_data
         }
 
     async def get_merchant_stats(

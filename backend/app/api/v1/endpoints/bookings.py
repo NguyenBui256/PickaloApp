@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, DBSession
 from app.models.user import User
-from app.models.booking import Booking, BookingStatus
+from app.models.booking import Booking, BookingStatus, BookingSlot
 from app.schemas.booking import (
     BookingCreate,
     BookingResponse,
@@ -25,8 +25,6 @@ from app.schemas.booking import (
     BookingPricePreview,
     BookingPriceResponse,
     BookingCancel,
-    BookingTimelineResponse,
-    TimeSlot,
 )
 from app.services.booking import BookingService, get_booking_service
 from app.services.pricing import PricingService, get_pricing_service
@@ -55,12 +53,15 @@ async def calculate_booking_price(
         service_ids = [s.service_id for s in request.services]
         service_quantities = {s.service_id: s.quantity for s in request.services}
 
-    # Calculate price
-    pricing_result = await pricing_service.calculate_booking_total(
+    # Calculate total price
+    pricing_result = await pricing_service.calculate_multi_slot_total(
         venue_id=request.venue_id,
-        booking_date=request.booking_date,
-        start_time=request.start_time,
-        end_time=request.end_time,
+        slots=[{
+            "date": request.booking_date,
+            "court_id": s.court_id,
+            "start_time": s.start_time,
+            "end_time": s.end_time,
+        } for s in request.slots],
         service_ids=service_ids,
         service_quantities=service_quantities,
     )
@@ -92,24 +93,36 @@ async def create_booking(
         service_quantities = {s.service_id: s.quantity for s in booking_data.services}
         services_list = booking_data.services
 
-    # Calculate price first
-    pricing_result = await pricing_service.calculate_booking_total(
+    # Calculate multi-slot price
+    pricing_result = await pricing_service.calculate_multi_slot_total(
         venue_id=booking_data.venue_id,
-        booking_date=booking_data.booking_date,
-        start_time=booking_data.start_time,
-        end_time=booking_data.end_time,
+        slots=[{
+            "date": booking_data.booking_date,
+            "court_id": s.court_id,
+            "start_time": s.start_time,
+            "end_time": s.end_time
+        } for s in booking_data.slots],
         service_ids=service_ids,
         service_quantities=service_quantities,
     )
+
+    # Flatten slot list for service creation (adding calculated price per slot)
+    slots_to_create = []
+    for i, s in enumerate(booking_data.slots):
+        slots_to_create.append({
+            "court_id": s.court_id,
+            "start_time": s.start_time,
+            "end_time": s.end_time,
+            "price": pricing_result["slots"][i]["pricing"]["total"]
+        })
 
     # Create booking
     booking = await booking_service.create_booking(
         user_id=current_user.id,
         venue_id=booking_data.venue_id,
         booking_date=booking_data.booking_date,
-        start_time=booking_data.start_time,
-        end_time=booking_data.end_time,
-        pricing_result=pricing_result,
+        slots_data=slots_to_create,
+        total_price=pricing_result["total"],
         services=[s.model_dump() for s in services_list] if services_list else None,
         notes=booking_data.notes,
     )
@@ -124,6 +137,7 @@ async def create_booking(
         select(Booking)
         .options(
             selectinload(Booking.venue),
+            selectinload(Booking.slots).selectinload(BookingSlot.court),
             selectinload(Booking.booking_services),
         )
         .where(Booking.id == booking.id)
@@ -215,6 +229,7 @@ async def get_booking(
         select(Booking)
         .options(
             selectinload(Booking.venue),
+            selectinload(Booking.slots).selectinload(BookingSlot.court),
             selectinload(Booking.booking_services),
         )
         .where(Booking.id == booking.id)
@@ -251,24 +266,6 @@ async def cancel_booking(
     return _booking_to_response(booking)
 
 
-@router.get("/venues/{venue_id}/timeline", response_model=BookingTimelineResponse)
-async def get_venue_timeline(
-    venue_id: str,
-    date: Annotated[date, Query(description="Date to check (ISO 8601 format)")],
-    booking_service: Annotated[BookingService, Depends(get_booking_service)],
-) -> BookingTimelineResponse:
-    """
-    Get venue availability timeline for a date.
-
-    Returns hourly slots showing availability and existing bookings.
-    Public endpoint for browsing venues.
-    """
-    timeline = await booking_service.get_timeline_availability(
-        uuid.UUID(venue_id),
-        date,
-    )
-
-    return BookingTimelineResponse(**timeline)
 
 
 def _booking_to_response(booking: Any) -> BookingResponse:
@@ -284,17 +281,24 @@ def _booking_to_response(booking: Any) -> BookingResponse:
                 "total": bs.total_price,
             })
 
+    # Slots
+    slots = []
+    if hasattr(booking, 'slots') and booking.slots:
+        for s in booking.slots:
+            slots.append({
+                "id": str(s.id),
+                "court_id": str(s.court_id),
+                "court_name": s.court.name if s.court else None,
+                "start_time": s.start_time.strftime("%H:%M"),
+                "end_time": s.end_time.strftime("%H:%M"),
+                "price": s.price,
+            })
+
     return BookingResponse(
         id=str(booking.id),
         user_id=str(booking.user_id),
         venue_id=str(booking.venue_id),
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
-        duration_minutes=booking.duration_minutes,
-        base_price=booking.base_price,
-        price_factor=booking.price_factor,
-        service_fee=booking.service_fee,
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,
@@ -310,6 +314,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         updated_at=booking.updated_at.isoformat(),
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
+        slots=slots,
         services=services,
     )
 
@@ -322,8 +327,6 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,

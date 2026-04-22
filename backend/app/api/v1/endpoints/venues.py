@@ -33,12 +33,16 @@ from app.schemas.venue import (
     VenueServiceCreate,
     VenueServiceUpdate,
     VenueServiceResponse,
+    Coordinates,
+    CourtCreate,
+    CourtUpdate,
+    CourtResponse,
     PricingSlotCreate,
     PricingSlotUpdate,
     PricingSlotResponse,
-    Coordinates,
 )
 from app.services.venue import VenueService, get_venue_service
+from app.services.booking import BookingService, get_booking_service
 
 router = APIRouter(prefix="/venues", tags=["venues"])
 
@@ -219,20 +223,16 @@ async def get_venue(
 async def get_venue_availability(
     venue_id: str,
     date: Annotated[date, Query(description="ISO 8601 date format (YYYY-MM-DD)")],
-    session: DBSession,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
 ) -> AvailabilityResponse:
     """
     Check venue availability for a given date.
 
-    Returns hourly slots showing available/booked status.
+    Returns grid of slots grouped by court.
     """
-    # Create datetime from date for service compatibility
-    date_obj = datetime.combine(date, datetime.min.time())
-
-    availability = await venue_service.get_venue_availability(
+    availability = await booking_service.get_timeline_availability(
         uuid.UUID(venue_id),
-        date_obj,
+        date,
     )
 
     return AvailabilityResponse(**availability)
@@ -526,3 +526,55 @@ async def verify_venue(
     await session.commit()
 
     return {"message": "Venue verified successfully"}
+
+
+# ===== Court Management Endpoints =====
+
+@router.get("/{venue_id}/courts", response_model=list[CourtResponse])
+async def get_venue_courts(
+    venue_id: str,
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+) -> list[CourtResponse]:
+    """Get all courts for a venue."""
+    courts = await venue_service.get_venue_courts(uuid.UUID(venue_id))
+    return [CourtResponse.model_validate(c) for c in courts]
+
+
+@router.post("/{venue_id}/courts", response_model=CourtResponse, status_code=status.HTTP_201_CREATED)
+async def create_court(
+    venue_id: str,
+    court_data: CourtCreate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    session: DBSession,
+) -> CourtResponse:
+    """Add a new court to venue (merchant only)."""
+    court = await venue_service.create_court(
+        venue_id=uuid.UUID(venue_id),
+        merchant_id=current_user.id,
+        name=court_data.name,
+        is_active=court_data.is_active,
+    )
+    await session.commit()
+    return CourtResponse.model_validate(court)
+
+
+@router.put("/courts/{court_id}", response_model=CourtResponse)
+async def update_court(
+    court_id: str,
+    court_data: CourtUpdate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    session: DBSession,
+) -> CourtResponse:
+    """Update court details (merchant only)."""
+    updates = court_data.model_dump(exclude_unset=True)
+    court = await venue_service.update_court(
+        court_id=uuid.UUID(court_id),
+        merchant_id=current_user.id,
+        **updates,
+    )
+    if not court:
+        raise HTTPException(status_code=404, detail="Court not found")
+    await session.commit()
+    return CourtResponse.model_validate(court)

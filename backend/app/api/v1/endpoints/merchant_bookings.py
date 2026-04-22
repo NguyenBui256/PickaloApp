@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_merchant, DBSession
 from app.models.user import User
-from app.models.booking import Booking, BookingStatus
+from app.models.booking import Booking, BookingStatus, BookingSlot
 from app.schemas.booking import (
     BookingResponse,
     BookingListItem,
@@ -126,6 +126,7 @@ async def get_merchant_booking(
         .options(
             selectinload(Booking.venue),
             selectinload(Booking.user),
+            selectinload(Booking.slots).selectinload(BookingSlot.court),
             selectinload(Booking.booking_services),
         )
         .where(Booking.id == booking.id)
@@ -287,17 +288,24 @@ def _booking_to_response(booking: Any) -> BookingResponse:
                 "total": bs.total_price,
             })
 
+    # Slots
+    slots = []
+    if hasattr(booking, 'slots') and booking.slots:
+        for s in booking.slots:
+            slots.append({
+                "id": str(s.id),
+                "court_id": str(s.court_id),
+                "court_name": s.court.name if s.court else None,
+                "start_time": s.start_time.strftime("%H:%M"),
+                "end_time": s.end_time.strftime("%H:%M"),
+                "price": s.price,
+            })
+
     return BookingResponse(
         id=str(booking.id),
         user_id=str(booking.user_id),
         venue_id=str(booking.venue_id),
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
-        duration_minutes=booking.duration_minutes,
-        base_price=booking.base_price,
-        price_factor=booking.price_factor,
-        service_fee=booking.service_fee,
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,
@@ -313,6 +321,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         updated_at=booking.updated_at.isoformat(),
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
+        slots=slots,
         services=services,
     )
 
@@ -325,8 +334,6 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,

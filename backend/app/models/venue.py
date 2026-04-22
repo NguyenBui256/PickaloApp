@@ -19,9 +19,9 @@ from geoalchemy2 import Geography  # PostGIS support
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.user import User
     from app.models.booking import Booking
     from app.models.review import VenueReview
+    from app.models.court import Court
 
 
 class VenueType(str, Enum):
@@ -35,6 +35,7 @@ class VenueType(str, Enum):
     VOLLEYBALL = "Volleyball"
     SWIMMING = "Swimming"
     TABLE_TENNIS = "Table Tennis"
+    PICKLEBALL = "Pickleball"
 
 
 class DayType(str, Enum):
@@ -151,6 +152,12 @@ class Venue(BaseModel):
         "Booking",
         back_populates="venue",
         lazy="selectin",
+    )
+    courts: Mapped[list["Court"]] = relationship(
+        "Court",
+        back_populates="venue",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
     pricing_slots: Mapped[list["PricingTimeSlot"]] = relationship(
         "PricingTimeSlot",
