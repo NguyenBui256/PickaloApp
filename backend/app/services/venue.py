@@ -673,8 +673,7 @@ class VenueService:
 
             # Check if slot is booked
             is_booked = any(
-                b.start_time < slot_end.time() and 
-                (datetime.combine(date.date(), b.start_time) + timedelta(hours=b.duration_hours)).time() > slot_start.time()
+                b.start_time < slot_end.time() and b.end_time > slot_start.time()
                 for b in bookings
             )
 

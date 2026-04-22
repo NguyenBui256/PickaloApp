@@ -229,12 +229,19 @@ class BookingTimelineResponse(BaseModel):
     slots: list[TimeSlot]
 
 
-class MerchantStatsResponse(BaseModel):
-    """Merchant booking revenue statistics response."""
+class MerchantVenueStats(BaseModel):
+    """Stats for a specific venue owned by the merchant."""
 
-    total_bookings: int
-    pending_bookings: int
-    confirmed_bookings: int
-    cancelled_bookings: int
-    total_revenue: Decimal
+    id: str
+    name: str
+    status: str # ACTIVE, PENDING
+    total_bookings: int # Bốn tuần gần nhất hoặc tháng hiện tại
+    revenue_mtd: Decimal
+    rating: float
+
+
+class MerchantStatsResponse(BaseModel):
+    """Response containing a list of venue statistics."""
+
+    venues: list[MerchantVenueStats]
     currency: str = "VND"

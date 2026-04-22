@@ -11,10 +11,12 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, DBSession
 from app.models.user import User
+from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import (
     BookingCreate,
     BookingResponse,
@@ -271,23 +273,6 @@ async def get_venue_timeline(
 
 def _booking_to_response(booking: Any) -> BookingResponse:
     """Convert Booking model to BookingResponse schema."""
-    from sqlalchemy.orm import object_session
-
-    # Ensure relations are loaded
-    session = object_session(booking)
-    if session:
-        # Refresh to get relations if not already loaded
-        from sqlalchemy.orm import selectinload
-        result = session.execute(
-            select(Booking)
-            .options(
-                selectinload(Booking.venue),
-                selectinload(Booking.booking_services),
-            )
-            .where(Booking.id == booking.id)
-        )
-        booking = result.scalar_one()
-
     services = []
     if hasattr(booking, 'booking_services') and booking.booking_services:
         for bs in booking.booking_services:

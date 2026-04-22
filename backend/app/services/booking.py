@@ -600,69 +600,53 @@ class BookingService:
         merchant_id: uuid.UUID,
     ) -> dict[str, Any]:
         """
-        Get booking statistics and revenue for a merchant.
-
-        Args:
-            merchant_id: Merchant UUID
-
-        Returns:
-            Dict with total_bookings, pending_bookings, total_revenue
+        Get per-venue booking statistics and revenue for a merchant.
         """
-        # Get merchant's venue IDs
+        # Get merchant's venues
         venue_result = await self.session.execute(
-            select(Venue.id).where(Venue.merchant_id == merchant_id)
+            select(Venue).where(Venue.merchant_id == merchant_id)
         )
-        venue_ids = [row[0] for row in venue_result.all()]
+        venues = list(venue_result.scalars().all())
 
-        if not venue_ids:
-            return {
-                "total_bookings": 0,
-                "pending_bookings": 0,
-                "confirmed_bookings": 0,
-                "cancelled_bookings": 0,
-                "total_revenue": Decimal("0"),
-                "currency": "VND",
-            }
+        today = date.today()
+        start_of_month = date(today.year, today.month, 1)
 
-        # Count total bookings
-        total_count_result = await self.session.execute(
-            select(func.count(Booking.id)).where(Booking.venue_id.in_(venue_ids))
-        )
-        total_bookings = total_count_result.scalar() or 0
-
-        # Count bookings by status
-        async def count_status(status_enum):
-            res = await self.session.execute(
+        venue_stats_list = []
+        for venue in venues:
+            # Count bookings MTD for this specific venue
+            mtd_count_result = await self.session.execute(
                 select(func.count(Booking.id)).where(
                     and_(
-                        Booking.venue_id.in_(venue_ids),
-                        Booking.status == status_enum
+                        Booking.venue_id == venue.id,
+                        Booking.booking_date >= start_of_month
                     )
                 )
             )
-            return res.scalar() or 0
+            bookings_mtd = mtd_count_result.scalar() or 0
 
-        pending_bookings = await count_status(BookingStatus.PENDING)
-        confirmed_bookings = await count_status(BookingStatus.CONFIRMED)
-        cancelled_bookings = await count_status(BookingStatus.CANCELLED)
-
-        # Calculate total revenue (confirmed/completed bookings)
-        revenue_result = await self.session.execute(
-            select(func.sum(Booking.total_price)).where(
-                and_(
-                    Booking.venue_id.in_(venue_ids),
-                    Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+            # Calculate revenue MTD for this specific venue
+            mtd_revenue_result = await self.session.execute(
+                select(func.sum(Booking.total_price)).where(
+                    and_(
+                        Booking.venue_id == venue.id,
+                        Booking.booking_date >= start_of_month,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
                 )
             )
-        )
-        total_revenue = revenue_result.scalar() or Decimal("0")
+            revenue_mtd = mtd_revenue_result.scalar() or Decimal("0")
+
+            venue_stats_list.append({
+                "id": str(venue.id),
+                "name": venue.name,
+                "status": "ACTIVE" if venue.is_active else "PENDING",
+                "total_bookings": bookings_mtd,
+                "revenue_mtd": revenue_mtd,
+                "rating": 0.0,
+            })
 
         return {
-            "total_bookings": total_bookings,
-            "pending_bookings": pending_bookings,
-            "confirmed_bookings": confirmed_bookings,
-            "cancelled_bookings": cancelled_bookings,
-            "total_revenue": total_revenue,
+            "venues": venue_stats_list,
             "currency": "VND",
         }
 
