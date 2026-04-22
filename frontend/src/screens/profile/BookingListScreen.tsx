@@ -11,7 +11,8 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { MOCK_BOOKINGS, Booking } from '../../constants/mock-data';
+import { MOCK_BOOKINGS, Booking, formatBookingTime, formatBookingDate, formatBookingPrice } from '../../constants/mock-data';
+import { fetchMyBookings } from '../../services/booking-service'; // TODO: gọi service thay vì MOCK_BOOKINGS trực tiếp
 
 const Ribbon = ({ text }: { text: string }) => (
   <View style={styles.ribbonContainer}>
@@ -25,8 +26,8 @@ const Ribbon = ({ text }: { text: string }) => (
 );
 
 const BookingCard = ({ item }: { item: Booking }) => {
-  const isCanceled = item.status === 'CANCELLED' || item.status === 'canceled';
-  const isSuccess = item.status === 'CONFIRMED' || item.status === 'success';
+  const isCanceled = item.status === 'CANCELLED';
+  const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
 
   const getStatusConfig = () => {
     if (isCanceled) return { label: 'Đã hủy', color: '#EA580C', icon: 'close-circle' };
@@ -46,7 +47,7 @@ const BookingCard = ({ item }: { item: Booking }) => {
       <Ribbon text={item.type || 'Đơn ngày'} />
 
       <View style={styles.cardHeader}>
-        <Text style={styles.clubName} numberOfLines={2}>{item.venue_name || item.clubName}</Text>
+        <Text style={styles.clubName} numberOfLines={2}>{item.venue_name}</Text>
         <View style={styles.statusRow}>
           <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
           <MaterialCommunityIcons name={status.icon as any} size={18} color={status.color} />
@@ -56,16 +57,16 @@ const BookingCard = ({ item }: { item: Booking }) => {
       <View style={styles.cardBody}>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Chi tiết:</Text>
-          <Text style={styles.infoValue}>{item.start_time && item.end_time ? `${item.start_time} - ${item.end_time}` : item.time} | {item.booking_date ? new Date(item.booking_date).toLocaleDateString('vi-VN') : item.date}</Text>
+          <Text style={styles.infoValue}>{formatBookingTime(item)} | {formatBookingDate(item)}</Text>
         </View>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Địa chỉ:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>{item.venue_address || item.address}</Text>
+          <Text style={styles.infoValue} numberOfLines={2}>{item.venue_address}</Text>
         </View>
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.priceText}>{item.total_price ? `${Number(item.total_price).toLocaleString('vi-VN')} đ` : `${item.price} đ`}</Text>
+        <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
         <TouchableOpacity
           style={styles.detailBtn}
           onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}

@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
+import { fetchVenues } from '../../services/venue-service'; // TODO: gọi service thay vì dùng VENUES trực tiếp
 import { VenueCard } from '../../components/VenueCard';
 
 export const SearchScreen: React.FC = () => {
@@ -59,11 +60,12 @@ export const SearchScreen: React.FC = () => {
               {...item}
               onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
               onBook={() => navigation.navigate('VenueDetails', { venueId: item.id })}
+              onFavoriteToggle={() => {}}
             />
           )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="magnify-remove" size={80} color={COLORS.GRAY_LIGHT} />
+              <MaterialCommunityIcons name="magnify-close" size={80} color={COLORS.GRAY_LIGHT} />
               <Text style={styles.emptyText}>Không tìm thấy kết quả phù hợp</Text>
             </View>
           }

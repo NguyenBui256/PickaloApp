@@ -23,6 +23,7 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { SocialButton } from '../../components/SocialButton';
 import { useAuthStore } from '../../store/auth-store';
 import { MOCK_USER, MOCK_REGISTER_PAYLOAD, MOCK_OWNER, MOCK_OWNER_REGISTER_PAYLOAD } from '../../constants/mock-data';
+import { login as loginApi } from '../../services/auth-service'; // TODO: gọi loginApi thay vì mock trực tiếp
 
 type AuthStackParamList = {
   Login: undefined;
@@ -53,20 +54,21 @@ export const LoginScreen: React.FC = () => {
     }
 
     // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       
-      if (
-        (activeTab === 'phone' && normalizedPhone === MOCK_REGISTER_PAYLOAD.phone && password === MOCK_REGISTER_PAYLOAD.password) ||
-        (activeTab === 'email' && email === MOCK_USER.email && password === MOCK_REGISTER_PAYLOAD.password)
-      ) {
-        login(MOCK_USER, 'mock-jwt-token');
-      } else if (
-        (activeTab === 'phone' && normalizedPhone === MOCK_OWNER_REGISTER_PAYLOAD.phone && password === MOCK_OWNER_REGISTER_PAYLOAD.password) ||
-        (activeTab === 'email' && email === MOCK_OWNER.email && password === MOCK_OWNER_REGISTER_PAYLOAD.password)
-      ) {
-        login(MOCK_OWNER, 'mock-jwt-token-owner');
-      } else {
+      const loginPayload = {
+        phone: normalizedPhone,
+        password: password
+      };
+
+      try {
+        // Sử dụng service login (hiện đang dùng mock fallback bên trong service)
+        const response = await loginApi(loginPayload);
+        
+        // Lưu vào store
+        login(response.user as any, response.access_token);
+      } catch (error) {
         Alert.alert('Đăng nhập thất bại', 'Số điện thoại/Email hoặc mật khẩu không chính xác.');
       }
     }, 1500);

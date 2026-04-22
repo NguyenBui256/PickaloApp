@@ -18,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { differenceInDays, format, addDays } from 'date-fns';
 import COLORS from '@theme/colors';
 import { OWNER_VENUES } from '../../constants/mock-data';
+import { fetchMyVenues } from '../../services/merchant-service'; // TODO: gọi service thay vì OWNER_VENUES trực tiếp
 
 export const OwnerRevenueReportScreen: React.FC = () => {
   const navigation = useNavigation<any>();

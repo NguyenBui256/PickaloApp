@@ -16,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 import { OWNER_SERVICES } from '../../../constants/mock-data';
+// @ts-ignore — TODO: gọi service khi chuyển sang API thật
+import { fetchVenueServices, createVenueService, deleteVenueService } from '../../../services/venue-service';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 
 export const ServiceManagementScreen: React.FC = () => {

@@ -215,7 +215,7 @@ export function AppNavigator(): React.JSX.Element {
       >
         {isAuthenticated ? (
           <>
-            {user?.role === 'OWNER' ? (
+            {user?.role === 'MERCHANT' ? (
               <Stack.Screen name="Main" component={OwnerNavigator} />
             ) : (
               <Stack.Screen name="Main" component={MainTabs} />

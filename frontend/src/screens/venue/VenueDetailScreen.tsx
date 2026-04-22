@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
+import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
 import { BookingModal } from '../../components/BookingModal';
 
 type RootStackParamList = {

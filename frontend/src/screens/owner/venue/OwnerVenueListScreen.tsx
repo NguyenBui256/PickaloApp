@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { OWNER_VENUES } from '../../../constants/mock-data';
+import { fetchMyVenues } from '../../../services/merchant-service'; // TODO: gọi service thay vì OWNER_VENUES trực tiếp
 
 export const OwnerVenueListScreen: React.FC = () => {
   const navigation = useNavigation<any>();

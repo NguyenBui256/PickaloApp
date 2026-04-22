@@ -193,33 +193,35 @@ export const BANK_DETAILS = {
 };
 
 // Map với Schema: BookingListItem / BookingResponse
+// ⚠️ Chỉ dùng fields từ BE schema. Legacy fields đã xoá.
 export interface Booking {
-  // --- Backend mapping fields ---
-  id: string; // Từ backend id
-  venue_id?: string; // Mới thêm theo mapping
-  venue_name?: string; // Mới thêm từ backend, backend trả về venue_name nếu join
-  venue_address?: string; // Mới thêm từ backend
-  booking_date?: string; // Mới thêm
-  start_time?: string; // Mới thêm
-  end_time?: string; // Mới thêm
-  total_price?: number | string; // Mới thêm
-  is_paid?: boolean; // Mới thêm
-  is_cancelable?: boolean; // Mới thêm
-  created_at?: string; // Mới thêm
+  // --- Backend BookingListItem fields ---
+  id: string;
+  venue_id: string;
+  venue_name: string;
+  venue_address: string;
+  booking_date: string;   // YYYY-MM-DD (ISO)
+  start_time: string;     // HH:MM
+  end_time: string;       // HH:MM
+  total_price: number;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'EXPIRED'; // BE enum chuẩn
+  is_paid: boolean;
+  is_cancelable: boolean;
+  created_at: string;
 
-  // --- Frontend legacy mock fields ---
-  status: 'CANCELLED' | 'COMPLETED' | 'CONFIRMED' | 'PENDING' | 'EXPIRED' | 'canceled' | 'success' | 'pending'; // Backend dùng Uppercase
-  type: string;
-  clubName: string;
-  time: string;
-  date: string;
-  address: string;
-  price: string;
+  // --- FE-only fields (không có trong BE, cần comment) ---
+  type: string;           // ⚠️ FE-only: "Đơn ngày" / "Sự kiện" — BE chưa có field này
 }
+
+// Helper: derive legacy display values từ BE fields
+export const formatBookingTime = (b: Booking) => `${b.start_time} - ${b.end_time}`;
+export const formatBookingDate = (b: Booking) =>
+  new Date(b.booking_date).toLocaleDateString('vi-VN');
+export const formatBookingPrice = (b: Booking) =>
+  `${Number(b.total_price).toLocaleString('vi-VN')} đ`;
 
 export const MOCK_BOOKINGS: Booking[] = [
   {
-    // Backend API mapping fields
     id: '1',
     venue_id: 'v-1234',
     venue_name: 'ALOBO CLUB - VINHOMES OCEAN PARK',
@@ -228,21 +230,13 @@ export const MOCK_BOOKINGS: Booking[] = [
     start_time: '18:00',
     end_time: '19:00',
     total_price: 190000,
+    status: 'CANCELLED',  // BE enum chuẩn
     is_paid: false,
     is_cancelable: false,
     created_at: '2026-03-20T10:00:00Z',
-
-    // Legacy Frontend mapping
-    type: 'Đơn ngày',
-    clubName: 'ALOBO CLUB - VINHOMES OCEAN PARK',
-    status: 'canceled', // Sẽ match logic FE cũ. BE chuẩn sẽ là "CANCELLED"
-    time: '18:00 - 19:00',
-    date: '30/03/2026',
-    address: 'Sân Pickleball, Phân khu Hải Âu, Vinhomes Ocean Park, Gia Lâm, Hà Nội',
-    price: '190.000',
+    type: 'Đơn ngày',     // FE-only
   },
   {
-    // Backend API mapping fields
     id: '2',
     venue_id: 'v-1235',
     venue_name: 'SWIN PICKLEBALL - HAI BA TRUNG',
@@ -251,21 +245,13 @@ export const MOCK_BOOKINGS: Booking[] = [
     start_time: '20:00',
     end_time: '21:00',
     total_price: 150000,
+    status: 'CONFIRMED',  // BE enum chuẩn
     is_paid: true,
     is_cancelable: true,
     created_at: '2026-03-21T14:30:00Z',
-
-    // Legacy Frontend mapping
     type: 'Đơn ngày',
-    clubName: 'SWIN PICKLEBALL - HAI BA TRUNG',
-    status: 'success', // BE chuẩn sẽ là "CONFIRMED"
-    time: '20:00 - 21:00',
-    date: '28/03/2026',
-    address: '458 Minh Khai, Vĩnh Tuy, Hai Bà Trưng, Hà Nội',
-    price: '150.000',
   },
   {
-    // Backend API mapping fields
     id: '3',
     venue_id: 'v-1236',
     venue_name: 'COCO PICKLECLUB - TAN BINH',
@@ -274,18 +260,11 @@ export const MOCK_BOOKINGS: Booking[] = [
     start_time: '08:00',
     end_time: '10:00',
     total_price: 280000,
+    status: 'CANCELLED',  // BE enum chuẩn
     is_paid: false,
     is_cancelable: false,
     created_at: '2026-03-22T09:15:00Z',
-
-    // Legacy Frontend mapping
     type: 'Đơn ngày',
-    clubName: 'COCO PICKLECLUB - TAN BINH',
-    status: 'canceled', // BE: "CANCELLED"
-    time: '08:00 - 10:00',
-    date: '25/03/2026',
-    address: '18E Cộng Hòa, Phường 4, Tân Bình, TP.HCM',
-    price: '280.000',
   },
 ];
 
@@ -308,8 +287,8 @@ export const MOCK_OWNER = {
   id: "o-111-456",
   full_name: "Chủ Sân ALOBO",
   email: "owner@alobo.vn",
-  phone: "0333444555",
-  role: "OWNER",
+  phone: "+84123456789",       // ✅ Unified with MOCK_OWNER_REGISTER_PAYLOAD
+  role: "MERCHANT",            // ✅ Fixed: BE enum = USER | MERCHANT | ADMIN (không có OWNER)
   avatar_url: "https://i.pravatar.cc/150?u=owner",
   is_active: true,
   is_verified: true,
@@ -329,8 +308,8 @@ export const MOCK_REGISTER_PAYLOAD = {
 export const MOCK_OWNER_REGISTER_PAYLOAD = {
   full_name: "Chủ Sân ALOBO",
   phone: "+84123456789",
-  password: "123456",
-  role: "OWNER"
+  password: "Owner1234!",      // ✅ Fixed: BE yêu cầu 8-16 chars + uppercase + lowercase + digit
+  role: "MERCHANT"             // ✅ Fixed: BE enum = MERCHANT (không phải OWNER)
 };
 
 // ==========================================

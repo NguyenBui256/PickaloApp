@@ -11,7 +11,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { Booking } from '../../constants/mock-data';
+import { Booking, formatBookingTime, formatBookingDate } from '../../constants/mock-data';
 
 
 // Color constants from user specs
@@ -50,9 +50,10 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
   const getButtonConfig = () => {
     switch (booking.status) {
-      case 'canceled':
+      case 'CANCELLED':
         return { text: 'BẠN ĐÃ HỦY ĐƠN', color: CANCELLED_ORANGE };
-      case 'success':
+      case 'CONFIRMED':
+      case 'COMPLETED':
         return { text: 'ĐÃ HOÀN THÀNH', color: '#16A34A' };
       default:
         return { text: 'CHỜ XÁC NHẬN', color: '#CA8A04' };
@@ -115,13 +116,13 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
-              <InfoItem label="Câu lạc bộ" value={booking.clubName} />
-              <InfoItem label="Trạng thái" value={booking.status === 'canceled' ? 'Bạn đã hủy đơn' : 'Đã thanh toán'} isYellow />
-              <InfoItem label="Thời gian" value={booking.time} />
-              <InfoItem label="Ngày tháng" value={booking.date} />
+              <InfoItem label="Câu lạc bộ" value={booking.venue_name} />
+              <InfoItem label="Trạng thái" value={booking.status === 'CANCELLED' ? 'Bạn đã hủy đơn' : 'Đã thanh toán'} isYellow />
+              <InfoItem label="Thời gian" value={formatBookingTime(booking)} />
+              <InfoItem label="Ngày tháng" value={formatBookingDate(booking)} />
               <InfoItem label="Thanh phí" value="Chưa thanh toán" isYellow />
               <InfoItem label="Số điện thoại" value="0333333333" isClickable />
-              <InfoItem label="Địa chỉ" value={booking.address} />
+              <InfoItem label="Địa chỉ" value={booking.venue_address} />
               <View style={styles.noteBox}>
                 <Text style={styles.noteText}>SÂN NGOÀI TRỜI</Text>
               </View>

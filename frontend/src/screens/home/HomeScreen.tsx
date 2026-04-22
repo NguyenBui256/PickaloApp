@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,12 @@ import COLORS from '@theme/colors';
 import { CategoryItem } from '../../components/CategoryItem';
 import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
-import { VENUES, CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
+import { CATEGORIES, QUICK_FILTERS, VENUES } from '../../constants/mock-data';
+import { fetchVenues } from '../../services/venue-service';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const [venues, setVenues] = useState(VENUES); // Fallback ban đầu
   const [favoriteVenues, setFavoriteVenues] = useState<string[]>(
     VENUES.filter(v => v.isFavorite).map(v => v.id)
   );
@@ -29,6 +31,17 @@ export const HomeScreen: React.FC = () => {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
+
+  // Load venues từ service (hiện trả về mock, sau bỏ comment sẽ gọi BE)
+  useEffect(() => {
+    fetchVenues().then(res => {
+      // Map lại cho đúng format component cần
+      if (res?.items) {
+        // Khi dùng API thật, cần transform response sang UI format
+        // Hiện tại vẫn dùng VENUES trực tiếp vì mock trả đủ fields
+      }
+    });
+  }, []);
 
   const toggleFavorite = (id: string) => {
     setFavoriteVenues(prev =>

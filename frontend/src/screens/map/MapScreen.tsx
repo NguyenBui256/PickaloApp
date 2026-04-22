@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
+import { fetchVenues, searchVenuesNearby } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES trực tiếp
 
 const { height } = Dimensions.get('window');
 

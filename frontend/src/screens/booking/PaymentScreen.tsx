@@ -15,6 +15,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { VENUES } from '../../constants/mock-data';
+import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
 import { InfoCard } from '../../components/InfoCard';
 
 

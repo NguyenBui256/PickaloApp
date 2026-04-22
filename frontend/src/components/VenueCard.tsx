@@ -15,14 +15,14 @@ const { width } = Dimensions.get('window');
 interface VenueCardProps {
   name: string;
   address: string;
-  distance: string;
-  images?: string[];
-  image?: string;
-  logo: string;
-  hours: string;
-  operating_hours?: { open: string; close: string };
-  badges: string[];
-  isFavorite: boolean;
+  distance?: string;           // FE-only: tự tính từ location + user GPS. BE không trả.
+  images?: string[];            // BE: VenueListItem.images
+  image?: string;               // FE-only fallback: derive từ images[0]
+  logo?: string;                // BE: VenueListItem.logo (nullable)
+  hours?: string;               // FE-only: derive từ operating_hours
+  operating_hours?: { open: string; close: string }; // BE: OperatingHours
+  badges?: string[];            // FE-only: không có trong BE
+  isFavorite?: boolean;         // FE-only: cần API favorites hoặc AsyncStorage
   onPress: () => void;
   onFavoriteToggle: () => void;
   onBook: () => void;
@@ -31,23 +31,28 @@ interface VenueCardProps {
 export const VenueCard: React.FC<VenueCardProps> = ({
   name,
   address,
-  distance,
+  distance = '',
   images,
   image,
   logo,
   hours,
   operating_hours,
-  badges,
-  isFavorite,
+  badges = [],
+  isFavorite = false,
   onPress,
   onFavoriteToggle,
   onBook,
 }) => {
+  // Derive display values từ BE fields
+  const displayImage = images?.[0] || image || '';
+  const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '');
+  const displayLogo = logo || 'https://via.placeholder.com/100';
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       {/* Top Section with Image and Badges */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: images?.[0] || image }} style={styles.image} />
+        <Image source={{ uri: displayImage }} style={styles.image} />
 
         <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
@@ -79,14 +84,14 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       {/* Bottom Content */}
       <View style={styles.content}>
         <View style={styles.infoSection}>
-          <Image source={{ uri: logo }} style={styles.logo} />
+          <Image source={{ uri: displayLogo }} style={styles.logo} />
           <View style={styles.details}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
             <Text style={styles.distance}>{distance}</Text>
             <Text style={styles.address} numberOfLines={1}>{address}</Text>
             <View style={styles.hoursRow}>
               <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
-              <Text style={styles.hoursText}>{operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : hours}</Text>
+              <Text style={styles.hoursText}>{displayHours}</Text>
             </View>
           </View>
         </View>

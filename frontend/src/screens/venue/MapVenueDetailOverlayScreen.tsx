@@ -23,6 +23,7 @@ import Animated, {
   withTiming 
 } from 'react-native-reanimated';
 import { VENUES } from '../../constants/mock-data';
+import { fetchVenueById } from '../../services/venue-service'; // TODO: gọi service thay vì VENUES.find
 import { BookingModal } from '../../components/BookingModal';
 import COLORS from '@theme/colors';
 
