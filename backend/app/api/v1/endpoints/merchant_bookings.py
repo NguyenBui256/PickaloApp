@@ -9,11 +9,12 @@ from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_merchant, DBSession
 from app.models.user import User
-from app.models.booking import BookingStatus
+from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import (
     BookingResponse,
     BookingListItem,
@@ -156,6 +157,35 @@ async def approve_booking(
     await session.refresh(booking)
 
     return _booking_to_response(booking)
+
+
+@router.post("/{booking_id}/complete", response_model=BookingResponse)
+async def complete_booking(
+    booking_id: str,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    session: DBSession,
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+) -> BookingResponse:
+    """
+    Mark a confirmed booking as completed.
+
+    Merchant confirms that the session has ended.
+    """
+    try:
+        booking = await booking_service.complete_booking(
+            uuid.UUID(booking_id),
+            current_user.id,
+        )
+
+        await session.commit()
+        await session.refresh(booking)
+
+        return _booking_to_response(booking)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.post("/{booking_id}/reject", response_model=BookingResponse)

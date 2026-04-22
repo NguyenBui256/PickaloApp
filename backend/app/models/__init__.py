@@ -10,6 +10,7 @@ from app.models.venue import Venue, VenueType, PricingTimeSlot, VenueService, Da
 from app.models.booking import Booking, BookingService, BookingStatus
 from app.models.post import Post, Comment, PostType, PostStatus, SportType
 from app.models.admin import AdminAction, ActionType, TargetType
+from app.models.review import VenueReview
 
 __all__ = [
     # Base

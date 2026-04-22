@@ -311,7 +311,7 @@ class BookingService:
 
         if not booking.is_cancelable:
             raise ValueError(
-                f"Booking cannot be cancelled (current status: {booking.status.value})"
+                f"Booking cannot be cancelled (current status: {booking.status})"
             )
 
         booking.cancel(cancelled_by)
@@ -349,12 +349,32 @@ class BookingService:
 
         if not booking.can_be_approved:
             raise ValueError(
-                f"Booking cannot be approved (status: {booking.status.value}, paid: {booking.is_paid})"
+                f"Booking cannot be approved (status: {booking.status}, paid: {booking.is_paid})"
             )
 
         booking.approve()
         await self.session.flush()
         return booking
+
+    async def complete_booking(
+        self,
+        booking_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+    ) -> Booking:
+        """
+        Merchant marks a confirmed booking as completed.
+        """
+        booking = await self.get_booking_by_id(booking_id, merchant_id=merchant_id)
+
+        if not booking:
+            raise ValueError("Booking not found")
+
+        try:
+            booking.complete()
+            await self.session.flush()
+            return booking
+        except ValueError as e:
+            raise ValueError(str(e))
 
     async def reject_booking(
         self,
@@ -383,7 +403,7 @@ class BookingService:
 
         if booking.status != BookingStatus.PENDING:
             raise ValueError(
-                f"Cannot reject booking with status: {booking.status.value}"
+                f"Cannot reject booking with status: {booking.status}"
             )
 
         # Reject by cancelling with merchant as cancelled_by

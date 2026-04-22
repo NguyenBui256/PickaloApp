@@ -47,7 +47,7 @@ class Booking(BaseModel):
         base_price: Price before multipliers
         price_factor: Dynamic pricing multiplier applied
         service_fee: Platform service fee
-        total_price: Final price to pay
+        total_price: Final price pay
         status: Current booking state
         payment_method: Payment gateway used
         payment_id: Transaction ID from payment provider
@@ -183,11 +183,22 @@ class Booking(BaseModel):
         """Check if merchant can approve this booking."""
         return self.status == BookingStatus.PENDING and self.is_paid
 
+    @property
+    def can_be_completed(self) -> bool:
+        """Check if booking can be marked as completed."""
+        return self.status == BookingStatus.CONFIRMED
+
     def approve(self) -> None:
         """Approve the booking (merchant action)."""
         if not self.can_be_approved:
             raise ValueError("Booking cannot be approved")
         self.status = BookingStatus.CONFIRMED
+
+    def complete(self) -> None:
+        """Mark the booking as completed (merchant action)."""
+        if not self.can_be_completed:
+            raise ValueError("Booking cannot be completed")
+        self.status = BookingStatus.COMPLETED
 
     def cancel(self, cancelled_by: str) -> None:
         """
