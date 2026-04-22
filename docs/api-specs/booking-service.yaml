@@ -1,0 +1,331 @@
+# ============================================
+# Booking Service — OpenAPI 3.0 Specification
+# Docs: https://swagger.io/specification/
+# ============================================
+openapi: 3.0.3
+info:
+  title: Booking Service API
+  description: |
+    API specification for Booking Service.
+    Handles booking creation, price calculations, and reservation management for users.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+    description: Local development
+
+tags:
+  - name: user-bookings
+    description: Operations for users to manage their bookings
+
+paths:
+  /api/v1/bookings:
+    get:
+      tags:
+        - user-bookings
+      summary: List my bookings
+      operationId: listMyBookings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED, REJECTED]
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A list of user bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+
+    post:
+      tags:
+        - user-bookings
+      summary: Create a new booking
+      operationId: createBooking
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid booking data or slot unavailable
+
+  /api/v1/bookings/price-calculation:
+    post:
+      tags:
+        - user-bookings
+      summary: Calculate booking price preview
+      description: Get detailed price breakdown before creating a booking
+      operationId: calculatePrice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingPricePreview'
+      responses:
+        '200':
+          description: Price calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPriceResponse'
+
+  /api/v1/bookings/{booking_id}:
+    get:
+      tags:
+        - user-bookings
+      summary: Get booking details
+      operationId: getBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detailed booking information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+
+  /api/v1/bookings/{booking_id}/cancel:
+    post:
+      tags:
+        - user-bookings
+      summary: Cancel a booking
+      operationId: cancelBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCancel'
+      responses:
+        '200':
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BookingStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED, REJECTED]
+
+    BookingCreate:
+      type: object
+      required: [venue_id, booking_date, slots]
+      properties:
+        venue_id:
+          type: string
+          format: uuid
+        booking_date:
+          type: string
+          format: date
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingSlotInfo'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingServiceRequest'
+        notes:
+          type: string
+
+    BookingSlotInfo:
+      type: object
+      required: [court_id, start_time, end_time]
+      properties:
+        court_id:
+          type: string
+          format: uuid
+        start_time:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        end_time:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+
+    BookingServiceRequest:
+      type: object
+      required: [service_id, quantity]
+      properties:
+        service_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+
+    BookingPricePreview:
+      type: object
+      required: [venue_id, booking_date, slots]
+      properties:
+        venue_id:
+          type: string
+          format: uuid
+        booking_date:
+          type: string
+          format: date
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingSlotInfo'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingServiceRequest'
+
+    BookingPriceResponse:
+      type: object
+      properties:
+        total:
+          type: number
+        subtotal:
+          type: number
+        service_fee:
+          type: number
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              pricing:
+                type: object
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venue_id:
+          type: string
+          format: uuid
+        booking_date:
+          type: string
+        total_price:
+          type: number
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        is_paid:
+          type: boolean
+        is_cancelable:
+          type: boolean
+        created_at:
+          type: string
+        venue_name:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingSlotResponse'
+
+    BookingSlotResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        court_id:
+          type: string
+        court_name:
+          type: string
+        start_time:
+          type: string
+        end_time:
+          type: string
+        price:
+          type: number
+
+    BookingListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venue_name:
+          type: string
+        booking_date:
+          type: string
+        total_price:
+          type: number
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        is_paid:
+          type: boolean
+
+    BookingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingListItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    BookingCancel:
+      type: object
+      properties:
+        reason:
+          type: string
