@@ -123,6 +123,7 @@ export interface VenueResponse {
   base_price_per_hour: number;
   is_active: boolean;
   is_verified: boolean;
+  isFavorite?: boolean; // FE-only field
   created_at: string;
   updated_at: string;
 }
@@ -138,6 +139,7 @@ export interface VenueListItem {
   location: Coordinates;
   base_price_per_hour: number;
   is_verified: boolean;
+  isFavorite?: boolean; // FE-only field
   images?: string[] | null;
   amenities?: string[] | null;
   logo?: string | null;
@@ -326,6 +328,7 @@ export interface BookingResponse {
   venue_address?: string | null;
   services: BookingServiceItem[];
   slots: BookingSlotResponse[];
+  review_id?: string | null;
 }
 
 /** Backend: BookingListItem — item trong BookingListResponse */
@@ -342,6 +345,7 @@ export interface BookingListItem {
   is_paid: boolean;
   is_cancelable: boolean;
   created_at: string;
+  review_id?: string | null;
 }
 
 /** Backend: BookingListResponse — GET /bookings */
@@ -485,4 +489,41 @@ export interface UserUpdateRequest {
   email?: string | null;
   avatar_url?: string | null;
   date_of_birth?: string | null;
+}
+
+// ==========================================
+// REVIEW SCHEMAS (app/schemas/review.py)
+// ==========================================
+
+/** Backend: ReviewCreate — POST /venues/{id}/reviews */
+export interface ReviewCreateRequest {
+  rating: number; // 1-5
+  comment?: string | null;
+  images?: string[] | null;
+}
+
+/** Backend: ReviewUpdate — PUT /reviews/{id} */
+export interface ReviewUpdateRequest {
+  rating?: number | null;
+  comment?: string | null;
+  images?: string[] | null;
+}
+
+/** Backend: ReviewResponse — GET /venues/{id}/reviews, POST /venues/{id}/reviews */
+export interface ReviewResponse {
+  id: string;
+  user_id: string;
+  venue_id: string;
+  rating: number;
+  comment?: string | null;
+  user_name: string;
+  created_at: string;
+}
+
+/** Backend: ReviewListResponse — GET /venues/{id}/reviews */
+export interface ReviewListResponse {
+  items: ReviewResponse[];
+  total: number;
+  page: number;
+  pages: number;
 }

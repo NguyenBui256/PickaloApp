@@ -91,6 +91,7 @@ export const fetchVenues = async (params?: VenueSearchParams): Promise<VenueList
       bookingLink: v.bookingLink,
       category: v.category,
       rating: v.rating,
+      isFavorite: v.isFavorite,
     })),
     total: filtered.length,
     page: params?.page || 1,
@@ -167,6 +168,7 @@ export const fetchVenueById = async (venueId: string): Promise<VenueResponse | n
     base_price_per_hour: venue.base_price_per_hour,
     is_active: true,
     is_verified: venue.is_verified,
+    isFavorite: venue.isFavorite,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

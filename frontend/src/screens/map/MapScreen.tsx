@@ -71,7 +71,7 @@ export const MapScreen: React.FC = () => {
         {venues.filter(v => activeCategory === 'all' || (v.category || '').toLowerCase().includes(activeCategory.toLowerCase())).map((venue) => (
           <Marker
             key={venue.id}
-            coordinate={{ latitude: venue.lat, longitude: venue.lng }}
+            coordinate={{ latitude: venue.location.lat, longitude: venue.location.lng }}
             title={venue.name}
             description={venue.address}
             pinColor={getMarkerColor(venue.category)}

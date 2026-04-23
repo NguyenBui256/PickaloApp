@@ -14,6 +14,7 @@ import { LoginScreen } from '@screens/auth/LoginScreen';
 import { HomeScreen } from '@screens/home/HomeScreen';
 import { VenueDetailScreen } from '@screens/venue/VenueDetailScreen';
 import { MapVenueDetailOverlayScreen } from '@screens/venue/MapVenueDetailOverlayScreen';
+import { ReviewSubmissionScreen } from '@screens/venue/ReviewSubmissionScreen';
 import { MapScreen } from '@screens/map/MapScreen';
 import { ExploreScreen } from '@screens/explore/ExploreScreen';
 import { HighlightsScreen } from '@screens/highlights/HighlightsScreen';
@@ -56,6 +57,7 @@ export type RootStackParamList = {
   MaintenanceScheduler: { venueId: string };
   OwnerBookingDetail: { booking: any };
   OwnerRevenueReport: undefined;
+  ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
 };
 
 export type MainTabParamList = {
@@ -282,6 +284,11 @@ export function AppNavigator(): React.JSX.Element {
             <Stack.Screen
               name="OwnerRevenueReport"
               component={OwnerRevenueReportScreen}
+            />
+            <Stack.Screen
+              name="ReviewSubmission"
+              component={ReviewSubmissionScreen}
+              options={{ presentation: 'modal' }}
             />
           </>
         ) : (

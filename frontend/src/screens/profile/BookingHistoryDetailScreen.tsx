@@ -53,10 +53,25 @@ export const BookingHistoryDetailScreen: React.FC = () => {
       case 'CANCELLED':
         return { text: 'BẠN ĐÃ HỦY ĐƠN', color: CANCELLED_ORANGE };
       case 'CONFIRMED':
+        return { text: 'ĐÃ XÁC NHẬN', color: '#16A34A' };
       case 'COMPLETED':
-        return { text: 'ĐÃ HOÀN THÀNH', color: '#16A34A' };
+        return { 
+          text: booking.review_id ? 'XEM ĐÁNH GIÁ' : 'ĐÁNH GIÁ NGAY', 
+          color: COLORS.PRIMARY 
+        };
       default:
         return { text: 'CHỜ XÁC NHẬN', color: '#CA8A04' };
+    }
+  };
+
+  const handleActionPress = () => {
+    if (booking.status === 'COMPLETED') {
+      navigation.navigate('ReviewSubmission', {
+        venueId: booking.venue_id,
+        venueName: booking.venue_name,
+        bookingId: booking.id,
+        reviewId: booking.review_id
+      });
     }
   };
 
@@ -149,7 +164,10 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
       {/* Action Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}>
+        <TouchableOpacity 
+          style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}
+          onPress={handleActionPress}
+        >
           <Text style={styles.actionBtnText}>{buttonConfig.text}</Text>
         </TouchableOpacity>
       </View>

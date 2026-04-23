@@ -14,7 +14,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
+import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
+import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
   VenueDetails: { venueId: string };
@@ -34,6 +36,8 @@ export const VenueDetailScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Thông tin');
   const [isFavorite, setIsFavorite] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   useEffect(() => {
     fetchVenueById(venueId).then(res => {
@@ -44,6 +48,15 @@ export const VenueDetailScreen: React.FC = () => {
       }
     });
   }, [venueId]);
+  useEffect(() => {
+    if (activeTab === 'Đánh giá' && reviews.length === 0) {
+      setIsLoadingReviews(true);
+      fetchVenueReviews(venueId).then(res => {
+        setReviews(res.items);
+        setIsLoadingReviews(false);
+      });
+    }
+  }, [activeTab, venueId]);
 
   const handleBookPress = () => {
     setBookingModalVisible(true);
@@ -77,7 +90,6 @@ export const VenueDetailScreen: React.FC = () => {
     // Simulation of clipboard copy
     Alert.alert('Đã sao chép link', venue.bookingLink);
   };
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'Thông tin':
@@ -92,6 +104,55 @@ export const VenueDetailScreen: React.FC = () => {
                 <MaterialCommunityIcons name="content-copy" size={20} color={COLORS.PRIMARY} />
               </TouchableOpacity>
             </View>
+          </View>
+        );
+      case 'Đánh giá':
+        return (
+          <View style={styles.tabContent}>
+            <View style={styles.reviewsHeader}>
+              <Text style={styles.sectionTitle}>Đánh giá từ khách hàng</Text>
+              <View style={styles.ratingSummary}>
+                <MaterialCommunityIcons name="star" size={20} color={COLORS.YELLOW} />
+                <Text style={styles.summaryScore}>{venue.rating || '0.0'}</Text>
+                <Text style={styles.summaryCount}>({reviews.length} đánh giá)</Text>
+              </View>
+            </View>
+
+            {isLoadingReviews ? (
+              <Text style={styles.loadingText}>Đang tải đánh giá...</Text>
+            ) : reviews.length > 0 ? (
+              reviews.map((item) => (
+                <View key={item.id} style={styles.reviewItem}>
+                  <View style={styles.reviewHeader}>
+                    <View style={styles.userAvatarPlaceholder}>
+                      <Text style={styles.avatarText}>{item.user_name.charAt(0)}</Text>
+                    </View>
+                    <View style={styles.reviewUserInfo}>
+                      <Text style={styles.reviewUserName}>{item.user_name}</Text>
+                      <View style={styles.starsRow}>
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <MaterialCommunityIcons
+                            key={s}
+                            name={s <= item.rating ? 'star' : 'star-outline'}
+                            size={14}
+                            color={COLORS.YELLOW}
+                          />
+                        ))}
+                        <Text style={styles.reviewDate}>
+                          {new Date(item.created_at).toLocaleDateString('vi-VN')}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={styles.reviewComment}>{item.comment}</Text>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyReviews}>
+                <MaterialCommunityIcons name="comment-text-multiple-outline" size={48} color={COLORS.GRAY_LIGHT} />
+                <Text style={styles.emptyText}>Chưa có đánh giá nào cho sân này.</Text>
+              </View>
+            )}
           </View>
         );
       default:
@@ -433,5 +494,83 @@ const styles = StyleSheet.create({
     color: COLORS.GRAY_MEDIUM,
     textAlign: 'center',
     marginTop: 20,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ratingSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  summaryScore: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+  },
+  summaryCount: {
+    fontSize: 12,
+    color: COLORS.GRAY_MEDIUM,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: COLORS.GRAY_MEDIUM,
+    paddingVertical: 20,
+  },
+  reviewItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+  },
+  reviewUserInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  reviewUserName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
+  },
+  reviewDate: {
+    fontSize: 11,
+    color: COLORS.GRAY_MEDIUM,
+    marginLeft: 8,
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    lineHeight: 20,
+    paddingLeft: 52,
+  },
+  emptyReviews: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
 });

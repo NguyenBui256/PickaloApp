@@ -211,6 +211,7 @@ export interface Booking {
 
   // --- FE-only fields (không có trong BE, cần comment) ---
   type: string;           // ⚠️ FE-only: "Đơn ngày" / "Sự kiện" — BE chưa có field này
+  review_id?: string | null; // ⚠️ FE-only: ID của đánh giá (nếu đã đánh giá)
 }
 
 // Helper: derive legacy display values từ BE fields
@@ -245,11 +246,12 @@ export const MOCK_BOOKINGS: Booking[] = [
     start_time: '20:00',
     end_time: '21:00',
     total_price: 150000,
-    status: 'CONFIRMED',  // BE enum chuẩn
+    status: 'COMPLETED',  // BE enum chuẩn
     is_paid: true,
     is_cancelable: true,
     created_at: '2026-03-21T14:30:00Z',
     type: 'Đơn ngày',
+    review_id: 'r-mock-123', // Giả lập đã đánh giá
   },
   {
     id: '3',
@@ -260,11 +262,12 @@ export const MOCK_BOOKINGS: Booking[] = [
     start_time: '08:00',
     end_time: '10:00',
     total_price: 280000,
-    status: 'CANCELLED',  // BE enum chuẩn
-    is_paid: false,
+    status: 'COMPLETED',  // BE enum chuẩn
+    is_paid: true,
     is_cancelable: false,
     created_at: '2026-03-22T09:15:00Z',
     type: 'Đơn ngày',
+    review_id: 'r-mock-456', // Giả lập đã đánh giá
   },
 ];
 

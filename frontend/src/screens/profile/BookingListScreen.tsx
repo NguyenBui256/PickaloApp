@@ -67,12 +67,29 @@ const BookingCard = ({ item }: { item: Booking }) => {
 
       <View style={styles.cardFooter}>
         <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
-        <TouchableOpacity
-          style={styles.detailBtn}
-          onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
-        >
-          <Text style={styles.detailBtnText}>Xem chi tiết</Text>
-        </TouchableOpacity>
+        <View style={styles.footerActions}>
+          {item.status === 'COMPLETED' && (
+            <TouchableOpacity
+              style={[styles.detailBtn, styles.reviewBtn]}
+              onPress={() => navigation.navigate('ReviewSubmission', { 
+                venueId: item.venue_id, 
+                venueName: item.venue_name,
+                bookingId: item.id,
+                reviewId: item.review_id
+              })}
+            >
+              <Text style={[styles.detailBtnText, styles.reviewBtnText]}>
+                {item.review_id ? 'Xem đánh giá' : 'Đánh giá'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.detailBtn}
+            onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
+          >
+            <Text style={styles.detailBtnText}>Xem chi tiết</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -293,5 +310,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.PRIMARY,
     fontWeight: '600',
+  },
+  footerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  reviewBtn: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  reviewBtnText: {
+    color: COLORS.WHITE,
   },
 });

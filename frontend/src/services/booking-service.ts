@@ -152,6 +152,7 @@ export const fetchMyBookings = async (
     is_paid: b.is_paid ?? false,
     is_cancelable: b.is_cancelable ?? false,
     created_at: b.created_at || new Date().toISOString(),
+    review_id: b.review_id,
   }));
 
   if (filters?.status) {
@@ -196,6 +197,7 @@ export const fetchBookingById = async (bookingId: string): Promise<BookingRespon
     venue_address: booking.venue_address,
     services: [],
     slots: [],
+    review_id: booking.review_id,
   };
 };
 

@@ -23,7 +23,9 @@ import Animated, {
   withTiming 
 } from 'react-native-reanimated';
 import { fetchVenueById } from '../../services/venue-service';
+import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
+import type { ReviewResponse } from '../../types/api-types';
 import COLORS from '@theme/colors';
 
 const { height } = Dimensions.get('window');
@@ -48,6 +50,8 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedBookingType, setSelectedBookingType] = useState<'normal' | 'event' | null>(null);
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
   useEffect(() => {
     fetchVenueById(venueId).then(res => {
@@ -58,6 +62,16 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
       }
     });
   }, [venueId]);
+
+  useEffect(() => {
+    if (activeTab === 'Đánh giá' && reviews.length === 0) {
+      setIsLoadingReviews(true);
+      fetchVenueReviews(venueId).then(res => {
+        setReviews(res.items);
+        setIsLoadingReviews(false);
+      });
+    }
+  }, [activeTab, venueId]);
 
   // Gesture handling
   const translateY = useSharedValue(0);
@@ -132,6 +146,56 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
         </View>
       );
     }
+    if (activeTab === 'Đánh giá') {
+      return (
+        <View style={styles.tabContent}>
+          <View style={styles.reviewsHeader}>
+            <Text style={styles.sectionTitle}>Đánh giá từ khách hàng</Text>
+            <View style={styles.ratingSummary}>
+              <MaterialCommunityIcons name="star" size={18} color={COLORS.YELLOW} />
+              <Text style={styles.summaryScore}>{venue.rating || '0.0'}</Text>
+              <Text style={styles.summaryCount}>({reviews.length})</Text>
+            </View>
+          </View>
+
+          {isLoadingReviews ? (
+            <Text style={styles.loadingText}>Đang tải đánh giá...</Text>
+          ) : reviews.length > 0 ? (
+            reviews.map((item) => (
+              <View key={item.id} style={styles.reviewItem}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.userAvatarPlaceholder}>
+                    <Text style={styles.avatarText}>{item.user_name.charAt(0)}</Text>
+                  </View>
+                  <View style={styles.reviewUserInfo}>
+                    <Text style={styles.reviewUserName}>{item.user_name}</Text>
+                    <View style={styles.starsRow}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <MaterialCommunityIcons
+                          key={s}
+                          name={s <= item.rating ? 'star' : 'star-outline'}
+                          size={12}
+                          color={COLORS.YELLOW}
+                        />
+                      ))}
+                      <Text style={styles.reviewDate}>
+                        {new Date(item.created_at).toLocaleDateString('vi-VN')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <Text style={styles.reviewComment}>{item.comment}</Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyReviews}>
+              <MaterialCommunityIcons name="comment-text-multiple-outline" size={40} color={COLORS.GRAY_LIGHT} />
+              <Text style={styles.emptyText}>Chưa có đánh giá nào.</Text>
+            </View>
+          )}
+        </View>
+      );
+    }
     return (
       <View style={styles.tabContent}>
         <Text style={styles.emptyText}>Đang cập nhật nội dung cho tab {activeTab}...</Text>
@@ -149,8 +213,8 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
           provider={PROVIDER_GOOGLE}
           style={styles.map}
           initialRegion={{
-            latitude: venue.lat,
-            longitude: venue.lng,
+            latitude: venue.location.lat,
+            longitude: venue.location.lng,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           }}
@@ -158,7 +222,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
           zoomEnabled={false}
         >
           <Marker
-            coordinate={{ latitude: venue.lat, longitude: venue.lng }}
+            coordinate={{ latitude: venue.location.lat, longitude: venue.location.lng }}
             pinColor={COLORS.PRIMARY}
           />
         </MapView>
@@ -585,5 +649,82 @@ const styles = StyleSheet.create({
     color: COLORS.GRAY_MEDIUM,
     textAlign: 'center',
     marginTop: 10,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  ratingSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  summaryScore: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+  },
+  summaryCount: {
+    fontSize: 12,
+    color: COLORS.GRAY_MEDIUM,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: COLORS.GRAY_MEDIUM,
+    paddingVertical: 15,
+  },
+  reviewItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  userAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+  },
+  reviewUserInfo: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  reviewUserName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  reviewDate: {
+    fontSize: 10,
+    color: COLORS.GRAY_MEDIUM,
+    marginLeft: 6,
+  },
+  reviewComment: {
+    fontSize: 13,
+    color: COLORS.TEXT_SECONDARY,
+    lineHeight: 18,
+    paddingLeft: 42,
+  },
+  emptyReviews: {
+    alignItems: 'center',
+    paddingVertical: 30,
   },
 });
