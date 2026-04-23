@@ -499,14 +499,12 @@ export interface UserUpdateRequest {
 export interface ReviewCreateRequest {
   rating: number; // 1-5
   comment?: string | null;
-  images?: string[] | null;
 }
 
 /** Backend: ReviewUpdate — PUT /reviews/{id} */
 export interface ReviewUpdateRequest {
   rating?: number | null;
   comment?: string | null;
-  images?: string[] | null;
 }
 
 export interface ReviewUser {
@@ -522,7 +520,6 @@ export interface ReviewResponse {
   user: ReviewUser;
   rating: number;
   comment?: string | null;
-  images?: string[] | null;
   created_at: string;
   updated_at: string;
 }

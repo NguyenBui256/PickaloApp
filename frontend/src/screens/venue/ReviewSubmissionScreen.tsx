@@ -159,12 +159,6 @@ export const ReviewSubmissionScreen: React.FC = () => {
           />
         </View>
 
-        <View style={styles.imageSection}>
-          <TouchableOpacity style={styles.addImageBtn}>
-            <MaterialCommunityIcons name="camera-plus" size={24} color={COLORS.PRIMARY} />
-            <Text style={styles.addImageText}>Thêm hình ảnh</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -254,25 +248,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E9ECEF',
     minHeight: 120,
-  },
-  imageSection: {
-    marginBottom: 32,
-  },
-  addImageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.PRIMARY,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 16,
-    justifyContent: 'center',
-  },
-  addImageText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.PRIMARY,
   },
   footer: {
     padding: 20,

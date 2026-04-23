@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
-import { fetchVenueReviews } from '../../services/review-service';
+import { fetchVenueReviews, deleteReview } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { useAuthStore } from '../../store/auth-store';
 import { updateVenueStatus } from '../../services/admin-service';
@@ -45,24 +45,36 @@ export const VenueDetailScreen: React.FC = () => {
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchVenueById(venueId).then(res => {
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchVenueById(venueId);
       if (res) {
         setVenue(res);
-        // @ts-ignore - isFavorite là field mở rộng của FE mock
+        // @ts-ignore
         setIsFavorite((res as any).isFavorite || false);
       }
-    });
+      
+      setIsLoadingReviews(true);
+      const reviewsRes = await fetchVenueReviews(venueId);
+      setReviews(reviewsRes.items);
+    } catch (error) {
+      console.error('Error fetching venue data:', error);
+    } finally {
+      setIsLoadingReviews(false);
+    }
   }, [venueId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
   useEffect(() => {
     if (activeTab === 'Đánh giá' && reviews.length === 0) {
-      setIsLoadingReviews(true);
-      fetchVenueReviews(venueId).then(res => {
-        setReviews(res.items);
-        setIsLoadingReviews(false);
-      });
+      fetchData();
     }
-  }, [activeTab, venueId]);
+  }, [activeTab, fetchData, reviews.length]);
 
   const handleBookPress = () => {
     setBookingModalVisible(true);
@@ -201,8 +213,8 @@ export const VenueDetailScreen: React.FC = () => {
                                   onPress: async () => {
                                     try {
                                       await deleteReview(item.id);
-                                      setReviews(prev => prev.filter(r => r.id !== item.id));
                                       Alert.alert('Thành công', 'Đã xóa đánh giá');
+                                      fetchData(); // Tải lại toàn bộ dữ liệu (bao gồm rating tổng)
                                     } catch (err) {
                                       Alert.alert('Lỗi', 'Không thể xóa đánh giá lúc này');
                                     }
