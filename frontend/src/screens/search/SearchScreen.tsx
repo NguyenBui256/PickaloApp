@@ -23,11 +23,25 @@ export const SearchScreen: React.FC = () => {
   const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadVenues = async () => {
+    try {
+      const res = await fetchVenues();
+      if (res?.items) setVenues(res.items);
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+    }
+  };
 
   useEffect(() => {
-    fetchVenues().then(res => {
-      if (res?.items) setVenues(res.items);
-    });
+    loadVenues();
+  }, [user]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadVenues();
+    setRefreshing(false);
   }, []);
 
   const handleToggleFavorite = async (id: string) => {
@@ -79,6 +93,8 @@ export const SearchScreen: React.FC = () => {
           data={filteredVenues}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => (
             <VenueCard
               {...item}

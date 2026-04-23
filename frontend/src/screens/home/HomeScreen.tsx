@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,17 +29,31 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
 
-  useEffect(() => {
-    fetchVenues().then(res => {
+  const loadVenues = async () => {
+    try {
+      const res = await fetchVenues();
       if (res?.items) {
         setVenues(res.items);
       }
-    });
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadVenues();
+  }, [user]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadVenues();
+    setRefreshing(false);
   }, []);
 
   const handleToggleFavorite = async (id: string) => {
@@ -74,6 +89,14 @@ export const HomeScreen: React.FC = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]} // Keep search bar sticky or semi-sticky if desired
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.PRIMARY]} // Android
+            tintColor={COLORS.PRIMARY} // iOS
+          />
+        }
       >
         {/* Header Section */}
         <LinearGradient colors={COLORS.GRADIENT_GREEN} style={styles.header}>

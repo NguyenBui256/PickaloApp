@@ -57,7 +57,7 @@ async def get_favorite_venues(
     
     # Convert to list items manually to handle location coordinates
     items = []
-    for venue in venues:
+    for venue, is_fav in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -69,6 +69,7 @@ async def get_favorite_venues(
             location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
+            is_favorite=is_fav,
             images=venue.images,
             amenities=venue.amenities,
             logo=venue.logo if hasattr(venue, 'logo') else None,

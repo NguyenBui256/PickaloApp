@@ -23,13 +23,6 @@ interface VenueCardProps {
   hours?: string | null;               // FE-only: derive từ operating_hours
   operating_hours?: { open: string; close: string } | null; // BE: OperatingHours
   badges?: string[] | null;            // FE-only: không có trong BE
-  amenities?: string[] | null;         // BE: VenueListItem.amenities
-  category?: string | null;            // BE: VenueListItem.category
-  rating?: number | null;              // BE: VenueListItem.rating
-  review_count?: number | null;        // BE: VenueListItem.review_count
-  fullAddress?: string | null;         // BE: VenueListItem.fullAddress
-  district?: string | null;            // BE: VenueListItem.district
-  is_verified?: boolean;               // BE: is_verified column
   is_favorite?: boolean;         // BE: is_favorite column
   onPress: () => void;
   onFavoriteToggle: () => void;

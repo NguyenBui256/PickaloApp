@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, exists, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2 import functions as geofunc
 
@@ -112,8 +112,21 @@ class VenueManagementService:
         # Note: Amenities filtering done at app level (stored as JSON)
         # TODO: Add dedicated columns for has_parking, has_lights for efficient filtering
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
         # Build base query
-        query = select(Venue).where(and_(*conditions))
+        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
         count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
 
         if only_favorites and user_id:
@@ -131,9 +144,10 @@ class VenueManagementService:
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def get_merchant_venues(
         self,
@@ -280,8 +294,21 @@ class VenueManagementService:
         if max_price is not None:
             conditions.append(Venue.base_price_per_hour <= max_price)
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
         # Build queries
-        query = select(Venue).where(and_(*conditions))
+        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
         count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
 
         if only_favorites and user_id:
@@ -299,9 +326,10 @@ class VenueManagementService:
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def create_venue(
         self,

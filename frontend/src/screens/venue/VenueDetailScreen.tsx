@@ -52,7 +52,7 @@ export const VenueDetailScreen: React.FC = () => {
       if (res) {
         setVenue(res);
         // @ts-ignore
-        setIsFavorite((res as any).isFavorite || false);
+        setIsFavorite((res as any).is_favorite || false);
       }
       
       setIsLoadingReviews(true);
