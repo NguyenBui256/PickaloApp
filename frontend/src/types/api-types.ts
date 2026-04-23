@@ -123,7 +123,7 @@ export interface VenueResponse {
   base_price_per_hour: number;
   is_active: boolean;
   is_verified: boolean;
-  isFavorite?: boolean; // FE-only field
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -139,7 +139,7 @@ export interface VenueListItem {
   location: Coordinates;
   base_price_per_hour: number;
   is_verified: boolean;
-  isFavorite?: boolean; // FE-only field
+  is_favorite: boolean;
   images?: string[] | null;
   amenities?: string[] | null;
   logo?: string | null;

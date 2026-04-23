@@ -18,6 +18,7 @@ import { fetchVenueReviews, deleteReview } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { useAuthStore } from '../../store/auth-store';
 import { updateVenueStatus } from '../../services/admin-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
@@ -127,6 +128,20 @@ export const VenueDetailScreen: React.FC = () => {
       });
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(venueId);
+      setIsFavorite(res.is_favorite);
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
     }
   };
 
@@ -281,7 +296,7 @@ export const VenueDetailScreen: React.FC = () => {
                       <MaterialCommunityIcons name="share-variant" size={22} color={COLORS.BLACK} />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => setIsFavorite(!isFavorite)}
+                      onPress={handleToggleFavorite}
                       style={styles.circularBtn}
                     >
                       <MaterialCommunityIcons

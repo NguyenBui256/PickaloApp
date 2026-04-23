@@ -22,7 +22,7 @@ interface VenueCardProps {
   hours?: string;               // FE-only: derive từ operating_hours
   operating_hours?: { open: string; close: string }; // BE: OperatingHours
   badges?: string[];            // FE-only: không có trong BE
-  isFavorite?: boolean;         // FE-only: cần API favorites hoặc AsyncStorage
+  is_favorite?: boolean;         // BE: is_favorite column
   onPress: () => void;
   onFavoriteToggle: () => void;
   onBook: () => void;
@@ -38,7 +38,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   hours,
   operating_hours,
   badges = [],
-  isFavorite = false,
+  is_favorite = false,
   onPress,
   onFavoriteToggle,
   onBook,
@@ -70,9 +70,9 @@ export const VenueCard: React.FC<VenueCardProps> = ({
 
         <View style={styles.topActions}>
           <TouchableOpacity style={styles.actionCircle} onPress={onFavoriteToggle}>
-            <MaterialCommunityIcons               name={isFavorite ? 'heart' : 'heart-outline'}
+            <MaterialCommunityIcons               name={is_favorite ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFavorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
+              color={is_favorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionCircle}>

@@ -20,13 +20,14 @@ import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
 import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import { useAuthStore } from '../../store/auth-store';
+import { Alert } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<any[]>([]);
-  const [favoriteVenues, setFavoriteVenues] = useState<string[]>([]);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
@@ -36,15 +37,23 @@ export const HomeScreen: React.FC = () => {
     fetchVenues().then(res => {
       if (res?.items) {
         setVenues(res.items);
-        setFavoriteVenues(res.items.filter((v: any) => v.isFavorite).map((v: any) => v.id));
       }
     });
   }, []);
 
-  const toggleFavorite = (id: string) => {
-    setFavoriteVenues(prev =>
-      prev.includes(id) ? prev.filter(vId => vId !== id) : [...prev, id]
-    );
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(id);
+      // Update local state for immediate feedback
+      setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    }
   };
 
   const handleBookPress = (venueId: string) => {
@@ -116,7 +125,10 @@ export const HomeScreen: React.FC = () => {
                 <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.favFloatingBtn}>
+            <TouchableOpacity 
+              style={styles.favFloatingBtn}
+              onPress={() => navigation.navigate('Favorites')}
+            >
               <MaterialCommunityIcons name="heart-outline" size={24} color={COLORS.PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -188,8 +200,8 @@ export const HomeScreen: React.FC = () => {
               <VenueCard
                 key={venue.id}
                 {...venue}
-                isFavorite={favoriteVenues.includes(venue.id)}
-                onFavoriteToggle={() => toggleFavorite(venue.id)}
+                is_favorite={venue.is_favorite}
+                onFavoriteToggle={() => handleToggleFavorite(venue.id)}
                 onBook={() => handleBookPress(venue.id)}
                 onPress={() => navigation.navigate('VenueDetails', { venueId: venue.id })}
               />

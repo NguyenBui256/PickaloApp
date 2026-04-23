@@ -148,10 +148,6 @@ components:
         comment:
           type: string
           example: "Great court, very friendly staff!"
-        images:
-          type: array
-          items:
-            type: string
 
     ReviewUpdate:
       type: object
@@ -162,10 +158,6 @@ components:
           maximum: 5
         comment:
           type: string
-        images:
-          type: array
-          items:
-            type: string
 
     ReviewResponse:
       type: object
@@ -193,11 +185,6 @@ components:
           maximum: 5
         comment:
           type: string
-          nullable: true
-        images:
-          type: array
-          items:
-            type: string
           nullable: true
         created_at:
           type: string

@@ -13,10 +13,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenues } from '../../services/venue-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import { VenueCard } from '../../components/VenueCard';
+import { useAuthStore } from '../../store/auth-store';
+import { Alert } from 'react-native';
 
 export const SearchScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
 
@@ -25,6 +29,20 @@ export const SearchScreen: React.FC = () => {
       if (res?.items) setVenues(res.items);
     });
   }, []);
+
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(id);
+      setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    }
+  };
 
   const filteredVenues = venues.filter(v =>
     v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,9 +82,10 @@ export const SearchScreen: React.FC = () => {
           renderItem={({ item }) => (
             <VenueCard
               {...item}
+              is_favorite={item.is_favorite}
               onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
               onBook={() => navigation.navigate('VenueDetails', { venueId: item.id })}
-              onFavoriteToggle={() => {}}
+              onFavoriteToggle={() => handleToggleFavorite(item.id)}
             />
           )}
           ListEmptyComponent={

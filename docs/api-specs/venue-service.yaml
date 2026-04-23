@@ -21,6 +21,8 @@ tags:
     description: Venue management for merchants
   - name: court-management
     description: Individual court configuration
+  - name: favorites
+    description: User favorite venue management
 
 paths:
   /api/v1/venues:
@@ -56,6 +58,11 @@ paths:
           schema:
             type: integer
             default: 20
+        - name: only_favorites
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: A list of venues
@@ -112,6 +119,11 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/VenueType'
+        - name: only_favorites
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Nearby venues found
@@ -236,6 +248,64 @@ paths:
       responses:
         '201':
           description: Court added successfully
+
+  /api/v1/favorites/toggle/{venue_id}:
+    post:
+      tags:
+        - favorites
+      summary: Toggle favorite status for a venue
+      operationId: toggleFavorite
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  venue_id:
+                    type: string
+                    format: uuid
+                  is_favorite:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/v1/favorites:
+    get:
+      tags:
+        - favorites
+      summary: List favorited venues
+      operationId: listFavorites
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A list of favorited venues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueListResponse'
 
   /api/v1/venues/{venue_id}/pricing:
     get:

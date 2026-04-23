@@ -61,6 +61,8 @@ async def list_venues(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     List venues with optional filters.
@@ -76,6 +78,8 @@ async def list_venues(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
     )
 
     # Convert to list items
@@ -123,6 +127,8 @@ async def search_venues_nearby(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     Search venues within radius using PostGIS geospatial query.
@@ -140,6 +146,8 @@ async def search_venues_nearby(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
     )
 
     # Convert to list items

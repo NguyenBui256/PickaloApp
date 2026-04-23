@@ -12,6 +12,7 @@ from app.models.court import Court
 from app.models.post import Post, Comment, PostType, PostStatus, SportType
 from app.models.admin import AdminAction, ActionType, TargetType
 from app.models.review import VenueReview
+from app.models.favorite import UserFavorite
 
 __all__ = [
     # Base
@@ -45,4 +46,6 @@ __all__ = [
     "AdminAction",
     "ActionType",
     "TargetType",
+    # Favorites
+    "UserFavorite",
 ]

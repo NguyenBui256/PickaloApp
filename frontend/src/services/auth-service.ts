@@ -29,7 +29,7 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
 
 /** Register new account. BE: POST /auth/register */
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
-  return apiClient.post('/auth/register', data);
+  return apiClient.post('/auth/register', data, { skipAuth: true });
 };
 
 /** Refresh access token. BE: POST /auth/refresh */
