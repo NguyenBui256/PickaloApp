@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import type { BookingListItem } from '../../types/api-types';
+import { useAuthStore } from '../../store/auth-store';
 
 // Helpers
 const formatBookingTime = (b: BookingListItem) => `${b.start_time} - ${b.end_time}`;
@@ -51,6 +52,7 @@ const InfoItem = ({ label, value, isYellow, isClickable }: InfoItemProps) => (
 export const BookingHistoryDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const user = useAuthStore(state => state.user);
   const { booking } = route.params as { booking: BookingListItem };
 
   const [activeTab, setActiveTab] = useState('Thông tin');
@@ -123,9 +125,9 @@ export const BookingHistoryDetailScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.userDetail}>
-            <Text style={styles.userName}>Phạm Ngọc Long</Text>
+            <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
             <Text style={styles.userSub}>Đặt lịch ngày trực quan</Text>
-            <Text style={styles.userPhone}>+84 0303030303</Text>
+            <Text style={styles.userPhone}>{user?.phone || 'Chưa cập nhật'}</Text>
           </View>
         </View>
 

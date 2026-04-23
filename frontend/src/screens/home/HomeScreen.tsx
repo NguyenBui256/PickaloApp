@@ -20,9 +20,11 @@ import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
 import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
+import { useAuthStore } from '../../store/auth-store';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<any[]>([]);
   const [favoriteVenues, setFavoriteVenues] = useState<string[]>([]);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
@@ -77,7 +79,7 @@ export const HomeScreen: React.FC = () => {
                 </View>
                 <View style={styles.textInfo}>
                   <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
-                  <Text style={styles.userName}>Phạm Ngọc Long</Text>
+                  <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
                 </View>
               </TouchableOpacity>
 
