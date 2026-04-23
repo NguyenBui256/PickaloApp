@@ -133,9 +133,9 @@ async def create_new_pickleball_venues(session: AsyncSession):
         
         # Add pricing slots
         pricing_configs = [
-            {"day": DayType.WEEKDAY, "start": time(5, 0), "end": time(16, 0), "factor": Decimal("1.0")},
-            {"day": DayType.WEEKDAY, "start": time(16, 0), "end": time(22, 0), "factor": Decimal("1.5")},
-            {"day": DayType.WEEKEND, "start": time(5, 0), "end": time(22, 0), "factor": Decimal("1.3")}
+            {"day": DayType.WEEKDAY, "start": time(5, 0), "end": time(23, 0), "factor": Decimal("1.0"), "is_default": True},
+            {"day": DayType.WEEKDAY, "start": time(16, 0), "end": time(22, 0), "factor": Decimal("1.5"), "is_default": False},
+            {"day": DayType.WEEKEND, "start": time(5, 0), "end": time(23, 0), "factor": Decimal("1.3"), "is_default": True}
         ]
         for config in pricing_configs:
             slot = PricingTimeSlot(
@@ -143,7 +143,8 @@ async def create_new_pickleball_venues(session: AsyncSession):
                 day_type=config["day"],
                 start_time=config["start"],
                 end_time=config["end"],
-                price_factor=config["factor"]
+                price=template["base_price"] * config["factor"],
+                is_default=config["is_default"]
             )
             session.add(slot)
             

@@ -41,7 +41,15 @@ export interface OwnerVenueItem {
 
 /** Get merchant's venue list. BE: GET /merchant/venues */
 export const fetchMyVenues = async (): Promise<OwnerVenueItem[]> => {
-  return apiClient.get('/merchant/venues');
+  try {
+    console.log('Fetching merchant venues from /merchant/venues');
+    const response = await apiClient.get<OwnerVenueItem[]>('/merchant/venues');
+    console.log('Merchant venues response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error fetching merchant venues:', error);
+    throw error;
+  }
 };
 
 // ==========================================

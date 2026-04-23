@@ -121,9 +121,9 @@ class Venue(BaseModel):
     )
 
     # Pricing
-    base_price_per_hour: Mapped[Decimal] = mapped_column(
+    base_price_per_hour: Mapped[Decimal | None] = mapped_column(
         Numeric(10, 2),
-        nullable=False,
+        nullable=True,
     )
 
     # Status and verification
@@ -239,6 +239,15 @@ class PricingTimeSlot(BaseModel):
         String(20),
         nullable=False,
     )
+    # New: days of week (0=Mon, ..., 6=Sun)
+    days_of_week: Mapped[list[int] | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    title: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
     start_time: Mapped[str] = mapped_column(
         Time,
         nullable=False,
@@ -248,10 +257,16 @@ class PricingTimeSlot(BaseModel):
         nullable=False,
     )
 
-    # Price multiplier (1.0 = base price, 1.5 = 50% premium)
-    price_factor: Mapped[Decimal] = mapped_column(
-        Numeric(3, 2),
-        default=Decimal("1.0"),
+    # Price amount (e.g., 500000 VND)
+    price: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
+
+    # Whether this is the default price for the day type
+    is_default: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
 
@@ -266,7 +281,7 @@ class PricingTimeSlot(BaseModel):
         """String representation for debugging."""
         return (
             f"PricingTimeSlot(id={self.id!r}, day_type={self.day_type.value}, "
-            f"factor={self.price_factor})"
+            f"price={self.price}, is_default={self.is_default})"
         )
 
 

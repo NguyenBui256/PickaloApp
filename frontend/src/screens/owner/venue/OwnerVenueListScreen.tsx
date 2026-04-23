@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchMyVenues, OwnerVenueItem } from '../../../services/merchant-service';
 
@@ -17,10 +17,31 @@ export const OwnerVenueListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
   const [venues, setVenues] = useState<OwnerVenueItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchMyVenues().then(res => setVenues(res));
-  }, []);
+  const loadVenues = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Loading venues...');
+      const data = await fetchMyVenues();
+      console.log('Venues loaded:', data);
+      setVenues(data);
+    } catch (err) {
+      console.error('Failed to load venues:', err);
+      setError('Failed to load venues. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh venues when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadVenues();
+    }, [])
+  );
 
   const renderVenue = ({ item }: { item: OwnerVenueItem }) => (
     <View style={styles.venueCard}>
@@ -51,15 +72,17 @@ export const OwnerVenueListScreen: React.FC = () => {
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.maintenanceBtn, item.status === 'PENDING' && styles.disabledBtn ]}
-          disabled={item.status === 'PENDING'}
-          onPress={() => navigation.navigate('MaintenanceScheduler', { venueId: item.id })}
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.configBtn]}
+          onPress={() => navigation.navigate('VenueConfiguration', { venueId: item.id })}
         >
-          <MaterialCommunityIcons name="wrench-clock" size={20} color={COLORS.WHITE} />
-          <Text style={styles.maintenanceText}>Thiết lập bảo trì</Text>
+          <MaterialCommunityIcons name="cog" size={20} color={COLORS.WHITE} />
+          <Text style={styles.configText}>Cấu hình</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionBtn, styles.editBtn]}>
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.editBtn]}
+          onPress={() => navigation.navigate('VenueEdit', { venueId: item.id })}
+        >
           <MaterialCommunityIcons name="pencil" size={20} color="#1976D2" />
           <Text style={styles.editText}>Sửa</Text>
         </TouchableOpacity>
@@ -73,20 +96,37 @@ export const OwnerVenueListScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Sân của tôi</Text>
       </View>
 
-      <FlatList
-        data={venues}
-        renderItem={renderVenue}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="storefront-outline" size={60} color="#DDD" />
-            <Text style={styles.emptyText}>Bạn chưa có sân nào.</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+          <Text style={styles.loadingText}>Đang tải sân...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.centerContainer}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={60} color="#FF4444" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadVenues}>
+            <Text style={styles.retryButtonText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={venues}
+          renderItem={renderVenue}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="storefront-outline" size={60} color="#DDD" />
+              <Text style={styles.emptyText}>Bạn chưa có sân nào.</Text>
+            </View>
+          }
+          refreshing={loading}
+          onRefresh={loadVenues}
+        />
+      )}
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('VenueRegistration')}
       >
@@ -203,11 +243,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  maintenanceBtn: {
-    flex: 2,
-    backgroundColor: '#FF9800',
+  configBtn: {
+    flex: 1,
+    backgroundColor: '#9C27B0',
   },
-  maintenanceText: {
+  configText: {
     color: COLORS.WHITE,
     fontWeight: '600',
     fontSize: 14,
@@ -255,5 +295,34 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     backgroundColor: '#BDBDBD',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.GRAY_MEDIUM,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#FF4444',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: COLORS.WHITE,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

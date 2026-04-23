@@ -28,6 +28,9 @@ import { SearchScreen } from '@screens/search/SearchScreen';
 import { EditProfileScreen } from '@screens/profile/EditProfileScreen';
 import { SettingsScreen } from '@screens/profile/SettingsScreen';
 import { VenueRegistrationScreen } from '@screens/owner/venue/VenueRegistrationScreen';
+import { VenueEditScreen } from '@screens/owner/venue/VenueEditScreen';
+import { VenueConfigurationScreen } from '@screens/owner/venue/VenueConfigurationScreen';
+import { LocationPickerScreen } from '@screens/owner/venue/LocationPickerScreen';
 import { MaintenanceSchedulerScreen } from '@screens/owner/venue/MaintenanceSchedulerScreen';
 import { OwnerBookingDetailScreen } from '@screens/profile/OwnerBookingDetailScreen';
 import { OwnerRevenueReportScreen } from '@screens/profile/OwnerRevenueReportScreen';
@@ -54,7 +57,10 @@ export type RootStackParamList = {
   Search: undefined;
   EditProfile: undefined;
   Settings: undefined;
-  VenueRegistration: undefined;
+  VenueRegistration: { selectedLocation?: { lat: number; lng: number } };
+  VenueEdit: { venueId: string };
+  VenueConfiguration: { venueId: string };
+  LocationPicker: { initialLocation?: { lat: number; lng: number } };
   MaintenanceScheduler: { venueId: string };
   OwnerBookingDetail: { booking: any };
   OwnerRevenueReport: undefined;
@@ -275,6 +281,19 @@ export function AppNavigator(): React.JSX.Element {
             <Stack.Screen
               name="VenueRegistration"
               component={VenueRegistrationScreen}
+            />
+            <Stack.Screen
+              name="VenueEdit"
+              component={VenueEditScreen}
+            />
+            <Stack.Screen
+              name="VenueConfiguration"
+              component={VenueConfigurationScreen}
+            />
+            <Stack.Screen
+              name="LocationPicker"
+              component={LocationPickerScreen}
+              options={{ headerShown: false, presentation: 'fullScreenModal' }}
             />
             <Stack.Screen
               name="MaintenanceScheduler"

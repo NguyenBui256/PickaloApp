@@ -91,9 +91,7 @@ class BookingPricePreview(BaseModel):
 class PriceBreakdown(BaseModel):
     """Price breakdown component."""
 
-    base_price: Decimal
     duration_hours: Decimal
-    price_factor: Decimal
     hourly_price: Decimal
     subtotal: Decimal
     service_fee: Decimal

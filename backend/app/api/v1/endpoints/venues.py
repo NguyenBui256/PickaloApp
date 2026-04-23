@@ -36,8 +36,10 @@ from app.schemas.venue import (
     Coordinates,
     CourtCreate,
     CourtUpdate,
+    CourtBulkCreate,
     CourtResponse,
     PricingSlotCreate,
+    PricingBulkCreate,
     PricingSlotUpdate,
     PricingSlotResponse,
     MerchantVenueListItem,
@@ -432,7 +434,7 @@ async def get_venue_services(
 
     return [
         VenueServiceResponse(
-            id=s.id,
+            id=str(s.id),
             venue_id=str(s.venue_id),
             name=s.name,
             description=s.description,
@@ -466,7 +468,7 @@ async def create_venue_service(
     await session.commit()
 
     return VenueServiceResponse(
-        id=service.id,
+        id=str(service.id),
         venue_id=str(service.venue_id),
         name=service.name,
         description=service.description,
@@ -490,7 +492,7 @@ async def update_venue_service(
     """
     updates = service_data.model_dump(exclude_unset=True)
     service = await venue_service.update_venue_service(
-        service_id=service_id,
+        service_id=uuid.UUID(service_id),
         merchant_id=current_user.id,
         **updates,
     )
@@ -504,7 +506,7 @@ async def update_venue_service(
     await session.commit()
 
     return VenueServiceResponse(
-        id=service.id,
+        id=str(service.id),
         venue_id=str(service.venue_id),
         name=service.name,
         description=service.description,
@@ -528,7 +530,7 @@ async def delete_venue_service(
     Soft delete — service is marked unavailable.
     """
     success = await venue_service.delete_venue_service(
-        service_id=service_id,
+        service_id=uuid.UUID(service_id),
         merchant_id=current_user.id,
     )
 
@@ -556,12 +558,13 @@ async def get_pricing_slots(
 
     return [
         PricingSlotResponse(
-            id=slot.id,
+            id=str(slot.id),
             venue_id=str(slot.venue_id),
             day_type=slot.day_type,
             start_time=slot.start_time.strftime("%H:%M"),
             end_time=slot.end_time.strftime("%H:%M"),
-            price_factor=slot.price_factor,
+            price=float(slot.price),
+            is_default=slot.is_default,
         )
         for slot in slots
     ]
@@ -584,19 +587,124 @@ async def create_pricing_slot(
         day_type=slot_data.day_type,
         start_time=slot_data.start_time,
         end_time=slot_data.end_time,
-        price_factor=slot_data.price_factor,
+        price=slot_data.price,
+        is_default=slot_data.is_default,
+        days_of_week=slot_data.days_of_week,
+        title=slot_data.title,
     )
 
     await session.commit()
 
     return PricingSlotResponse(
-        id=slot.id,
+        id=str(slot.id),
         venue_id=str(slot.venue_id),
+        title=slot.title,
         day_type=slot.day_type,
+        days_of_week=slot.days_of_week,
         start_time=slot.start_time.strftime("%H:%M"),
         end_time=slot.end_time.strftime("%H:%M"),
-        price_factor=slot.price_factor,
+        price=float(slot.price),
+        is_default=slot.is_default,
     )
+
+
+@router.post("/{venue_id}/pricing/bulk", response_model=list[PricingSlotResponse], status_code=status.HTTP_201_CREATED)
+async def bulk_create_pricing_slots(
+    venue_id: str,
+    bulk_data: PricingBulkCreate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> list[PricingSlotResponse]:
+    """Add multiple pricing slots to venue (merchant only)."""
+    slots = await venue_service.bulk_create_pricing_slots(
+        venue_id=uuid.UUID(venue_id),
+        merchant_id=current_user.id,
+        title=bulk_data.title,
+        days_of_week=bulk_data.days_of_week,
+        slots_data=[s.model_dump() for s in bulk_data.slots],
+        day_type=bulk_data.day_type,
+    )
+    await session.commit()
+    return [
+        PricingSlotResponse(
+            id=str(s.id),
+            venue_id=str(s.venue_id),
+            title=s.title,
+            day_type=s.day_type,
+            days_of_week=s.days_of_week,
+            start_time=s.start_time.strftime("%H:%M"),
+            end_time=s.end_time.strftime("%H:%M"),
+            price=float(s.price),
+            is_default=s.is_default,
+        )
+        for s in slots
+    ]
+
+
+@router.put("/{venue_id}/pricing/{slot_id}", response_model=PricingSlotResponse)
+async def update_pricing_slot(
+    venue_id: str,
+    slot_id: str,
+    slot_data: PricingSlotUpdate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> PricingSlotResponse:
+    """
+    Update pricing slot (merchant only, ownership verified).
+    """
+    updates = slot_data.model_dump(exclude_unset=True)
+    slot = await venue_service.update_pricing_slot(
+        slot_id=uuid.UUID(slot_id),
+        merchant_id=current_user.id,
+        **updates,
+    )
+
+    if not slot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pricing slot not found",
+        )
+
+    await session.commit()
+
+    return PricingSlotResponse(
+        id=str(slot.id),
+        venue_id=str(slot.venue_id),
+        title=slot.title,
+        day_type=slot.day_type,
+        days_of_week=slot.days_of_week,
+        start_time=slot.start_time.strftime("%H:%M"),
+        end_time=slot.end_time.strftime("%H:%M"),
+        price=float(slot.price),
+        is_default=slot.is_default,
+    )
+
+
+@router.delete("/{venue_id}/pricing/{slot_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_pricing_slot(
+    venue_id: str,
+    slot_id: str,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> None:
+    """
+    Delete pricing slot (merchant only, ownership verified).
+    """
+    success = await venue_service.delete_pricing_slot(
+        slot_id=uuid.UUID(slot_id),
+        merchant_id=current_user.id,
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pricing slot not found",
+        )
+
+    await session.commit()
 
 
 # ===== Admin Endpoints =====
@@ -657,6 +765,25 @@ async def create_court(
     return CourtResponse.model_validate(court)
 
 
+@router.post("/{venue_id}/courts/bulk", response_model=list[CourtResponse], status_code=status.HTTP_201_CREATED)
+async def bulk_create_courts(
+    venue_id: str,
+    bulk_data: CourtBulkCreate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> list[CourtResponse]:
+    """Add multiple courts to venue (merchant only)."""
+    courts = await venue_service.bulk_create_courts(
+        venue_id=uuid.UUID(venue_id),
+        merchant_id=current_user.id,
+        names=bulk_data.names,
+        is_active=bulk_data.is_active,
+    )
+    await session.commit()
+    return [CourtResponse.model_validate(c) for c in courts]
+
+
 @router.put("/courts/{court_id}", response_model=CourtResponse)
 async def update_court(
     court_id: str,
@@ -676,3 +803,39 @@ async def update_court(
         raise HTTPException(status_code=404, detail="Court not found")
     await session.commit()
     return CourtResponse.model_validate(court)
+
+
+@router.delete("/courts/{court_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_court(
+    court_id: str,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> None:
+    """Delete a court (merchant only)."""
+    success = await venue_service.delete_court(
+        court_id=uuid.UUID(court_id),
+        merchant_id=current_user.id,
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Court not found")
+    await session.commit()
+
+
+@router.post("/{venue_id}/courts/bulk", response_model=list[CourtResponse], status_code=status.HTTP_201_CREATED)
+async def bulk_create_courts(
+    venue_id: str,
+    court_data: CourtBulkCreate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> list[CourtResponse]:
+    """Bulk add new courts to venue (merchant only)."""
+    courts = await venue_service.bulk_create_courts(
+        venue_id=uuid.UUID(venue_id),
+        merchant_id=current_user.id,
+        names=court_data.names,
+        is_active=court_data.is_active,
+    )
+    await session.commit()
+    return [CourtResponse.model_validate(c) for c in courts]

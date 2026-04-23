@@ -16,14 +16,14 @@ import { CustomInput } from '../../../components/CustomInput';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { expoSelectMultipleImages, validateImageAsset } from '../../../utils/image-picker-expo';
+import { fetchVenueById, updateVenue } from '../../../services/venue-service';
 import { uploadVenueImages } from '../../../services/image-service';
 import { getImageUrl } from '../../../utils/image-upload-helper';
-import { createVenue } from '../../../services/venue-service';
-import type { Coordinates } from '../../../types/api-types';
+import type { Coordinates, VenueType } from '../../../types/api-types';
 
-type VenueRegistrationRouteProp = RouteProp<
-  { VenueRegistration: { selectedLocation?: { lat: number; lng: number } } },
-  'VenueRegistration'
+type VenueEditRouteProp = RouteProp<
+  { VenueEdit: { venueId: string } },
+  'VenueEdit'
 >;
 
 interface TempImage {
@@ -32,40 +32,144 @@ interface TempImage {
   fileName?: string | undefined;
 }
 
-export const VenueRegistrationScreen: React.FC = () => {
+export const VenueEditScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const route = useRoute<VenueRegistrationRouteProp>();
+  const route = useRoute<VenueEditRouteProp>();
+  const { venueId } = route.params;
 
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    type: 'Pickleball' as const,
+    type: 'Pickleball' as VenueType,
     price: '',
     description: '',
   });
 
-  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(
-    route.params?.selectedLocation || null
-  );
-
+  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
+  const [venueImages, setVenueImages] = useState<string[]>([]);
   const [tempImages, setTempImages] = useState<TempImage[]>([]);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasLicense, setHasLicense] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Update location when returning from LocationPicker
+  // Load existing venue data
   useEffect(() => {
-    if (route.params?.selectedLocation) {
-      setSelectedLocation(route.params.selectedLocation);
+    loadVenueData();
+  }, [venueId]);
+
+  const loadVenueData = async () => {
+    try {
+      setIsLoading(true);
+      const venue = await fetchVenueById(venueId);
+
+      // Populate form with existing data
+      setFormData({
+        name: venue.name,
+        address: venue.address,
+        type: venue.venue_type,
+        price: venue.base_price_per_hour.toString(),
+        description: venue.description || '',
+      });
+
+      setSelectedLocation(venue.location);
+      setVenueImages(venue.images || []);
+    } catch (error: any) {
+      console.error('Error loading venue:', error);
+      Alert.alert('Lỗi', 'Không thể tải thông tin sân. Vui lòng thử lại.');
+      navigation.goBack();
+    } finally {
+      setIsLoading(false);
     }
-  }, [route.params?.selectedLocation]);
+  };
+
+  const handleUpdate = async () => {
+    // Validation
+    if (!formData.name || !formData.address || !formData.price) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc (*)');
+      return;
+    }
+
+    if (!selectedLocation) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng chọn vị trí trên bản đồ');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Prepare venue update data
+      const updateData = {
+        name: formData.name,
+        address: formData.address,
+        coordinates: selectedLocation,
+        venue_type: formData.type,
+        base_price_per_hour: parseInt(formData.price, 10),
+        description: formData.description || undefined,
+        images: venueImages.length > 0 ? venueImages : undefined,
+      };
+
+      // Update venue
+      await updateVenue(venueId, updateData);
+
+      // Upload new images if any were selected
+      if (tempImages.length > 0) {
+        await uploadNewImages();
+      } else {
+        Alert.alert('Thành công', 'Cập nhật thông tin sân thành công.');
+      }
+
+      // Navigate back
+      navigation.goBack();
+    } catch (error: any) {
+      console.error('Venue update error:', error);
+      const errorMessage = error?.response?.data?.detail || 'Không thể cập nhật sân. Vui lòng thử lại.';
+      Alert.alert('Lỗi', errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const uploadNewImages = async () => {
+    try {
+      setIsUploading(true);
+
+      // Create FormData
+      const formData = new FormData();
+      tempImages.forEach((image) => {
+        formData.append('files', {
+          uri: image.uri,
+          type: image.type,
+          name: image.fileName,
+        } as any);
+      });
+
+      // Upload images
+      const response = await uploadVenueImages(venueId, formData);
+      setVenueImages((prev) => [...prev, ...response.urls]);
+      setTempImages([]);
+
+      Alert.alert(
+        'Thành công',
+        `Cập nhật sân thành công và tải lên ${response.count} hình ảnh mới.`
+      );
+    } catch (error) {
+      console.error('Image upload error:', error);
+      Alert.alert('Thành công', 'Cập nhật sân thành công nhưng không thể tải lên hình ảnh.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePickLocation = () => {
+    navigation.navigate('LocationPicker' as never, {
+      initialLocation: selectedLocation || undefined,
+    });
+  };
 
   const handleAddImages = async () => {
     try {
-      const result = await expoSelectMultipleImages(5 - tempImages.length);
+      const result = await expoSelectMultipleImages(5 - venueImages.length - tempImages.length);
 
-      // Handle case where image picker is not available
       if (result === null) {
         return;
       }
@@ -100,109 +204,35 @@ export const VenueRegistrationScreen: React.FC = () => {
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    Alert.alert('Xóa ảnh', 'Bạn có chắc muốn xóa ảnh này?', [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Xóa',
-        style: 'destructive',
-        onPress: () => {
-          const updatedTempImages = tempImages.filter((_, i) => i !== index);
-          setTempImages(updatedTempImages);
+  const handleRemoveImage = (index: number, isTemp: boolean) => {
+    if (isTemp) {
+      const updatedTempImages = tempImages.filter((_, i) => i !== index);
+      setTempImages(updatedTempImages);
+    } else {
+      Alert.alert('Xóa ảnh', 'Bạn có chắc muốn xóa ảnh này?', [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: () => {
+            const updatedImages = venueImages.filter((_, i) => i !== index);
+            setVenueImages(updatedImages);
+          },
         },
-      },
-    ]);
-  };
-
-  const uploadImagesToVenue = async (venueId: string): Promise<void> => {
-    if (tempImages.length === 0) {
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-
-      // Create FormData
-      const formData = new FormData();
-      tempImages.forEach((image) => {
-        formData.append('files', {
-          uri: image.uri,
-          type: image.type,
-          name: image.fileName,
-        } as any);
-      });
-
-      // Upload images
-      const response = await uploadVenueImages(venueId, formData);
-      setUploadedImageUrls(response.urls);
-
-      Alert.alert(
-        'Thành công',
-        `Đã đăng ký sân thành công và tải lên ${response.count} hình ảnh.`
-      );
-    } catch (error: any) {
-      console.error('Image upload error:', error);
-      // Don't show error for image upload failure, venue is already created
-      console.warn('Venue created but image upload failed');
-    } finally {
-      setIsUploading(false);
+      ]);
     }
   };
 
-  const handleRegister = async () => {
-    // Validation
-    if (!formData.name || !formData.address || !formData.price) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc (*)');
-      return;
-    }
-
-    if (!selectedLocation) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng chọn vị trí trên bản đồ');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Prepare venue data (without images first)
-      const venueData = {
-        name: formData.name,
-        address: formData.address,
-        coordinates: selectedLocation,
-        venue_type: formData.type,
-        base_price_per_hour: parseInt(formData.price, 10),
-        description: formData.description || undefined,
-      };
-
-      // Create venue
-      const response = await createVenue(venueData);
-
-      // Upload images if any were selected
-      if (tempImages.length > 0) {
-        await uploadImagesToVenue(response.id);
-      } else {
-        Alert.alert(
-          'Thành công',
-          'Hồ sơ đăng ký sân của bạn đã được gửi và đang chờ duyệt.'
-        );
-      }
-
-      // Navigate back
-      navigation.goBack();
-    } catch (error: any) {
-      console.error('Venue registration error:', error);
-      const errorMessage = error?.response?.data?.detail || 'Không thể đăng ký sân. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePickLocation = () => {
-    navigation.navigate('LocationPicker', {
-      initialLocation: selectedLocation || undefined,
-    });
-  };
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+          <Text style={styles.loadingText}>Đang tải thông tin sân...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -210,7 +240,7 @@ export const VenueRegistrationScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnHeader}>
           <MaterialCommunityIcons name="chevron-left" size={30} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Đăng ký sân mới</Text>
+        <Text style={styles.headerTitle}>Chỉnh sửa sân</Text>
         <View style={{ width: 30 }} />
       </View>
 
@@ -273,7 +303,7 @@ export const VenueRegistrationScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.addImageBtn}
               onPress={handleAddImages}
-              disabled={isUploading || isSubmitting || tempImages.length >= 5}
+              disabled={isUploading || isSubmitting || venueImages.length + tempImages.length >= 5}
             >
               {isUploading ? (
                 <ActivityIndicator size="small" color={COLORS.PRIMARY} />
@@ -283,7 +313,7 @@ export const VenueRegistrationScreen: React.FC = () => {
                     name="camera-plus"
                     size={30}
                     color={
-                      isUploading || isSubmitting || tempImages.length >= 5
+                      isUploading || isSubmitting || venueImages.length + tempImages.length >= 5
                         ? COLORS.GRAY_LIGHT
                         : COLORS.GRAY_MEDIUM
                     }
@@ -291,7 +321,7 @@ export const VenueRegistrationScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.addImageText,
-                      (isUploading || isSubmitting || tempImages.length >= 5) &&
+                      (isUploading || isSubmitting || venueImages.length + tempImages.length >= 5) &&
                         styles.addImageTextDisabled,
                     ]}
                   >
@@ -301,17 +331,17 @@ export const VenueRegistrationScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            {/* Temp Images (local URIs) */}
-            {tempImages.map((image, index) => (
+            {/* Existing Images */}
+            {venueImages.map((imageUrl, index) => (
               <TouchableOpacity
-                key={index}
+                key={`existing-${index}`}
                 style={styles.imageContainer}
-                onLongPress={() => handleRemoveImage(index)}
+                onLongPress={() => handleRemoveImage(index, false)}
               >
-                <Image source={{ uri: image.uri }} style={styles.venueImage} />
+                <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} />
                 <TouchableOpacity
                   style={styles.removeImageButton}
-                  onPress={() => handleRemoveImage(index)}
+                  onPress={() => handleRemoveImage(index, false)}
                 >
                   <MaterialCommunityIcons
                     name="close-circle"
@@ -323,18 +353,30 @@ export const VenueRegistrationScreen: React.FC = () => {
               </TouchableOpacity>
             ))}
 
-            {/* Uploaded Images (from server) */}
-            {uploadedImageUrls.map((imageUrl, index) => (
-              <TouchableOpacity key={`uploaded-${index}`} style={styles.imageContainer}>
-                <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} />
-                <View style={styles.uploadedBadge}>
-                  <MaterialCommunityIcons name="check" size={12} color="#388E3C" />
-                </View>
+            {/* Temp Images (local URIs) */}
+            {tempImages.map((image, index) => (
+              <TouchableOpacity
+                key={`temp-${index}`}
+                style={styles.imageContainer}
+                onLongPress={() => handleRemoveImage(index, true)}
+              >
+                <Image source={{ uri: image.uri }} style={styles.venueImage} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => handleRemoveImage(index, true)}
+                >
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={20}
+                    color="#FF4444"
+                    style={styles.removeIconBg}
+                  />
+                </TouchableOpacity>
               </TouchableOpacity>
             ))}
 
             {/* Placeholder for visual feedback when no images */}
-            {tempImages.length === 0 && uploadedImageUrls.length === 0 && !isUploading && (
+            {venueImages.length === 0 && tempImages.length === 0 && !isUploading && (
               <>
                 <View style={styles.placeholderImage} />
                 <View style={styles.placeholderImage} />
@@ -342,33 +384,18 @@ export const VenueRegistrationScreen: React.FC = () => {
             )}
           </ScrollView>
 
-          {(tempImages.length > 0 || uploadedImageUrls.length > 0) && (
+          {venueImages.length + tempImages.length > 0 && (
             <Text style={styles.imageCount}>
-              {tempImages.length + uploadedImageUrls.length} hình đã chọn
+              {venueImages.length + tempImages.length} hình đã chọn
             </Text>
           )}
-        </View>
-
-        {/* License Section */}
-        <View style={styles.formSection}>
-          <Text style={styles.label}>Giấy phép & Tài liệu</Text>
-          <TouchableOpacity style={styles.licenseUpload} onPress={() => setHasLicense(!hasLicense)}>
-            <MaterialCommunityIcons
-              name={hasLicense ? 'file-check' : 'file-upload-outline'}
-              size={24}
-              color={hasLicense ? '#388E3C' : COLORS.GRAY_MEDIUM}
-            />
-            <Text style={styles.licenseText}>
-              {hasLicense ? 'Đã tải giấy phép kinh doanh' : 'Tải lên giấy phép kinh doanh'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Submit Button */}
         <View style={styles.submitSection}>
           <PrimaryButton
-            text={isSubmitting ? 'Đang gửi...' : 'Đăng ký sân'}
-            onPress={handleRegister}
+            text={isSubmitting ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
+            onPress={handleUpdate}
             disabled={isSubmitting || isUploading}
             loading={isSubmitting}
           />
@@ -382,6 +409,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.GRAY_MEDIUM,
   },
   header: {
     flexDirection: 'row',
@@ -503,14 +540,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
   },
-  uploadedBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 2,
-  },
   placeholderImage: {
     width: 100,
     height: 100,
@@ -523,20 +552,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.GRAY_MEDIUM,
     marginTop: 4,
-  },
-  licenseUpload: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  licenseText: {
-    marginLeft: 12,
-    fontSize: 14,
-    color: COLORS.GRAY_MEDIUM,
   },
   submitSection: {
     marginTop: 8,

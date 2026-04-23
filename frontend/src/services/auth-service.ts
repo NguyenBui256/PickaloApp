@@ -72,14 +72,9 @@ export const changePassword = async (data: ChangePasswordRequest): Promise<{ mes
 
 /**
  * Upload avatar.
- * TODO: BE endpoint POST /auth/me/avatar not yet available.
- * Using mock until backend adds multipart upload endpoint.
+ * BE endpoint: POST /images/avatar
  */
 export const uploadAvatar = async (formData: FormData): Promise<{ avatar_url: string }> => {
-  // TODO: Uncomment when BE endpoint is ready
-  // return apiClient.post('/auth/me/avatar', formData, {
-  //   headers: { 'Content-Type': 'multipart/form-data' },
-  // });
-  console.log('[MOCK] uploadAvatar:', formData);
-  return { avatar_url: 'https://i.pravatar.cc/150?u=uploaded' };
+  return apiClient.upload<{ url: string; filename: string; message: string }>('/images/avatar', formData)
+    .then(response => ({ avatar_url: response.url }));
 };

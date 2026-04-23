@@ -12,6 +12,7 @@ from app.models.court import Court
 from app.models.post import Post, Comment, PostType, PostStatus, SportType
 from app.models.admin import AdminAction, ActionType, TargetType
 from app.models.review import VenueReview
+from app.models.pricing_profile import PricingProfile, PricingProfileSlot
 
 __all__ = [
     # Base
@@ -28,6 +29,9 @@ __all__ = [
     "PricingTimeSlot",
     "VenueService",
     "DayType",
+    # Pricing Profile
+    "PricingProfile",
+    "PricingProfileSlot",
     # Booking
     "Booking",
     "BookingService",

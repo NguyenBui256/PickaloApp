@@ -215,12 +215,13 @@ async def create_pricing_slots(session: AsyncSession, venues: list[Venue]) -> No
     from sqlalchemy import text
 
     pricing_configs = [
-        # Off-peak weekday
+        # Default weekday (covers unconfigured hours)
         {
             "day": DayType.WEEKDAY,
             "start": "05:00",
-            "end": "16:00",
+            "end": "23:00",
             "factor": Decimal("1.0"),
+            "is_default": True,
         },
         # Peak weekday evening
         {
@@ -228,32 +229,29 @@ async def create_pricing_slots(session: AsyncSession, venues: list[Venue]) -> No
             "start": "16:00",
             "end": "22:00",
             "factor": Decimal("1.5"),
+            "is_default": False,
         },
-        # Weekend all day
+        # Default weekend (covers unconfigured hours)
         {
             "day": DayType.WEEKEND,
             "start": "05:00",
-            "end": "22:00",
+            "end": "23:00",
             "factor": Decimal("1.2"),
-        },
-        # Holiday premium
-        {
-            "day": DayType.HOLIDAY,
-            "start": "05:00",
-            "end": "22:00",
-            "factor": Decimal("1.5"),
+            "is_default": True,
         },
     ]
 
     count = 0
     for venue in venues:
+        base_price = venue.base_price_per_hour or Decimal("200000")
         for config in pricing_configs:
             slot = PricingTimeSlot(
                 venue_id=venue.id,
                 day_type=config["day"],
                 start_time=config["start"],
                 end_time=config["end"],
-                price_factor=config["factor"],
+                price=base_price * config["factor"],
+                is_default=config["is_default"],
             )
             session.add(slot)
             count += 1

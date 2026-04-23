@@ -85,7 +85,7 @@ export interface VenueCreateRequest {
   images?: string[] | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
-  base_price_per_hour: number;
+  base_price_per_hour?: number | null;
 }
 
 /** Backend: VenueUpdate — PUT /venues/merchant/{id} */
@@ -120,7 +120,7 @@ export interface VenueResponse {
   images?: string[] | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
-  base_price_per_hour: number;
+  base_price_per_hour?: number | null;
   is_active: boolean;
   is_verified: boolean;
   isFavorite?: boolean; // FE-only field
@@ -137,8 +137,8 @@ export interface VenueListItem {
   fullAddress?: string | null;
   venue_type: VenueType;
   location: Coordinates;
-  base_price_per_hour: number;
-  is_verified: boolean;
+  base_price_per_hour?: number | null;
+  is_verified: bool;
   isFavorite?: boolean; // FE-only field
   images?: string[] | null;
   amenities?: string[] | null;
@@ -198,22 +198,37 @@ export interface VenueServiceResponse {
   created_at: string;
 }
 
-/** Backend: PricingSlotCreate — POST /venues/{id}/pricing */
 export interface PricingSlotCreateRequest {
   day_type: DayType;
+  days_of_week?: number[] | null; // 0=Mon, ..., 6=Sun
   start_time: string; // HH:MM
   end_time: string;   // HH:MM
-  price_factor?: number; // 0.1 - 3.0, default 1.0
+  price: number;
+  is_default?: boolean;
 }
 
-/** Backend: PricingSlotResponse — GET/POST /venues/{id}/pricing */
+export interface PricingBulkCreateRequest {
+  title?: string | null;
+  days_of_week: number[];
+  slots: {
+    start_time: string;
+    end_time: string;
+    price: number;
+    is_default: boolean;
+  }[];
+  day_type?: DayType;
+}
+
 export interface PricingSlotResponse {
-  id: number;
+  id: string;  // UUID as string
   venue_id: string;
+  title?: string | null;
   day_type: DayType;
+  days_of_week?: number[] | null;
   start_time: string;
   end_time: string;
-  price_factor: number;
+  price: number;
+  is_default: boolean;
 }
 
 /** Backend: TimeSlot (venue availability) — trong AvailabilityResponse */
@@ -221,6 +236,7 @@ export interface VenueTimeSlot {
   start_time: string; // HH:MM
   end_time: string;   // HH:MM
   available: boolean;
+  price: number;
 }
 
 /** Backend: CourtAvailability — lịch trống của một sân con */
@@ -237,6 +253,37 @@ export interface AvailabilityResponse {
   courts: CourtAvailability[];
   open_time: string;
   close_time: string;
+}
+
+export interface CourtResponse {
+  id: string;
+  venue_id: string;
+  name: string;
+  is_active: boolean;
+  images?: string[] | null;
+}
+
+// ==========================================
+// PRICING PROFILES
+// ==========================================
+
+export interface PricingProfileSlotResponse {
+  id: string;
+  day_type: DayType;
+  days_of_week?: number[] | null;
+  start_time: string;
+  end_time: string;
+  price: number;
+  is_default: boolean;
+}
+
+export interface PricingProfileResponse {
+  id: string;
+  merchant_id: string;
+  name: string;
+  description: string | null;
+  slots: PricingProfileSlotResponse[];
+  created_at: string;
 }
 
 // ==========================================
@@ -273,12 +320,12 @@ export interface BookingPricePreviewRequest {
   services?: BookingServiceRequest[] | null;
 }
 
-/** Backend: PriceBreakdown — phần chi tiết giá */
 export interface PriceBreakdown {
-  base_price: number;
   duration_hours: number;
-  price_factor: number;
   hourly_price: number;
+  subtotal: number;
+  service_fee: number;
+  total: number;
 }
 
 export interface BookingSlotResponse {
