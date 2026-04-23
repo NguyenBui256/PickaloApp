@@ -46,17 +46,21 @@ export const LoginScreen: React.FC = () => {
     setIsLoading(true);
 
     // Chuẩn hóa số điện thoại để khớp với backend format (+84...)
-    let normalizedPhone = phoneNumber;
+    let normalizedPhone = phoneNumber.trim();
     if (normalizedPhone.startsWith('0')) {
       normalizedPhone = '+84' + normalizedPhone.slice(1);
+    } else if (normalizedPhone.startsWith('84')) {
+      normalizedPhone = '+84' + normalizedPhone.slice(2);
     } else if (normalizedPhone.length > 0 && !normalizedPhone.startsWith('+')) {
       normalizedPhone = '+84' + normalizedPhone;
     }
 
     const loginPayload = {
       phone: normalizedPhone,
-      password: password
+      password: password.trim()
     };
+
+    console.log('Login Payload:', loginPayload);
 
     try {
       // Call real API backend

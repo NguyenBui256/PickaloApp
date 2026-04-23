@@ -56,7 +56,6 @@ class ReviewService:
             venue_id=venue_id,
             rating=review_data.rating,
             comment=review_data.comment,
-            images=review_data.images
         )
         self.session.add(review)
         await self.session.flush()
@@ -92,8 +91,6 @@ class ReviewService:
             review.rating = review_data.rating
         if review_data.comment is not None:
             review.comment = review_data.comment
-        if review_data.images is not None:
-            review.images = review_data.images
 
         await self.session.flush()
         

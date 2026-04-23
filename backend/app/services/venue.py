@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, exists, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2 import functions as geofunc
 
@@ -19,6 +19,7 @@ from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
 from app.models.booking import Booking, BookingStatus
 from app.models.court import Court
+from app.models.favorite import UserFavorite
 
 
 class VenueManagementService:
@@ -71,6 +72,8 @@ class VenueManagementService:
         has_lights: bool | None = None,
         skip: int = 0,
         limit: int = 20,
+        user_id: uuid.UUID | None = None,
+        only_favorites: bool = False,
     ) -> tuple[list[Venue], int]:
         """
         List venues with optional filters.
@@ -109,23 +112,42 @@ class VenueManagementService:
         # Note: Amenities filtering done at app level (stored as JSON)
         # TODO: Add dedicated columns for has_parking, has_lights for efficient filtering
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
+        # Build base query
+        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
+        count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
+
+        if only_favorites and user_id:
+            query = query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+            count_query = count_query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+
         # Get total count
-        count_result = await self.session.execute(
-            select(func.count()).select_from(Venue).where(and_(*conditions))
-        )
+        count_result = await self.session.execute(count_query)
         total = count_result.scalar()
 
         # Get paginated results
         result = await self.session.execute(
-            select(Venue)
-            .where(and_(*conditions))
+            query
             .order_by(Venue.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def get_merchant_venues(
         self,
@@ -232,6 +254,8 @@ class VenueManagementService:
         max_price: Decimal | None = None,
         skip: int = 0,
         limit: int = 20,
+        user_id: uuid.UUID | None = None,
+        only_favorites: bool = False,
     ) -> tuple[list[Venue], int]:
         """
         Search venues within radius using PostGIS.
@@ -270,25 +294,42 @@ class VenueManagementService:
         if max_price is not None:
             conditions.append(Venue.base_price_per_hour <= max_price)
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
+        # Build queries
+        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
+        count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
+
+        if only_favorites and user_id:
+            query = query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+            count_query = count_query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+
         # Get total count
-        count_result = await self.session.execute(
-            select(func.count())
-            .select_from(Venue)
-            .where(and_(*conditions))
-        )
+        count_result = await self.session.execute(count_query)
         total = count_result.scalar()
 
         # Get results ordered by distance
         result = await self.session.execute(
-            select(Venue)
-            .where(and_(*conditions))
+            query
             .order_by(geofunc.ST_Distance(Venue.location, point))
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def create_venue(
         self,

@@ -106,6 +106,7 @@ class VenueResponse(VenueBase):
     review_count: int | None = 0
     bookingLink: str | None = None
     category: str | None = None
+    is_favorite: bool = False
     created_at: str
     updated_at: str
     courts: list["CourtResponse"] | None = None
@@ -143,6 +144,7 @@ class VenueListItem(BaseModel):
     category: str | None = None
     rating: float | None = 0.0
     review_count: int | None = 0
+    is_favorite: bool = False
 
 
 class VenueServiceCreate(BaseModel):

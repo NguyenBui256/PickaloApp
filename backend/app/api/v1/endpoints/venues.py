@@ -61,6 +61,8 @@ async def list_venues(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     List venues with optional filters.
@@ -76,11 +78,13 @@ async def list_venues(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
     )
 
     # Convert to list items
     items = []
-    for venue in venues:
+    for venue, is_fav in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -92,6 +96,7 @@ async def list_venues(
             location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
+            is_favorite=is_fav,
             images=venue.images,
             amenities=venue.amenities,
             logo=None,
@@ -123,6 +128,8 @@ async def search_venues_nearby(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     Search venues within radius using PostGIS geospatial query.
@@ -140,11 +147,13 @@ async def search_venues_nearby(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
     )
 
     # Convert to list items
     items = []
-    for venue in venues:
+    for venue, is_fav in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -156,6 +165,7 @@ async def search_venues_nearby(
             location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
+            is_favorite=is_fav,
             images=venue.images,
             amenities=venue.amenities,
             logo=None,
@@ -180,6 +190,7 @@ async def get_venue(
     venue_id: str,
     session: DBSession,
     venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueResponse:
     """
     Get venue details by ID.
@@ -193,6 +204,13 @@ async def get_venue(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Venue not found",
         )
+
+    # Check if favorite
+    is_fav = False
+    if current_user:
+        from app.services.favorite import FavoriteService
+        fav_service = FavoriteService(session)
+        is_fav = await fav_service.is_favorite(current_user.id, uuid.UUID(venue_id))
 
     # Build response
     return VenueResponse(
@@ -216,6 +234,7 @@ async def get_venue(
         base_price_per_hour=venue.base_price_per_hour,
         is_active=venue.is_active,
         is_verified=venue.is_verified,
+        is_favorite=is_fav,
         created_at=venue.created_at.isoformat(),
         updated_at=venue.updated_at.isoformat(),
     )

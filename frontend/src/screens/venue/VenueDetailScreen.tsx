@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
-import { fetchVenueReviews } from '../../services/review-service';
+import { fetchVenueReviews, deleteReview } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { useAuthStore } from '../../store/auth-store';
 import { updateVenueStatus } from '../../services/admin-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
@@ -45,24 +46,36 @@ export const VenueDetailScreen: React.FC = () => {
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchVenueById(venueId).then(res => {
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetchVenueById(venueId);
       if (res) {
         setVenue(res);
-        // @ts-ignore - isFavorite là field mở rộng của FE mock
-        setIsFavorite((res as any).isFavorite || false);
+        // @ts-ignore
+        setIsFavorite((res as any).is_favorite || false);
       }
-    });
+      
+      setIsLoadingReviews(true);
+      const reviewsRes = await fetchVenueReviews(venueId);
+      setReviews(reviewsRes.items);
+    } catch (error) {
+      console.error('Error fetching venue data:', error);
+    } finally {
+      setIsLoadingReviews(false);
+    }
   }, [venueId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
   useEffect(() => {
     if (activeTab === 'Đánh giá' && reviews.length === 0) {
-      setIsLoadingReviews(true);
-      fetchVenueReviews(venueId).then(res => {
-        setReviews(res.items);
-        setIsLoadingReviews(false);
-      });
+      fetchData();
     }
-  }, [activeTab, venueId]);
+  }, [activeTab, fetchData, reviews.length]);
 
   const handleBookPress = () => {
     setBookingModalVisible(true);
@@ -87,8 +100,8 @@ export const VenueDetailScreen: React.FC = () => {
       'Bạn có chắc chắn muốn xóa sân này khỏi hệ thống? Sân sẽ được đưa vào danh sách tạm xóa.',
       [
         { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Xóa sân', 
+        {
+          text: 'Xóa sân',
           style: 'destructive',
           onPress: async () => {
             setIsDeleting(true);
@@ -115,6 +128,20 @@ export const VenueDetailScreen: React.FC = () => {
       });
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(venueId);
+      setIsFavorite(res.is_favorite);
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
     }
   };
 
@@ -157,10 +184,10 @@ export const VenueDetailScreen: React.FC = () => {
                 <View key={item.id} style={styles.reviewItem}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.userAvatarPlaceholder}>
-                      <Text style={styles.avatarText}>{item.user_name.charAt(0)}</Text>
+                      <Text style={styles.avatarText}>{item.user?.full_name?.charAt(0) || 'U'}</Text>
                     </View>
                     <View style={styles.reviewUserInfo}>
-                      <Text style={styles.reviewUserName}>{item.user_name}</Text>
+                      <Text style={styles.reviewUserName}>{item.user?.full_name || 'Người dùng'}</Text>
                       <View style={styles.starsRow}>
                         {[1, 2, 3, 4, 5].map((s) => (
                           <MaterialCommunityIcons
@@ -175,6 +202,48 @@ export const VenueDetailScreen: React.FC = () => {
                         </Text>
                       </View>
                     </View>
+
+                    {user?.id === item.user.id && (
+                      <View style={styles.reviewActions}>
+                        <TouchableOpacity
+                          onPress={() => navigation.navigate('ReviewSubmission', {
+                            venueId,
+                            venueName: venue.name,
+                            reviewId: item.id
+                          })}
+                          style={styles.actionBtn}
+                        >
+                          <MaterialCommunityIcons name="pencil-outline" size={18} color={COLORS.PRIMARY} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Alert.alert(
+                              'Xóa đánh giá',
+                              'Bạn có chắc chắn muốn xóa đánh giá này?',
+                              [
+                                { text: 'Hủy', style: 'cancel' },
+                                {
+                                  text: 'Xóa',
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    try {
+                                      await deleteReview(item.id);
+                                      Alert.alert('Thành công', 'Đã xóa đánh giá');
+                                      fetchData(); // Tải lại toàn bộ dữ liệu (bao gồm rating tổng)
+                                    } catch (err) {
+                                      Alert.alert('Lỗi', 'Không thể xóa đánh giá lúc này');
+                                    }
+                                  }
+                                }
+                              ]
+                            );
+                          }}
+                          style={styles.actionBtn}
+                        >
+                          <MaterialCommunityIcons name="delete-outline" size={18} color={COLORS.ERROR} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.reviewComment}>{item.comment}</Text>
                 </View>
@@ -214,8 +283,8 @@ export const VenueDetailScreen: React.FC = () => {
 
               <View style={styles.headerRight}>
                 {isAdmin ? (
-                  <TouchableOpacity 
-                    style={[styles.circularBtn, { backgroundColor: '#F44336' }]} 
+                  <TouchableOpacity
+                    style={[styles.circularBtn, { backgroundColor: '#F44336' }]}
                     onPress={handleAdminDelete}
                     disabled={isDeleting}
                   >
@@ -227,7 +296,7 @@ export const VenueDetailScreen: React.FC = () => {
                       <MaterialCommunityIcons name="share-variant" size={22} color={COLORS.BLACK} />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => setIsFavorite(!isFavorite)}
+                      onPress={handleToggleFavorite}
                       style={styles.circularBtn}
                     >
                       <MaterialCommunityIcons
@@ -613,6 +682,14 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SECONDARY,
     lineHeight: 20,
     paddingLeft: 52,
+    marginTop: 4,
+  },
+  reviewActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    padding: 4,
   },
   emptyReviews: {
     alignItems: 'center',

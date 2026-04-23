@@ -13,18 +13,50 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenues } from '../../services/venue-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import { VenueCard } from '../../components/VenueCard';
+import { useAuthStore } from '../../store/auth-store';
+import { Alert } from 'react-native';
 
 export const SearchScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadVenues = async () => {
+    try {
+      const res = await fetchVenues();
+      if (res?.items) setVenues(res.items);
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+    }
+  };
 
   useEffect(() => {
-    fetchVenues().then(res => {
-      if (res?.items) setVenues(res.items);
-    });
+    loadVenues();
+  }, [user]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadVenues();
+    setRefreshing(false);
   }, []);
+
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(id);
+      setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    }
+  };
 
   const filteredVenues = venues.filter(v =>
     v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,12 +93,15 @@ export const SearchScreen: React.FC = () => {
           data={filteredVenues}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => (
             <VenueCard
               {...item}
+              is_favorite={item.is_favorite}
               onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
               onBook={() => navigation.navigate('VenueDetails', { venueId: item.id })}
-              onFavoriteToggle={() => {}}
+              onFavoriteToggle={() => handleToggleFavorite(item.id)}
             />
           )}
           ListEmptyComponent={
