@@ -95,38 +95,6 @@ export const MapScreen: React.FC = () => {
             <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
           </TouchableOpacity>
         </View>
-
-        {/* Category Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsContainer}
-        >
-          {MAP_CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => setActiveCategory(cat.id)}
-              style={[
-                styles.chip,
-                activeCategory === cat.id && styles.activeChip,
-              ]}
-            >
-              <MaterialCommunityIcons name={cat.icon as any}
-                size={18}
-                color={activeCategory === cat.id ? COLORS.WHITE : COLORS.GRAY_MEDIUM}
-              />
-              <Text
-                style={[
-                  styles.chipText,
-                  activeCategory === cat.id && styles.activeChipText,
-                ]}
-              >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       {/* Floating UI: Map Controls */}

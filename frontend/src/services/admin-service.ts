@@ -8,11 +8,11 @@
  */
 
 import { apiClient } from './api-client';
-import { 
-  ADMIN_STATS, 
-  ADMIN_USERS, 
-  ADMIN_VENUES, 
-  ADMIN_REPORTED_POSTS 
+import {
+  ADMIN_STATS,
+  ADMIN_USERS,
+  ADMIN_VENUES,
+  ADMIN_REPORTED_POSTS
 } from '@constants/mock-data';
 import type {
   AdminStatsResponse,

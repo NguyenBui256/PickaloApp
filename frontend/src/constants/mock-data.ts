@@ -5,11 +5,6 @@
 // Chưa có API danh sách Categories riêng (Backend hiện tại sử dụng enum VenueType)
 export const CATEGORIES = [
   { id: '1', name: 'Pickleball', icon: 'tennis-ball' as const },
-  { id: '2', name: 'Cầu lông', icon: 'badminton' as const },
-  { id: '3', name: 'Bóng đá', icon: 'soccer' as const },
-  { id: '4', name: 'Tennis', icon: 'tennis' as const },
-  { id: '5', name: 'B.Chuyền', icon: 'volleyball' as const },
-  { id: '6', name: 'Bóng rổ', icon: 'basketball' as const },
 ];
 
 // Map với Schema: VenueListItem
@@ -116,9 +111,8 @@ export const VENUES = [
 
 // Chưa có API filters
 export const QUICK_FILTERS = [
-  'Cầu lông gần tôi',
-  'Pickleball gần tôi',
-  'Xé vé gần tôi',
+  'Sân gần tôi',
+  'Gần đây đặt',
 ];
 
 // Chưa có API filters
@@ -226,8 +220,8 @@ BOOKING_COURTS.forEach(court => {
     const rand = Math.random();
     let status = 'available'; // backend "available" (available=true)
     if (rand < 0.1) status = 'booked'; // backend status = "CONFIRMED"
-    else if (rand < 0.15) status = 'locked';
-    else if (rand < 0.18) status = 'event';
+    else if (rand < 0.13) status = 'maintenance';
+    else if (rand < 0.16) status = 'event';
     MOCK_AVAILABILITY[`${court}-${slot}`] = status;
   });
 });
@@ -543,3 +537,40 @@ export const MOCK_ADMIN = {
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
+
+// ==========================================
+// SOCIAL RECRUITMENT (Highlights Tab)
+// ==========================================
+export const RECRUITMENT_POSTS = [
+  {
+    id: 'p1',
+    user_name: 'Phạm Ngọc Long',
+    user_avatar: 'https://i.pravatar.cc/150?u=long',
+    content: 'Cần tuyển 2 thành viên nam/nữ trình độ trung bình khá vào giao lưu sáng mai. Sân đẹp, nước uống miễn phí!',
+    venue_id: '1',
+    venue_name: 'LVK Pickleball Club',
+    booking_date: '2026-04-24',
+    booking_time: '08:00 - 10:00',
+    created_at: '2026-04-23T10:00:00Z',
+    comments: [
+      { id: 'c1', user_name: 'Minh Tuấn', content: 'Cho mình đăng ký 1 slot nhé!', created_at: '2026-04-23T11:30:00Z', is_mine: false },
+    ],
+  },
+  {
+    id: 'p2',
+    user_name: 'Nguyễn Văn An',
+    user_avatar: 'https://i.pravatar.cc/150?u=an',
+    content: 'Team mình đang thiếu 1 người chơi đôi nam nữ tối nay. Ai rảnh ghé qua giao lưu nhé.',
+    venue_id: '2',
+    venue_name: 'Pickleball Hà Đông',
+    booking_date: '2026-04-23',
+    booking_time: '19:00 - 21:00',
+    created_at: '2026-04-23T08:00:00Z',
+    comments: [],
+  }
+];
+
+export const MY_BOOKINGS_FOR_POST = [
+  { id: 'b1', venue_id: '1', venue_name: 'LVK Pickleball Club', date: '2026-04-24', time: '08:00 - 10:00' },
+  { id: 'b2', venue_id: '2', venue_name: 'Sân Pickleball PVV', date: '2026-04-25', time: '17:00 - 19:00' },
+];

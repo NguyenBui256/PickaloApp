@@ -144,45 +144,9 @@ export const HomeScreen: React.FC = () => {
 
         {/* Main Content Area */}
         <View style={styles.content}>
-          {/* Sports Categories */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}
-          >
-            {CATEGORIES.map((cat) => (
-              <CategoryItem
-                key={cat.id}
-                name={cat.name}
-                iconName={cat.icon}
-                isActive={selectedCategory === cat.name}
-                onPress={() => setSelectedCategory(prev => prev === cat.name ? 'Tất cả' : cat.name)}
-              />
-            ))}
-          </ScrollView>
-
-          {/* Filter Banner */}
-          <TouchableOpacity 
-            style={styles.filterBanner} 
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('Search')}
-          >
-            <View style={styles.bannerContent}>
-              <Text style={styles.bannerText}>
-                Tìm sân trống, sự kiện xé vé, ghép đội
-              </Text>
-              <MaterialCommunityIcons name="tune-variant" size={24} color={COLORS.WHITE} />
-            </View>
-          </TouchableOpacity>
-
           {/* Venue List */}
           <View style={styles.venueList}>
-            {venues.filter(venue => {
-              const matchesCategory = selectedCategory === 'Tất cả' || venue.category.toLowerCase().includes(selectedCategory.toLowerCase());
-              // For simplicity, just filtering by category for now. 
-              // Quick filters like "Gần đây" would normally involve location calc.
-              return matchesCategory;
-            }).map((venue) => (
+            {venues.map((venue) => (
               <VenueCard
                 key={venue.id}
                 {...venue}

@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, Platform } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { 
@@ -32,7 +33,7 @@ const { height } = Dimensions.get('window');
 const MAP_HEIGHT = 180;
 
 type RootStackParamList = {
-  MapVenueDetailOverlay: { venueId: string };
+  MapVenueDetailOverlay: { venueId: string; hideMap?: boolean };
   BookingDetails: { venueId: string };
 };
 
@@ -43,7 +44,7 @@ const TABS = ['Thông tin', 'Dịch vụ', 'Hình ảnh', 'Điều khoản & quy
 export const MapVenueDetailOverlayScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProps>();
-  const { venueId } = route.params;
+  const { venueId, hideMap } = route.params;
 
   const [venue, setVenue] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('Thông tin');
@@ -107,6 +108,12 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  const openMap = () => {
+    const query = encodeURIComponent(`${venue?.name}, ${venue?.address}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    Linking.openURL(url).catch(err => console.error("Error opening maps", err));
+  };
 
   const handleBookPress = () => {
     setBookingModalVisible(true);
@@ -204,61 +211,8 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       <StatusBar barStyle="dark-content" />
-
-      {/* 1. Map Background Header */}
-      <View style={styles.mapContainer}>
-        <MapView
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          initialRegion={{
-            latitude: venue.location.lat,
-            longitude: venue.location.lng,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-          scrollEnabled={false}
-          zoomEnabled={false}
-        >
-          <Marker
-            coordinate={{ latitude: venue.location.lat, longitude: venue.location.lng }}
-            pinColor={COLORS.PRIMARY}
-          />
-        </MapView>
-      </View>
-
-      {/* 2. Floating Navbar above Map */}
-      <SafeAreaView style={styles.navbarOverlay}>
-        <View style={styles.navbar}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
-            <MaterialCommunityIcons name="chevron-left" size={28} color={COLORS.TEXT_PRIMARY} />
-          </TouchableOpacity>
-          <Text style={styles.navTitle} numberOfLines={1}>{venue.name}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.navBtn}>
-            <MaterialCommunityIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Category Chips below Navbar */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsContent}
-        >
-          {['Pickleball', 'Cầu lông', 'Bóng đá'].map((name) => (
-            <TouchableOpacity
-              key={name}
-              style={[styles.chip, venue.category === name && styles.activeChip]}
-            >
-              <Text style={[styles.chipText, venue.category === name && styles.activeChipText]}>
-                {name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </SafeAreaView>
 
       {/* 3. Main Detail Overlay Panel */}
       <Animated.View style={[styles.gestureContainer, animatedStyle]}>
@@ -288,6 +242,12 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
                 <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
               </TouchableOpacity>
+              
+              {/* Map/Direction Button */}
+              <TouchableOpacity onPress={openMap} style={styles.circularBtn}>
+                <MaterialCommunityIcons name="map-marker-outline" size={22} color={COLORS.PRIMARY} />
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.bookNowBtn}
                 onPress={handleBookPress}
