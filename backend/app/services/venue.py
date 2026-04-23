@@ -127,6 +127,83 @@ class VenueManagementService:
 
         return venues, total
 
+    async def get_merchant_venues(
+        self,
+        merchant_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[dict], int]:
+        """
+        List venues for a specific merchant with summary stats.
+
+        Args:
+            merchant_id: Merchant user ID
+            skip: Pagination offset
+            limit: Results per page
+
+        Returns:
+            Tuple of (list of venue data dicts, total count)
+        """
+        # Get total count
+        count_result = await self.session.execute(
+            select(func.count()).select_from(Venue).where(
+                Venue.merchant_id == merchant_id,
+                Venue.deleted_at.is_(None)
+            )
+        )
+        total = count_result.scalar()
+
+        # Get venues
+        result = await self.session.execute(
+            select(Venue)
+            .where(
+                Venue.merchant_id == merchant_id,
+                Venue.deleted_at.is_(None)
+            )
+            .order_by(Venue.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        venues = result.scalars().all()
+
+        # Get stats for each venue
+        # Note: In a production app, we might want to do this in a single query with joins
+        # or use a cached analytics table. For now, we'll do it per venue for simplicity.
+        now = datetime.utcnow()
+        start_of_month = datetime(now.year, now.month, 1).date()
+
+        items = []
+        for venue in venues:
+            # Total bookings count
+            booking_count_result = await self.session.execute(
+                select(func.count()).select_from(Booking).where(
+                    Booking.venue_id == venue.id,
+                    Booking.status != BookingStatus.CANCELLED
+                )
+            )
+            total_bookings = booking_count_result.scalar() or 0
+
+            # Revenue MTD (Month To Date)
+            revenue_result = await self.session.execute(
+                select(func.sum(Booking.total_price)).where(
+                    Booking.venue_id == venue.id,
+                    Booking.booking_date >= start_of_month,
+                    Booking.status == BookingStatus.COMPLETED
+                )
+            )
+            revenue_mtd = float(revenue_result.scalar() or 0.0)
+
+            items.append({
+                "id": str(venue.id),
+                "name": venue.name,
+                "status": "active" if venue.is_active else "inactive",
+                "total_bookings": total_bookings,
+                "revenue_mtd": revenue_mtd,
+                "rating": float(venue.rating or 0.0),
+            })
+
+        return items, total
+
     async def get_venue_by_id(self, venue_id: uuid.UUID) -> Venue | None:
         """
         Get venue by ID with full details.

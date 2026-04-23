@@ -6,7 +6,12 @@ and realistic pricing data.
 """
 
 import asyncio
+import os
+import sys
 from decimal import Decimal
+
+# Add backend root to path so app can be imported
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

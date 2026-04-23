@@ -40,8 +40,10 @@ from app.schemas.venue import (
     PricingSlotCreate,
     PricingSlotUpdate,
     PricingSlotResponse,
+    MerchantVenueListItem,
+    MerchantVenueListResponse,
 )
-from app.services.venue import VenueService, get_venue_service
+from app.services.venue import VenueManagementService, get_venue_service
 from app.services.booking import BookingService, get_booking_service
 
 router = APIRouter(prefix="/venues", tags=["venues"])
@@ -384,6 +386,37 @@ async def deactivate_venue(
     await session.commit()
 
 
+@router.get("/merchant/list", response_model=MerchantVenueListResponse)
+async def list_merchant_venues(
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> MerchantVenueListResponse:
+    """
+    List venues owned by the current merchant.
+
+    Returns summary stats for each venue.
+    """
+    skip = (page - 1) * limit
+
+    items, total = await venue_service.get_merchant_venues(
+        merchant_id=current_user.id,
+        skip=skip,
+        limit=limit,
+    )
+
+    pages = (total + limit - 1) // limit
+
+    return MerchantVenueListResponse(
+        items=[MerchantVenueListItem(**item) for item in items],
+        total=total,
+        page=page,
+        limit=limit,
+        pages=pages,
+    )
+
+
 @router.get("/{venue_id}/services", response_model=list[VenueServiceResponse])
 async def get_venue_services(
     venue_id: str,
@@ -441,6 +474,71 @@ async def create_venue_service(
         is_available=service.is_available,
         created_at=service.created_at.isoformat(),
     )
+
+
+@router.put("/{venue_id}/services/{service_id}", response_model=VenueServiceResponse)
+async def update_venue_service(
+    venue_id: str,
+    service_id: str,
+    service_data: VenueServiceUpdate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> VenueServiceResponse:
+    """
+    Update venue service (merchant only, ownership verified).
+    """
+    updates = service_data.model_dump(exclude_unset=True)
+    service = await venue_service.update_venue_service(
+        service_id=service_id,
+        merchant_id=current_user.id,
+        **updates,
+    )
+
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found",
+        )
+
+    await session.commit()
+
+    return VenueServiceResponse(
+        id=service.id,
+        venue_id=str(service.venue_id),
+        name=service.name,
+        description=service.description,
+        price_per_unit=service.price_per_unit,
+        is_available=service.is_available,
+        created_at=service.created_at.isoformat(),
+    )
+
+
+@router.delete("/{venue_id}/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_venue_service(
+    venue_id: str,
+    service_id: str,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    session: DBSession,
+) -> None:
+    """
+    Delete venue service (merchant only, ownership verified).
+
+    Soft delete — service is marked unavailable.
+    """
+    success = await venue_service.delete_venue_service(
+        service_id=service_id,
+        merchant_id=current_user.id,
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Service not found",
+        )
+
+    await session.commit()
 
 
 @router.get("/{venue_id}/pricing", response_model=list[PricingSlotResponse])
@@ -533,7 +631,7 @@ async def verify_venue(
 @router.get("/{venue_id}/courts", response_model=list[CourtResponse])
 async def get_venue_courts(
     venue_id: str,
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
 ) -> list[CourtResponse]:
     """Get all courts for a venue."""
     courts = await venue_service.get_venue_courts(uuid.UUID(venue_id))
@@ -545,7 +643,7 @@ async def create_court(
     venue_id: str,
     court_data: CourtCreate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> CourtResponse:
     """Add a new court to venue (merchant only)."""
@@ -564,7 +662,7 @@ async def update_court(
     court_id: str,
     court_data: CourtUpdate,
     current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
     session: DBSession,
 ) -> CourtResponse:
     """Update court details (merchant only)."""

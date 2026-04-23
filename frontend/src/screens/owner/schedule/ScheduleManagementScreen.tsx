@@ -11,48 +11,64 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { OWNER_BOOKING_REQUESTS } from '../../../constants/mock-data';
-import { fetchMerchantBookings, approveBooking, rejectBooking } from '../../../services/merchant-service';
+import {
+  fetchMerchantBookings,
+  approveBooking,
+  rejectBooking,
+} from '../../../services/merchant-service';
+import type { BookingListItem } from '../../../types/api-types';
 
 export const ScheduleManagementScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [requests, setRequests] = useState(OWNER_BOOKING_REQUESTS);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'maintenance'>('pending');
+  const [_loading, setLoading] = useState(true);
 
-  const filteredRequests = requests.filter(req => {
-    if (activeTab === 'pending') return req.status === 'Đang xếp lịch' || req.status === 'PENDING';
-    if (activeTab === 'approved') return req.status === 'Đã duyệt' || req.status === 'CONFIRMED';
-    if (activeTab === 'maintenance') return req.status === 'Bảo trì';
+  useEffect(() => {
+    fetchMerchantBookings()
+      .then((res) => {
+        setBookings(res.items);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredRequests = bookings.filter((b) => {
+    if (activeTab === 'pending') return b.status === 'PENDING';
+    if (activeTab === 'approved') return b.status === 'CONFIRMED';
     return false;
   });
 
   const handleAction = (id: string, action: 'APPROVE' | 'CANCEL') => {
     const actionText = action === 'APPROVE' ? 'duyệt' : 'hủy';
-    Alert.alert(
-      'Xác nhận',
-      `Bạn có chắc chắn muốn ${actionText} đơn đặt sân này?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Đồng ý', 
-          onPress: () => {
+    Alert.alert('Xác nhận', `Bạn có chắc chắn muốn ${actionText} đơn đặt sân này?`, [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Đồng ý',
+        onPress: async () => {
+          try {
             if (action === 'CANCEL') {
-              setRequests(prev => prev.filter(req => req.id !== id));
+              await rejectBooking(id, { reason: 'Merchant rejected' });
             } else {
-              setRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'Đã duyệt' } : req));
+              await approveBooking(id);
             }
-          } 
-        }
-      ]
-    );
+            // Refresh list
+            const res = await fetchMerchantBookings();
+            setBookings(res.items);
+          } catch (err) {
+            Alert.alert('Lỗi', 'Không thể thực hiện thao tác.');
+          }
+        },
+      },
+    ]);
   };
 
-  const renderItem = ({ item }: { item: typeof OWNER_BOOKING_REQUESTS[0] }) => (
+  const renderItem = ({ item }: { item: BookingListItem }) => (
     <View style={styles.requestCard}>
       <View style={styles.cardHeader}>
         <View style={styles.customerInfo}>
-          <Text style={styles.customerName}>{item.customerName}</Text>
-          <Text style={styles.customerPhone}>{item.phone}</Text>
+          <Text style={styles.customerName}>{item.venue_name || 'N/A'}</Text>
+          <Text style={styles.customerPhone}>{item.booking_date}</Text>
         </View>
         <View style={styles.statusBadge}>
           <Text style={styles.statusText}>{item.status}</Text>
@@ -64,42 +80,39 @@ export const ScheduleManagementScreen: React.FC = () => {
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="calendar" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.date}</Text>
+          <Text style={styles.detailText}>{item.booking_date}</Text>
         </View>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="clock-outline" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.time}</Text>
+          <Text style={styles.detailText}>
+            {item.start_time} - {item.end_time}
+          </Text>
         </View>
       </View>
 
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="map-marker" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.court}</Text>
+          <Text style={styles.detailText}>{item.venue_address || 'N/A'}</Text>
         </View>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="cash" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.totalPrice.toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.detailText}>
+            {Number(item.total_price).toLocaleString('vi-VN')} đ
+          </Text>
         </View>
       </View>
 
-      {item.services.length > 0 && (
-        <View style={styles.servicesContainer}>
-          <Text style={styles.servicesLabel}>Dịch vụ kèm theo:</Text>
-          <Text style={styles.servicesList}>{item.services.join(', ')}</Text>
-        </View>
-      )}
-
-      {item.status === 'Đang xếp lịch' || item.status === 'PENDING' ? (
+      {item.status === 'PENDING' ? (
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={[styles.btn, styles.cancelBtn]} 
+          <TouchableOpacity
+            style={[styles.btn, styles.cancelBtn]}
             onPress={() => handleAction(item.id, 'CANCEL')}
           >
             <Text style={styles.cancelBtnText}>Từ chối</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.btn, styles.approveBtn]} 
+          <TouchableOpacity
+            style={[styles.btn, styles.approveBtn]}
             onPress={() => handleAction(item.id, 'APPROVE')}
           >
             <Text style={styles.approveBtnText}>Duyệt đơn</Text>
@@ -107,9 +120,9 @@ export const ScheduleManagementScreen: React.FC = () => {
         </View>
       ) : null}
 
-      <TouchableOpacity 
-        style={styles.detailsBtn} 
-        onPress={() => navigation.navigate('OwnerBookingDetail', { booking: item })}
+      <TouchableOpacity
+        style={styles.detailsBtn}
+        onPress={() => navigation.navigate('OwnerBookingDetail', { bookingId: item.id })}
       >
         <Text style={styles.detailsBtnText}>Xem chi tiết</Text>
       </TouchableOpacity>
@@ -126,23 +139,23 @@ export const ScheduleManagementScreen: React.FC = () => {
       </View>
 
       <View style={styles.tabBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
           onPress={() => setActiveTab('pending')}
         >
           <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
-            Đang chờ ({requests.filter(r => r.status === 'Đang xếp lịch').length})
+            Đang chờ ({bookings.filter((b) => b.status === 'PENDING').length})
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'approved' && styles.activeTab]}
           onPress={() => setActiveTab('approved')}
         >
           <Text style={[styles.tabText, activeTab === 'approved' && styles.activeTabText]}>
-            Đã duyệt ({requests.filter(r => r.status === 'Đã duyệt').length})
+            Đã duyệt ({bookings.filter((b) => b.status === 'CONFIRMED').length})
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'maintenance' && styles.activeTab]}
           onPress={() => setActiveTab('maintenance')}
         >
@@ -155,7 +168,7 @@ export const ScheduleManagementScreen: React.FC = () => {
       <FlatList
         data={filteredRequests}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

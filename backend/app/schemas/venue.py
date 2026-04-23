@@ -315,3 +315,24 @@ class AvailabilityResponse(BaseModel):
     open_time: str
     close_time: str
     courts: list[CourtAvailability]
+
+
+class MerchantVenueListItem(BaseModel):
+    """Simplified venue for merchant dashboard."""
+
+    id: str
+    name: str
+    status: str  # active, inactive, pending
+    total_bookings: int = 0
+    revenue_mtd: float = 0.0
+    rating: float = 0.0
+
+
+class MerchantVenueListResponse(BaseModel):
+    """Paginated merchant venue list response."""
+
+    items: list[MerchantVenueListItem]
+    total: int
+    page: int
+    limit: int
+    pages: int

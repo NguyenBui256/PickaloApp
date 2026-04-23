@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,33 +12,53 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { BookingCell } from '../../../components/BookingCell';
-import { TIME_SLOTS, BOOKING_COURTS, MOCK_AVAILABILITY } from '../../../constants/mock-data';
+import { fetchVenueAvailability } from '../../../services/venue-service';
+import type { AvailabilityResponse } from '../../../types/api-types';
 
 export const MaintenanceSchedulerScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { venueId } = route.params || {};
 
-  // Clone mock data to represent local state editing
-  const [availability, setAvailability] = useState<{ [key: string]: string }>(MOCK_AVAILABILITY);
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityResponse | null>(null);
+  // Track local overrides for maintenance toggling
+  const [overrides, setOverrides] = useState<{ [key: string]: string }>({});
 
-  const toggleMaintenance = useCallback((court: string, slot: string) => {
-    const slotId = `${court}-${slot}`;
-    setAvailability((prev) => {
-      const currentStatus = prev[slotId];
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    fetchVenueAvailability(venueId, today).then(setAvailabilityData).catch(console.error);
+  }, [venueId]);
+
+  const getSlotStatus = useCallback(
+    (courtId: string, slotStart: string, available: boolean) => {
+      const key = `${courtId}-${slotStart}`;
+      if (overrides[key]) return overrides[key];
+      return available ? 'available' : 'booked';
+    },
+    [overrides]
+  );
+
+  const toggleMaintenance = useCallback(
+    (courtId: string, slotStart: string, available: boolean) => {
+      const key = `${courtId}-${slotStart}`;
+      const current = overrides[key] || (available ? 'available' : 'booked');
       // Only toggle available or locked slots. Ignore booked/event slots.
-      if (currentStatus === 'available') {
-        return { ...prev, [slotId]: 'locked' };
-      } else if (currentStatus === 'locked') {
-        return { ...prev, [slotId]: 'available' };
+      if (current === 'available') {
+        setOverrides((prev) => ({ ...prev, [key]: 'locked' }));
+      } else if (current === 'locked') {
+        setOverrides((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
       }
-      return prev;
-    });
-  }, []);
+    },
+    [overrides]
+  );
 
   const handleSave = () => {
     Alert.alert('Thành công', 'Đã lưu lịch bảo trì thành công.', [
-      { text: 'OK', onPress: () => navigation.goBack() }
+      { text: 'OK', onPress: () => navigation.goBack() },
     ]);
   };
 
@@ -74,27 +94,29 @@ export const MaintenanceSchedulerScreen: React.FC = () => {
               <View style={styles.courtHeaderCell}>
                 <Text style={styles.courtHeaderText}>Sân / Giờ</Text>
               </View>
-              {TIME_SLOTS.map((slot) => (
-                <View key={slot} style={styles.timeLabelCell}>
-                  <Text style={styles.timeLabelText}>{slot}</Text>
+              {availabilityData?.courts[0]?.slots.map((slot) => (
+                <View key={slot.start_time} style={styles.timeLabelCell}>
+                  <Text style={styles.timeLabelText}>{slot.start_time}</Text>
                 </View>
               ))}
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {BOOKING_COURTS.map((court) => (
-                <View key={court} style={styles.courtRow}>
+              {availabilityData?.courts.map((court) => (
+                <View key={court.court_id} style={styles.courtRow}>
                   <View style={styles.courtNameCell}>
-                    <Text style={styles.courtNameText}>{court}</Text>
+                    <Text style={styles.courtNameText}>{court.court_name}</Text>
                   </View>
-                  {TIME_SLOTS.map((slot) => {
-                    const slotId = `${court}-${slot}`;
+                  {court.slots.map((slot) => {
+                    const status = getSlotStatus(court.court_id, slot.start_time, slot.available);
                     return (
                       <BookingCell
-                        key={slotId}
-                        status={availability[slotId]}
+                        key={`${court.court_id}-${slot.start_time}`}
+                        status={status}
                         isSelected={false}
-                        onPress={() => toggleMaintenance(court, slot)}
+                        onPress={() =>
+                          toggleMaintenance(court.court_id, slot.start_time, slot.available)
+                        }
                         isMaintenanceMode={true}
                       />
                     );
