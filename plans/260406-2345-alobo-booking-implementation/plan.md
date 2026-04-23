@@ -31,23 +31,28 @@ Sports facility booking platform connecting venue owners (Merchants) and players
 
 | Sprint | Focus | Status | Effort |
 |--------|-------|--------|--------|
-| Sprint 0 | Infrastructure & Setup | Complete | 8h |
+| Sprint 0 | Infrastructure & Setup | ✅ Complete | 8h |
 Completed: 2026-04-07
-| Sprint 1 | Database & Models | Complete | 12h |
-| Sprint 2 | Authentication & Authorization | Complete | 10h |
+| Sprint 1 | Database & Models | ✅ Complete | 12h |
 Completed: 2026-04-07
-| Sprint 3 | Venue Management APIs | In Progress | 14h |
-| Sprint 4 | Booking & Pricing Engine | Pending | 16h |
-| Sprint 5 | Payment Integration | Pending | 12h |
-| Sprint 6 | Maps & Search | Pending | 10h |
-| Sprint 7 | Newsfeed & Community | Pending | 10h |
-| Sprint 8 | Merchant Dashboard APIs | Pending | 12h |
-| Sprint 9 | Admin Dashboard APIs | Pending | 8h |
-| Sprint 10 | React Native - Core & Navigation | Pending | 10h |
-| Sprint 11 | React Native - User Features | Pending | 14h |
-| Sprint 12 | React Native - Merchant Features | Pending | 12h |
-| Sprint 13 | React Native - Admin Features | Pending | 8h |
-| Sprint 14 | Integration Testing & Polish | Pending | 8h |
+| Sprint 2 | Authentication & Authorization | ✅ Complete | 10h |
+Completed: 2026-04-07
+| Sprint 3 | Venue Management APIs | ✅ Complete | 14h |
+Completed: 2026-04-08
+| Sprint 4 | Booking & Pricing Engine | ✅ Complete | 16h |
+Completed: 2026-04-08
+| Sprint 5 | Payment Integration | 🔄 In Progress | 20h |
+| Sprint 6 | Maps & Search | ✅ Complete | 10h |
+Completed: 2026-04-08
+| Sprint 7 | Newsfeed & Community | ⏳ Planned | 10h |
+| Sprint 8 | Merchant Dashboard APIs | ⏳ Planned | 12h |
+| Sprint 9 | Admin Dashboard APIs | ✅ Complete | 8h |
+Completed: 2026-04-09
+| Sprint 10 | React Native - Core & Navigation | ⏳ Planned | 10h |
+| Sprint 11 | React Native - User Features | ⏳ Planned | 14h |
+| Sprint 12 | React Native - Merchant Features | ⏳ Planned | 12h |
+| Sprint 13 | React Native - Admin Features | ⏳ Planned | 8h |
+| Sprint 14 | Integration Testing & Polish | ⏳ Planned | 8h |
 
 ## Dependencies
 
@@ -81,7 +86,7 @@ Sprint 10-13 (Frontend) --> Sprint 14 (Testing)
 - [Sprint 6: Maps & Search](./sprint-06-maps-search.md)
 - [Sprint 7: Newsfeed & Community](./sprint-07-newsfeed.md)
 - [Sprint 8: Merchant Dashboard APIs](./sprint-08-merchant-dashboard.md)
-- [Sprint 9: Admin Dashboard APIs](./sprint-09-admin-dashboard.md)
+- [Sprint 9: Admin Dashboard APIs](./sprint-09-admin-dashboard.md) ✅ Complete
 - [Sprint 10: React Native - Core & Navigation](./sprint-10-rn-core.md)
 - [Sprint 11: React Native - User Features](./sprint-11-rn-user.md)
 - [Sprint 12: React Native - Merchant Features](./sprint-12-rn-merchant.md)

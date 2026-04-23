@@ -2,11 +2,11 @@
  * Application configuration constants.
  */
 
+import { API_BASE_URL } from '@env';
+
 export const APP_CONFIG = {
   // API Configuration
-  API_BASE_URL: __DEV__
-    ? 'http://10.0.2.2:8000/api/v1' // Android emulator to host machine
-    : 'https://api.alobo.vn/api/v1', // Production URL
+  API_BASE_URL: __DEV__ ? API_BASE_URL : 'https://api.alobo.vn/api/v1', // Production URL
 
   // Timeouts (in milliseconds)
   API_TIMEOUT: 30000,

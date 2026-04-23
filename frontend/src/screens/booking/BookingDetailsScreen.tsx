@@ -1,21 +1,14 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { BOOKING_COURTS, TIME_SLOTS, MOCK_AVAILABILITY } from '../../constants/mock-data';
 import { BookingCell } from '../../components/BookingCell';
 import { BookingSummaryBar } from '../../components/BookingSummaryBar';
+import { fetchVenueAvailability } from '../../services/venue-service';
+import type { AvailabilityResponse } from '../../types/api-types';
 
-const { width } = Dimensions.get('window');
 const COURT_COLUMN_WIDTH = 100;
 const TIME_CELL_WIDTH = 60;
 const CELL_HEIGHT = 40;
@@ -27,10 +20,16 @@ export const BookingDetailsScreen: React.FC = () => {
   const { venueId } = route.params || {};
 
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    fetchVenueAvailability(venueId, today).then(setAvailability).catch(console.error);
+  }, [venueId]);
 
   // Format price helper
   const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
   // Calculations
@@ -49,8 +48,8 @@ export const BookingDetailsScreen: React.FC = () => {
 
   const toggleSlot = useCallback((court: string, slot: string) => {
     const slotId = `${court}-${slot}`;
-    setSelectedSlots(prev =>
-      prev.includes(slotId) ? prev.filter(id => id !== slotId) : [...prev, slotId]
+    setSelectedSlots((prev) =>
+      prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
   }, []);
 
@@ -75,7 +74,12 @@ export const BookingDetailsScreen: React.FC = () => {
           {/* Legend */}
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendBox, { backgroundColor: COLORS.WHITE, borderWidth: 0.5, borderColor: COLORS.BORDER }]} />
+              <View
+                style={[
+                  styles.legendBox,
+                  { backgroundColor: COLORS.WHITE, borderWidth: 0.5, borderColor: COLORS.BORDER },
+                ]}
+              />
               <Text style={styles.legendLabel}>Trống</Text>
             </View>
             <View style={styles.legendItem}>
@@ -103,31 +107,31 @@ export const BookingDetailsScreen: React.FC = () => {
               <View style={styles.courtHeaderCell}>
                 <Text style={styles.courtHeaderText}>Sân / Giờ</Text>
               </View>
-              {TIME_SLOTS.map((slot) => (
-                <View key={slot} style={styles.timeLabelCell}>
-                  <Text style={styles.timeLabelText}>{slot}</Text>
+              {availability?.courts[0]?.slots.map((slot) => (
+                <View key={slot.start_time} style={styles.timeLabelCell}>
+                  <Text style={styles.timeLabelText}>{slot.start_time}</Text>
                 </View>
               ))}
             </View>
 
             {/* Matrix Content */}
             <ScrollView showsVerticalScrollIndicator={false}>
-              {BOOKING_COURTS.map((court) => (
-                <View key={court} style={styles.courtRow}>
+              {availability?.courts.map((court) => (
+                <View key={court.court_id} style={styles.courtRow}>
                   {/* Sticky Court Column (Scrolls Vertically) */}
                   <View style={styles.courtNameCell}>
-                    <Text style={styles.courtNameText}>{court}</Text>
+                    <Text style={styles.courtNameText}>{court.court_name}</Text>
                   </View>
 
                   {/* Row Cells */}
-                  {TIME_SLOTS.map((slot) => {
-                    const slotId = `${court}-${slot}`;
+                  {court.slots.map((slot) => {
+                    const slotId = `${court.court_id}-${slot.start_time}`;
                     return (
                       <BookingCell
                         key={slotId}
-                        status={MOCK_AVAILABILITY[slotId]}
+                        status={slot.available ? 'available' : 'booked'}
                         isSelected={selectedSlots.includes(slotId)}
-                        onPress={() => toggleSlot(court, slot)}
+                        onPress={() => toggleSlot(court.court_id, slot.start_time)}
                       />
                     );
                   })}

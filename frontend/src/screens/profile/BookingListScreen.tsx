@@ -11,8 +11,15 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { Booking, formatBookingTime, formatBookingDate, formatBookingPrice } from '../../constants/mock-data';
+import type { BookingListItem } from '../../types/api-types';
 import { fetchMyBookings } from '../../services/booking-service';
+
+// Helpers
+const formatBookingTime = (b: BookingListItem) => `${b.start_time} - ${b.end_time}`;
+const formatBookingDate = (b: BookingListItem) =>
+  new Date(b.booking_date).toLocaleDateString('vi-VN');
+const formatBookingPrice = (b: BookingListItem) =>
+  `${Number(b.total_price).toLocaleString('vi-VN')} đ`;
 
 const Ribbon = ({ text }: { text: string }) => (
   <View style={styles.ribbonContainer}>
@@ -25,7 +32,7 @@ const Ribbon = ({ text }: { text: string }) => (
   </View>
 );
 
-const BookingCard = ({ item }: { item: Booking }) => {
+const BookingCard = ({ item }: { item: BookingListItem }) => {
   const isCanceled = item.status === 'CANCELLED';
   const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
 
@@ -44,10 +51,12 @@ const BookingCard = ({ item }: { item: Booking }) => {
       style={styles.card}
       onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
     >
-      <Ribbon text={item.type || 'Đơn ngày'} />
+      <Ribbon text="Đơn ngày" />
 
       <View style={styles.cardHeader}>
-        <Text style={styles.clubName} numberOfLines={2}>{item.venue_name}</Text>
+        <Text style={styles.clubName} numberOfLines={2}>
+          {item.venue_name}
+        </Text>
         <View style={styles.statusRow}>
           <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
           <MaterialCommunityIcons name={status.icon as any} size={18} color={status.color} />
@@ -57,11 +66,15 @@ const BookingCard = ({ item }: { item: Booking }) => {
       <View style={styles.cardBody}>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Chi tiết:</Text>
-          <Text style={styles.infoValue}>{formatBookingTime(item)} | {formatBookingDate(item)}</Text>
+          <Text style={styles.infoValue}>
+            {formatBookingTime(item)} | {formatBookingDate(item)}
+          </Text>
         </View>
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Địa chỉ:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>{item.venue_address}</Text>
+          <Text style={styles.infoValue} numberOfLines={2}>
+            {item.venue_address}
+          </Text>
         </View>
       </View>
 
@@ -71,12 +84,14 @@ const BookingCard = ({ item }: { item: Booking }) => {
           {item.status === 'COMPLETED' && (
             <TouchableOpacity
               style={[styles.detailBtn, styles.reviewBtn]}
-              onPress={() => navigation.navigate('ReviewSubmission', { 
-                venueId: item.venue_id, 
-                venueName: item.venue_name,
-                bookingId: item.id,
-                reviewId: item.review_id
-              })}
+              onPress={() =>
+                navigation.navigate('ReviewSubmission', {
+                  venueId: item.venue_id,
+                  venueName: item.venue_name,
+                  bookingId: item.id,
+                  reviewId: item.review_id,
+                })
+              }
             >
               <Text style={[styles.detailBtnText, styles.reviewBtnText]}>
                 {item.review_id ? 'Xem đánh giá' : 'Đánh giá'}
@@ -97,10 +112,10 @@ const BookingCard = ({ item }: { item: Booking }) => {
 
 export const BookingListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
 
   useEffect(() => {
-    fetchMyBookings().then(res => {
+    fetchMyBookings().then((res) => {
       if (res?.items) {
         setBookings(res.items as any);
       }
@@ -128,7 +143,11 @@ export const BookingListScreen: React.FC = () => {
       <View style={styles.filterSection}>
         <TouchableOpacity style={styles.filterBar}>
           <Text style={styles.filterText}>Xem tất cả</Text>
-          <MaterialCommunityIcons name="calendar-month-outline" size={20} color={COLORS.GRAY_MEDIUM} />
+          <MaterialCommunityIcons
+            name="calendar-month-outline"
+            size={20}
+            color={COLORS.GRAY_MEDIUM}
+          />
         </TouchableOpacity>
       </View>
 

@@ -1,0 +1,23 @@
+{
+  "test": "API-Authentication-Complete",
+  "timestamp": "2026-04-09T17:59:13.639Z",
+  "data": {
+    "userId": "7781fefe-8b3d-45ac-849a-eddc80f1f40f",
+    "userName": "Nguyen Bui",
+    "userRole": "ADMIN",
+    "tokenType": "Bearer"
+  },
+  "results": {
+    "passed": 2,
+    "failed": 0,
+    "errors": [],
+    "screenshots": [],
+    "apiTests": [
+      {
+        "name": "Admin Login API",
+        "status": "PASS"
+      }
+    ],
+    "frontendTests": []
+  }
+}

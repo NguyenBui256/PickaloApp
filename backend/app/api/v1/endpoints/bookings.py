@@ -28,7 +28,7 @@ from app.schemas.booking import (
 )
 from app.services.booking import BookingService, get_booking_service
 from app.services.pricing import PricingService, get_pricing_service
-from app.services.venue import VenueService, get_venue_service
+from app.services.venue import VenueManagementService, get_venue_service
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -275,7 +275,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         for bs in booking.booking_services:
             services.append({
                 "service_id": str(bs.service_id),
-                "name": f"Service {bs.service_id}",  # Will be populated from VenueService
+                "name": f"Service {bs.service_id}",  # Will be populated from VenueManagementService
                 "quantity": bs.quantity,
                 "unit_price": bs.price_per_unit,
                 "total": bs.total_price,

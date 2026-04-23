@@ -19,9 +19,9 @@ export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const user = useAuthStore(state => state.user);
   
-  const [name, setName] = useState(user?.full_name || 'Phạm Ngọc Long');
-  const [email, setEmail] = useState(user?.email || 'long43872@gmail.com');
-  const [avatar, setAvatar] = useState('https://i.pravatar.cc/150?u=red-haired-boy');
+  const [name, setName] = useState(user?.full_name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [avatar, setAvatar] = useState(user?.avatar_url || 'https://i.pravatar.cc/150?u=default');
 
   const handleSave = () => {
     Alert.alert('Thành công', 'Thông tin cá nhân của bạn đã được cập nhật.');

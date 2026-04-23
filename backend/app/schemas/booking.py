@@ -197,6 +197,8 @@ class BookingListItem(BaseModel):
     is_paid: bool
     is_cancelable: bool
     created_at: str
+    customer_name: str | None = None
+    customer_phone: str | None = None
 
 
 class BookingCancel(BaseModel):

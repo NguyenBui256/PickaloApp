@@ -7,7 +7,7 @@ from decimal import Decimal
 from datetime import time
 
 # Add backend root to path so app can be imported
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
@@ -150,16 +150,16 @@ async def create_new_pickleball_venues(session: AsyncSession):
     await session.flush()
 
 async def seed_multi_court():
-    print("🌱 Starting Multi-Court Seed Process...")
+    print("Starting Multi-Court Seed Process...")
     async with async_session_factory() as session:
         try:
             await ensure_courts_for_existing_venues(session)
             await create_new_pickleball_venues(session)
             await session.commit()
-            print("✅ Multi-Court Seeding Completed Successfully!")
+            print("Multi-Court Seeding Completed Successfully!")
         except Exception as e:
             await session.rollback()
-            print(f"❌ Seeding Error: {e}")
+            print(f"Seeding Error: {e}")
             raise
 
 if __name__ == "__main__":

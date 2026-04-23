@@ -20,6 +20,9 @@ lib/
 lib64/
 parts/
 sdist/
+
+# Exception for admin-dashboard lib directory
+!admin-dashboard/src/lib/
 var/
 wheels/
 *.egg-info/

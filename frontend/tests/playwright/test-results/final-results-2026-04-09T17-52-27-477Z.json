@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "totalBrowsers": 0,
+    "totalTests": 0,
+    "passedTests": 0,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "executionTime": 0,
+    "startTime": "2026-04-09T17:52:27.483Z",
+    "endTime": null
+  },
+  "browserResults": {},
+  "screenshots": [],
+  "videos": [],
+  "errors": [
+    "Command failed: npx playwright install"
+  ],
+  "recommendations": []
+}

@@ -12,7 +12,7 @@ from uuid import uuid4
 from app.core.security import hash_password
 from app.models.user import User, UserRole
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
-from geoalchemy2 import func as geofunc
+from sqlalchemy import func
 
 
 @pytest.mark.asyncio

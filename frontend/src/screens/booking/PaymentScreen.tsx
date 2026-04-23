@@ -16,16 +16,16 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
 import { InfoCard } from '../../components/InfoCard';
+import { useAuthStore } from '../../store/auth-store';
 
 
 export const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { venueId, selectedSlots = [] } = route.params || {};
+  const user = useAuthStore(state => state.user);
 
   const [venue, setVenue] = useState<any>(null);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export const PaymentScreen: React.FC = () => {
     }
   }, [venueId]);
 
-  const isFormValid = name.trim().length > 0 && phone.trim().length >= 10;
+  const isFormValid = user?.full_name && user?.phone;
   const totalPrice = selectedSlots.length * 95000;
 
   const formatCurrency = (amount: number) => {
@@ -98,47 +98,24 @@ export const PaymentScreen: React.FC = () => {
             <MaterialCommunityIcons name="plus" size={24} color="#EAB308" />
           </View>
 
-          {/* Section 4: Customer Details Form */}
+          {/* Section 4: Customer Details (Read-only) */}
           <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
+            <View style={styles.infoGroup}>
               <Text style={styles.label}>HỌ TÊN</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập họ tên"
-                  placeholderTextColor={COLORS.GRAY_MEDIUM}
-                  value={name}
-                  onChangeText={setName}
-                />
-                {name.length > 0 && (
-                  <TouchableOpacity onPress={() => setName('')}>
-                    <MaterialCommunityIcons name="close-circle" size={20} color="#15803d" />
-                  </TouchableOpacity>
-                )}
+              <View style={styles.infoDisplay}>
+                <Text style={styles.infoText}>{user?.full_name || 'Chưa cập nhật'}</Text>
+                <MaterialCommunityIcons name="check-circle" size={20} color="#15803d" />
               </View>
             </View>
 
-            <View style={styles.inputGroup}>
+            <View style={styles.infoGroup}>
               <Text style={styles.label}>SỐ ĐIỆN THOẠI</Text>
-              <View style={styles.inputWrapper}>
-                <View style={styles.flagContainer}>
+              <View style={styles.infoDisplay}>
+                <View style={styles.phoneDisplay}>
                   <Text style={styles.flag}>🇻🇳</Text>
-                  <Text style={styles.countryCode}>+84</Text>
-                  <MaterialCommunityIcons name="chevron-down" size={16} color={COLORS.BLACK} />
+                  <Text style={styles.infoText}>{user?.phone || 'Chưa cập nhật'}</Text>
                 </View>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="Nhập số điện thoại"
-                  placeholderTextColor={COLORS.GRAY_MEDIUM}
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                />
-                {phone.length > 0 && (
-                  <TouchableOpacity onPress={() => setPhone('')}>
-                    <MaterialCommunityIcons name="close-circle" size={20} color="#15803d" />
-                  </TouchableOpacity>
-                )}
+                <MaterialCommunityIcons name="check-circle" size={20} color="#15803d" />
               </View>
             </View>
 
@@ -193,7 +170,10 @@ export const PaymentScreen: React.FC = () => {
           disabled={!isFormValid}
           onPress={() => navigation.navigate('FinalPayment', {
             totalPrice: formatCurrency(totalPrice),
-            bookingId: 'ALOBO' + Math.floor(Math.random() * 100000)
+            bookingId: 'ALOBO' + Math.floor(Math.random() * 100000),
+            customerName: user?.full_name || '',
+            customerPhone: user?.phone || '',
+            note: note.trim(),
           })}
         >
           <Text style={styles.payBtnText}>XÁC NHẬN & THANH TOÁN</Text>
@@ -308,6 +288,9 @@ const styles = StyleSheet.create({
   inputGroup: {
     gap: 8,
   },
+  infoGroup: {
+    gap: 8,
+  },
   label: {
     color: COLORS.WHITE,
     fontSize: 14,
@@ -320,6 +303,29 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 50,
+  },
+  infoDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  infoText: {
+    flex: 1,
+    color: COLORS.WHITE,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  phoneDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
   },
   input: {
     flex: 1,

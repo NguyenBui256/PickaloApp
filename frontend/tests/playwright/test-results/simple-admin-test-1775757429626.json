@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-04-09T17:57:09.626Z",
+  "testConfig": {
+    "baseUrl": "http://localhost:3000",
+    "apiBaseUrl": "http://localhost:8000/api/v1",
+    "adminCredentials": {
+      "phone": "+84123456789",
+      "password": "Admin@123"
+    }
+  },
+  "results": {
+    "passed": 6,
+    "failed": 1,
+    "errors": [
+      "Users List: Request failed with status code 404"
+    ],
+    "screenshots": []
+  },
+  "summary": {
+    "totalTests": 7,
+    "passRate": "85.71%",
+    "status": "FAIL"
+  }
+}
