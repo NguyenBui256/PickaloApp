@@ -12,15 +12,16 @@ from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, Text, Numeric, Boolean, Time, ForeignKey, JSON
+from sqlalchemy import String, Text, Numeric, Boolean, Time, ForeignKey, JSON, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from geoalchemy2 import Geography  # PostGIS support
 
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.user import User
     from app.models.booking import Booking
+    from app.models.review import VenueReview
+    from app.models.court import Court
 
 
 class VenueType(str, Enum):
@@ -34,6 +35,7 @@ class VenueType(str, Enum):
     VOLLEYBALL = "Volleyball"
     SWIMMING = "Swimming"
     TABLE_TENNIS = "Table Tennis"
+    PICKLEBALL = "Pickleball"
 
 
 class DayType(str, Enum):
@@ -124,7 +126,7 @@ class Venue(BaseModel):
         nullable=False,
     )
 
-    # Status
+    # Status and verification
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -136,6 +138,10 @@ class Venue(BaseModel):
         nullable=False,
     )
 
+    # Rating summary (denormalized for performance)
+    rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0.0)
+    review_count: Mapped[int] = mapped_column(Integer, default=0)
+
     # Relationships
     merchant: Mapped["User"] = relationship(
         "User",
@@ -146,6 +152,12 @@ class Venue(BaseModel):
         "Booking",
         back_populates="venue",
         lazy="selectin",
+    )
+    courts: Mapped[list["Court"]] = relationship(
+        "Court",
+        back_populates="venue",
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
     pricing_slots: Mapped[list["PricingTimeSlot"]] = relationship(
         "PricingTimeSlot",
@@ -159,23 +171,33 @@ class Venue(BaseModel):
         lazy="selectin",
         cascade="all, delete-orphan",
     )
+    reviews: Mapped[list["VenueReview"]] = relationship(
+        "VenueReview",
+        back_populates="venue",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def latitude(self) -> float | None:
         """Extract latitude from PostGIS location."""
-        if self.location:
-            # PostGIS ST_Y returns latitude
-            from sqlalchemy import func
-            return float(func.ST_Y(self.location).as_scalar())
+        if self.location is not None:
+            from geoalchemy2.shape import to_shape
+            try:
+                return to_shape(self.location).y
+            except Exception:
+                return None
         return None
 
     @property
     def longitude(self) -> float | None:
         """Extract longitude from PostGIS location."""
-        if self.location:
-            # PostGIS ST_X returns longitude
-            from sqlalchemy import func
-            return float(func.ST_X(self.location).as_scalar())
+        if self.location is not None:
+            from geoalchemy2.shape import to_shape
+            try:
+                return to_shape(self.location).x
+            except Exception:
+                return None
         return None
 
     def to_dict(self) -> dict[str, Any]:

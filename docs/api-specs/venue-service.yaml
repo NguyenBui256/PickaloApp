@@ -1,0 +1,450 @@
+# ============================================
+# Venue Service — OpenAPI 3.0 Specification
+# Docs: https://swagger.io/specification/
+# ============================================
+openapi: 3.0.3
+info:
+  title: Venue Service API
+  description: |
+    API specification for Venue Service.
+    Handles venue registration, court management, dynamic pricing, and venue discovery.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+    description: Local development
+
+tags:
+  - name: venues
+    description: Public venue browsing and searching
+  - name: merchant-venues
+    description: Venue management for merchants
+  - name: court-management
+    description: Individual court configuration
+
+paths:
+  /api/v1/venues:
+    get:
+      tags:
+        - venues
+      summary: List venues with filters
+      operationId: listVenues
+      parameters:
+        - name: district
+          in: query
+          schema:
+            type: string
+        - name: venue_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/VenueType'
+        - name: min_price
+          in: query
+          schema:
+            type: number
+        - name: max_price
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A list of venues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueListResponse'
+
+    post:
+      tags:
+        - merchant-venues
+      summary: Create a new venue
+      operationId: createVenue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VenueCreate'
+      responses:
+        '201':
+          description: Venue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueResponse'
+
+  /api/v1/venues/search/nearby:
+    get:
+      tags:
+        - venues
+      summary: Search venues nearby
+      description: Order venues by distance from provided coordinates
+      operationId: searchNearby
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 5000
+        - name: venue_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/VenueType'
+      responses:
+        '200':
+          description: Nearby venues found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueListResponse'
+
+  /api/v1/venues/{venue_id}:
+    get:
+      tags:
+        - venues
+      summary: Get venue details
+      operationId: getVenue
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detailed venue info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueResponse'
+        '404':
+          description: Venue not found
+
+  /api/v1/venues/{venue_id}/availability:
+    get:
+      tags:
+        - venues
+      summary: Check venue availability timeline
+      operationId: getVenueAvailability
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            description: ISO 8601 date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Court availability grid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+
+  /api/v1/venues/districts/list:
+    get:
+      tags:
+        - venues
+      summary: Get Hanoi districts
+      operationId: listHanoiDistricts
+      responses:
+        '200':
+          description: List of district names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  districts:
+                    type: array
+                    items:
+                      type: string
+
+  /api/v1/venues/{venue_id}/courts:
+    get:
+      tags:
+        - court-management
+      summary: Get all courts at a venue
+      operationId: getVenueCourts
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of courts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourtResponse'
+
+    post:
+      tags:
+        - court-management
+      summary: Add a new court
+      operationId: createCourt
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourtCreate'
+      responses:
+        '201':
+          description: Court added successfully
+
+  /api/v1/venues/{venue_id}/pricing:
+    get:
+      tags:
+        - merchant-venues
+      summary: Get dynamic pricing slots
+      operationId: getPricingSlots
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pricing configuration slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PricingSlotResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    VenueType:
+      type: string
+      enum: ["Football 5", "Football 7", "Tennis", "Badminton", "Basketball", "Volleyball", "Swimming", "Table Tennis", "Pickleball"]
+
+    Coordinates:
+      type: object
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
+
+    VenueCreate:
+      type: object
+      required: [name, address, coordinates, venue_type, base_price_per_hour]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        district:
+          type: string
+        description:
+          type: string
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        venue_type:
+          $ref: '#/components/schemas/VenueType'
+        base_price_per_hour:
+          type: number
+        images:
+          type: array
+          items:
+            type: string
+        amenities:
+          type: array
+          items:
+            type: string
+
+    VenueResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        district:
+          type: string
+        location:
+          $ref: '#/components/schemas/Coordinates'
+        venue_type:
+          $ref: '#/components/schemas/VenueType'
+        rating:
+          type: number
+        review_count:
+          type: integer
+        is_active:
+          type: boolean
+        is_verified:
+          type: boolean
+        base_price_per_hour:
+          type: number
+
+    VenueListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        district:
+          type: string
+        address:
+          type: string
+        venue_type:
+          $ref: '#/components/schemas/VenueType'
+        location:
+          $ref: '#/components/schemas/Coordinates'
+        base_price_per_hour:
+          type: number
+        rating:
+          type: number
+        images:
+          type: array
+          items:
+            type: string
+
+    VenueListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VenueListItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    CourtResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_active:
+          type: boolean
+
+    CourtCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        is_active:
+          type: boolean
+          default: true
+
+    PricingSlotResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        day_type:
+          type: string
+          enum: [WEEKDAY, WEEKEND, HOLIDAY]
+        start_time:
+          type: string
+          example: "16:00"
+        end_time:
+          type: string
+          example: "22:00"
+        price_factor:
+          type: number
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        venue_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        courts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtAvailability'
+
+    CourtAvailability:
+      type: object
+      properties:
+        court_id:
+          type: string
+        court_name:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotAvailability'
+
+    SlotAvailability:
+      type: object
+      properties:
+        start_time:
+          type: string
+        end_time:
+          type: string
+        available:
+          type: boolean
+        price:
+          type: number

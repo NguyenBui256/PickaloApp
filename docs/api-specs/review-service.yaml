@@ -1,0 +1,204 @@
+# ============================================
+# Review Service — OpenAPI 3.0 Specification
+# Docs: https://swagger.io/specification/
+# ============================================
+openapi: 3.0.3
+info:
+  title: Review Service API
+  description: |
+    API specification for Review Service.
+    Handles venue ratings, user reviews, and feedback management.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+    description: Local development
+
+tags:
+  - name: reviews
+    description: Public feedback and rating operations
+
+paths:
+  /api/v1/venues/{venue_id}/reviews:
+    get:
+      tags:
+        - reviews
+      summary: Get venue reviews
+      operationId: listVenueReviews
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: A list of venue reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+
+    post:
+      tags:
+        - reviews
+      summary: Submit a venue review
+      description: Only users who have completed a booking at the venue can leave a review.
+      operationId: createReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '403':
+          description: Forbidden - User hasn't finished a booking at this venue
+
+  /api/v1/reviews/{review_id}:
+    put:
+      tags:
+        - reviews
+      summary: Update your review
+      operationId: updateReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewUpdate'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+
+    delete:
+      tags:
+        - reviews
+      summary: Delete your review
+      operationId: deleteReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Review deleted successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ReviewCreate:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          example: "Great court, very friendly staff!"
+        images:
+          type: array
+          items:
+            type: string
+
+    ReviewUpdate:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+
+    ReviewResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        venue_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        user_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ReviewListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer

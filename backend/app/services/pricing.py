@@ -340,6 +340,77 @@ class PricingService:
             "currency": "VND",
         }
 
+    async def calculate_multi_slot_total(
+        self,
+        venue_id: uuid.UUID,
+        slots: list[dict[str, Any]],  # List of {date, start_time, end_time}
+        service_ids: list[uuid.UUID] | None = None,
+        service_quantities: dict[uuid.UUID, int] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Calculate total price for multiple slots across potentially different courts/times.
+        """
+        total_subtotal = Decimal("0")
+        total_service_fee = Decimal("0")
+        slots_breakdown = []
+
+        for slot_data in slots:
+            slot_pricing = await self.calculate_slot_price(
+                venue_id, 
+                slot_data["date"], 
+                slot_data["start_time"], 
+                slot_data["end_time"]
+            )
+            total_subtotal += slot_pricing["subtotal"]
+            total_service_fee += slot_pricing["service_fee"]
+            
+            slots_breakdown.append({
+                "start_time": slot_data["start_time"],
+                "end_time": slot_data["end_time"],
+                "court_id": slot_data.get("court_id"),
+                "pricing": slot_pricing
+            })
+
+        # Add services
+        services_breakdown = []
+        services_total = Decimal("0")
+
+        if service_ids:
+            for service_id in service_ids:
+                result = await self.session.execute(
+                    select(VenueService).where(
+                        VenueService.id == service_id,
+                        VenueService.is_available.is_(True),
+                    )
+                )
+                service = result.scalar_one_or_none()
+
+                if service:
+                    quantity = service_quantities.get(service_id, 1) if service_quantities else 1
+                    service_cost = service.price_per_unit * Decimal(quantity)
+                    services_total += service_cost
+
+                    services_breakdown.append({
+                        "service_id": str(service.id),
+                        "name": service.name,
+                        "quantity": quantity,
+                        "unit_price": service.price_per_unit,
+                        "total": service_cost,
+                    })
+
+        final_total = total_subtotal + services_total + total_service_fee
+
+        return {
+            "booking_date": slots[0]["date"] if slots else None,
+            "slots": slots_breakdown,
+            "services": services_breakdown,
+            "services_total": services_total,
+            "subtotal": total_subtotal + services_total,
+            "service_fee": total_service_fee,
+            "total": final_total,
+            "currency": "VND",
+        }
+
 
 async def get_pricing_service(session: Annotated[AsyncSession, Depends(get_db)]) -> PricingService:
     """

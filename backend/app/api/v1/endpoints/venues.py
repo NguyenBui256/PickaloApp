@@ -5,7 +5,7 @@ Handles venue CRUD, search, availability, and management for merchants.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from typing import Annotated
 
@@ -33,12 +33,16 @@ from app.schemas.venue import (
     VenueServiceCreate,
     VenueServiceUpdate,
     VenueServiceResponse,
+    Coordinates,
+    CourtCreate,
+    CourtUpdate,
+    CourtResponse,
     PricingSlotCreate,
     PricingSlotUpdate,
     PricingSlotResponse,
-    Coordinates,
 )
-from app.services.venue import VenueManagementService, get_venue_service
+from app.services.venue import VenueService, get_venue_service
+from app.services.booking import BookingService, get_booking_service
 
 router = APIRouter(prefix="/venues", tags=["venues"])
 
@@ -78,13 +82,20 @@ async def list_venues(
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
+            address=venue.address,
             district=venue.district,
+            fullAddress=venue.address,
             venue_type=venue.venue_type,
-            location=Coordinates(lat=0, lng=0),  # Will be populated from model
+            category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
+            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
+            logo=None,
+            bookingLink=None,
+            rating=venue.rating,
+            review_count=venue.review_count
         ))
 
     pages = (total + limit - 1) // limit
@@ -135,13 +146,20 @@ async def search_venues_nearby(
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
+            address=venue.address,
             district=venue.district,
+            fullAddress=venue.address,
             venue_type=venue.venue_type,
-            location=Coordinates(lat=0, lng=0),
+            category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
+            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
+            logo=None,
+            bookingLink=None,
+            rating=venue.rating,
+            review_count=venue.review_count
         ))
 
     pages = (total + limit - 1) // limit
@@ -181,11 +199,17 @@ async def get_venue(
         name=venue.name,
         address=venue.address,
         district=venue.district,
-        location=Coordinates(lat=0, lng=0),
+        fullAddress=venue.address,
+        location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
         venue_type=venue.venue_type,
+        category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
+        logo=None,
+        rating=venue.rating,
+        review_count=venue.review_count,
+        bookingLink=None,
         images=venue.images,
-        operating_hours=venue.operating_hours,
+        operating_hours={"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
         base_price_per_hour=venue.base_price_per_hour,
         is_active=venue.is_active,
@@ -198,26 +222,17 @@ async def get_venue(
 @router.get("/{venue_id}/availability", response_model=AvailabilityResponse)
 async def get_venue_availability(
     venue_id: str,
-    date: Annotated[str, Query(description="ISO 8601 date format")],
-    session: DBSession,
-    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    date: Annotated[date, Query(description="ISO 8601 date format (YYYY-MM-DD)")],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
 ) -> AvailabilityResponse:
     """
     Check venue availability for a given date.
 
-    Returns hourly slots showing available/booked status.
+    Returns grid of slots grouped by court.
     """
-    try:
-        date_obj = datetime.fromisoformat(date)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid date format. Use ISO 8601 format (YYYY-MM-DD).",
-        )
-
-    availability = await venue_service.get_venue_availability(
+    availability = await booking_service.get_timeline_availability(
         uuid.UUID(venue_id),
-        date_obj,
+        date,
     )
 
     return AvailabilityResponse(**availability)
@@ -273,15 +288,20 @@ async def create_venue(
         name=venue.name,
         address=venue.address,
         district=venue.district,
-        location=Coordinates(lat=0, lng=0),
+        fullAddress=venue.address,
+        location=venue_data.coordinates,
         venue_type=venue.venue_type,
+        category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
         images=venue.images,
-        operating_hours=venue.operating_hours,
+        operating_hours={"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
-        base_price_per_hour=venue.base_price_per_hour,
+        base_price_per_hour=float(venue.base_price_per_hour),
         is_active=venue.is_active,
         is_verified=venue.is_verified,
+        logo=None,
+        bookingLink=None,
+        rating=None,
         created_at=venue.created_at.isoformat(),
         updated_at=venue.updated_at.isoformat(),
     )
@@ -506,3 +526,55 @@ async def verify_venue(
     await session.commit()
 
     return {"message": "Venue verified successfully"}
+
+
+# ===== Court Management Endpoints =====
+
+@router.get("/{venue_id}/courts", response_model=list[CourtResponse])
+async def get_venue_courts(
+    venue_id: str,
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+) -> list[CourtResponse]:
+    """Get all courts for a venue."""
+    courts = await venue_service.get_venue_courts(uuid.UUID(venue_id))
+    return [CourtResponse.model_validate(c) for c in courts]
+
+
+@router.post("/{venue_id}/courts", response_model=CourtResponse, status_code=status.HTTP_201_CREATED)
+async def create_court(
+    venue_id: str,
+    court_data: CourtCreate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    session: DBSession,
+) -> CourtResponse:
+    """Add a new court to venue (merchant only)."""
+    court = await venue_service.create_court(
+        venue_id=uuid.UUID(venue_id),
+        merchant_id=current_user.id,
+        name=court_data.name,
+        is_active=court_data.is_active,
+    )
+    await session.commit()
+    return CourtResponse.model_validate(court)
+
+
+@router.put("/courts/{court_id}", response_model=CourtResponse)
+async def update_court(
+    court_id: str,
+    court_data: CourtUpdate,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    venue_service: Annotated[VenueService, Depends(get_venue_service)],
+    session: DBSession,
+) -> CourtResponse:
+    """Update court details (merchant only)."""
+    updates = court_data.model_dump(exclude_unset=True)
+    court = await venue_service.update_court(
+        court_id=uuid.UUID(court_id),
+        merchant_id=current_user.id,
+        **updates,
+    )
+    if not court:
+        raise HTTPException(status_code=404, detail="Court not found")
+    await session.commit()
+    return CourtResponse.model_validate(court)

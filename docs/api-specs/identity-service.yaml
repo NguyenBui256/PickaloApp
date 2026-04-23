@@ -1,0 +1,328 @@
+# ============================================
+# Identity Service — OpenAPI 3.0 Specification
+# Docs: https://swagger.io/specification/
+# ============================================
+openapi: 3.0.3
+info:
+  title: Identity Service API
+  description: |
+    API specification for Identity Service.
+    Handles user authentication, identity management, and profile operations.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+    description: Local development
+
+tags:
+  - name: authentication
+    description: Login, Register and Token management
+  - name: users
+    description: User profile and account operations
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - authentication
+      summary: Register a new user account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or user already exists
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - authentication
+      summary: Login with phone and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid phone or password
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - authentication
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - authentication
+      summary: Logout and invalidate refresh token
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /api/v1/auth/verify-phone:
+    post:
+      tags:
+        - authentication
+      summary: Verify phone number with OTP
+      operationId: verifyPhone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPhoneRequest'
+      responses:
+        '200':
+          description: Phone verified successfully
+        '400':
+          description: Invalid or expired OTP code
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - users
+      summary: Get current user profile
+      description: Requires valid JWT access token.
+      operationId: getCurrentUserProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+
+    patch:
+      tags:
+        - users
+      summary: Update current user profile
+      operationId: updateCurrentUserProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /api/v1/auth/me/change-password:
+    post:
+      tags:
+        - users
+      summary: Change current user password
+      operationId: changePassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+        '400':
+          description: Invalid password format or old password incorrect
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - phone
+        - password
+        - full_name
+      properties:
+        phone:
+          type: string
+          pattern: '^\+84\d{9}$'
+          example: "+84912345678"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 16
+          example: "Password@123"
+        full_name:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          format: email
+          example: "vana@example.com"
+        role:
+          type: string
+          enum: [USER, MERCHANT, ADMIN]
+          default: USER
+
+    LoginRequest:
+      type: object
+      required:
+        - phone
+        - password
+      properties:
+        phone:
+          type: string
+          example: "+84912345678"
+        password:
+          type: string
+          example: "Password@123"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: "Bearer"
+        expires_in:
+          type: integer
+          example: 900
+
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/TokenResponse'
+        - type: object
+          properties:
+            refresh_token:
+              type: string
+            user:
+              $ref: '#/components/schemas/UserResponse'
+
+    VerifyPhoneRequest:
+      type: object
+      required:
+        - phone
+        - otp
+      properties:
+        phone:
+          type: string
+          example: "+84912345678"
+        otp:
+          type: string
+          example: "123456"
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - old_password
+        - new_password
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+          example: "NewPassword@123"
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          format: url
+        date_of_birth:
+          type: string
+          format: date
+        role:
+          type: string
+          enum: [USER, MERCHANT, ADMIN]
+        is_active:
+          type: boolean
+        is_verified:
+          type: boolean
+
+    UserUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          format: url
+        date_of_birth:
+          type: string
+          format: date

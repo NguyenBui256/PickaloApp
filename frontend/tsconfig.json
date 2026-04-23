@@ -1,8 +1,12 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
-    "lib": ["esnext"],
+    // ✅ FIX lỗi bundler
+    "module": "esnext",
+    "lib": [
+      "esnext"
+    ],
     "jsx": "react-native",
     "strict": true,
     "noEmit": true,
@@ -12,24 +16,53 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    // ✅ Fix customConditions error
+    "moduleResolution": "bundler",
     "allowJs": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,
+    // ✅ Alias root
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"],
-      "@navigation/*": ["navigation/*"],
-      "@screens/*": ["screens/*"],
-      "@components/*": ["components/*"],
-      "@services/*": ["services/*"],
-      "@hooks/*": ["hooks/*"],
-      "@types/*": ["types/*"],
-      "@utils/*": ["utils/*"],
-      "@constants/*": ["constants/*"]
+      "@/*": [
+        "*"
+      ],
+      "@navigation/*": [
+        "navigation/*"
+      ],
+      "@screens/*": [
+        "screens/*"
+      ],
+      "@components/*": [
+        "components/*"
+      ],
+      "@services/*": [
+        "services/*"
+      ],
+      "@hooks/*": [
+        "hooks/*"
+      ],
+      "@api-types/*": [
+        "types/*"
+      ],
+      "@utils/*": [
+        "utils/*"
+      ],
+      "@constants/*": [
+        "constants/*"
+      ],
+      "@theme/*": [
+        "theme/*"
+      ]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts", "**/*.spec.tsx"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
 }
