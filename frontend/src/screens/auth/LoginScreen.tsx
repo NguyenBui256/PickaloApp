@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import COLORS from '@theme/colors';
 import { AuthCard } from '../../components/AuthCard';
@@ -40,11 +41,11 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const login = useAuthStore.getState().login;
     setIsLoading(true);
 
-    // Chuẩn hóa số điện thoại để khớp với mock data (+84...)
+    // Chuẩn hóa số điện thoại để khớp với backend format (+84...)
     let normalizedPhone = phoneNumber;
     if (normalizedPhone.startsWith('0')) {
       normalizedPhone = '+84' + normalizedPhone.slice(1);
@@ -52,25 +53,30 @@ export const LoginScreen: React.FC = () => {
       normalizedPhone = '+84' + normalizedPhone;
     }
 
-    // Simulate API call
-    setTimeout(async () => {
-      setIsLoading(false);
-      
-      const loginPayload = {
-        phone: normalizedPhone,
-        password: password
-      };
+    const loginPayload = {
+      phone: normalizedPhone,
+      password: password
+    };
 
-      try {
-        // Sử dụng service login (hiện đang dùng mock fallback bên trong service)
-        const response = await loginApi(loginPayload);
-        
-        // Lưu vào store
-        login(response.user as any, response.access_token);
-      } catch (error) {
-        Alert.alert('Đăng nhập thất bại', 'Số điện thoại/Email hoặc mật khẩu không chính xác.');
-      }
-    }, 1500);
+    try {
+      // Call real API backend
+      const response = await loginApi(loginPayload);
+
+      // Store tokens and user data from real API response
+      await AsyncStorage.setItem('@alobo_access_token', response.access_token);
+      await AsyncStorage.setItem('@alobo_refresh_token', response.refresh_token);
+
+      // Update auth store with real user data and tokens
+      login(response.user as any, response.access_token, response.refresh_token);
+
+      // Navigate to main app
+      navigation.navigate('Main');
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Đăng nhập thất bại', 'Số điện thoại hoặc mật khẩu không chính xác.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

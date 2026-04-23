@@ -42,6 +42,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, value, color = COLORS.
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
 
   return (
@@ -61,13 +62,13 @@ export const ProfileScreen: React.FC = () => {
             >
               <View style={styles.avatarContainer}>
                 <Image
-                  source={{ uri: 'https://i.pravatar.cc/150?u=red-haired-boy' }}
+                  source={{ uri: user?.avatar_url || 'https://i.pravatar.cc/150?u=default' }}
                   style={styles.avatar}
                 />
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.userName}>Phạm Ngọc Long</Text>
-                <Text style={styles.userEmail}>long43872@gmail.com</Text>
+                <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
+                <Text style={styles.userEmail}>{user?.email || 'Chưa cập nhật email'}</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>

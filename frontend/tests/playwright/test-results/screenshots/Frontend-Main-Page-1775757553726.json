@@ -1,0 +1,63 @@
+{
+  "test": "Frontend-Main-Page",
+  "timestamp": "2026-04-09T17:59:13.726Z",
+  "data": {
+    "status": 200,
+    "contentLength": 627,
+    "hasReact": false,
+    "hasVite": true,
+    "title": "PickAlo Admin Dashboard"
+  },
+  "results": {
+    "passed": 7,
+    "failed": 0,
+    "errors": [],
+    "screenshots": [
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Authentication-Complete-1775757553639.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-API-Root-1775757553650.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-Venues-List-1775757553667.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-Bookings-List-1775757553698.json"
+    ],
+    "apiTests": [
+      {
+        "name": "Admin Login API",
+        "status": "PASS"
+      },
+      {
+        "name": "API Root API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Venues List API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Users List API",
+        "status": "NOT_FOUND",
+        "statusCode": 404
+      },
+      {
+        "name": "Bookings List API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Merchants List API",
+        "status": "NOT_FOUND",
+        "statusCode": 404
+      }
+    ],
+    "frontendTests": [
+      {
+        "name": "Main Page Access",
+        "status": "PASS"
+      },
+      {
+        "name": "React Detection",
+        "status": "PASS"
+      }
+    ]
+  }
+}

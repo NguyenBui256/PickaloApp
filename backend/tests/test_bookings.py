@@ -17,7 +17,7 @@ from app.models.venue import Venue, VenueType, VenueService
 from app.models.booking import Booking, BookingStatus
 from app.services.pricing import PricingService
 from app.services.booking import BookingService
-from geoalchemy2 import func as geofunc
+from sqlalchemy import func
 
 
 class TestBookingAvailability:

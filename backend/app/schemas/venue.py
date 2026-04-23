@@ -4,6 +4,7 @@ Venue schemas for request and response.
 Pydantic models for venue data validation and serialization.
 """
 
+from uuid import UUID
 from decimal import Decimal
 from typing import Annotated, Literal
 from pydantic import BaseModel, Field, field_validator
@@ -115,8 +116,8 @@ class VenueResponse(VenueBase):
 class CourtResponse(BaseModel):
     """Court response schema."""
 
-    id: str
-    venue_id: str
+    id: UUID
+    venue_id: UUID
     name: str
     is_active: bool
 
@@ -314,3 +315,24 @@ class AvailabilityResponse(BaseModel):
     open_time: str
     close_time: str
     courts: list[CourtAvailability]
+
+
+class MerchantVenueListItem(BaseModel):
+    """Simplified venue for merchant dashboard."""
+
+    id: str
+    name: str
+    status: str  # active, inactive, pending
+    total_bookings: int = 0
+    revenue_mtd: float = 0.0
+    rating: float = 0.0
+
+
+class MerchantVenueListResponse(BaseModel):
+    """Paginated merchant venue list response."""
+
+    items: list[MerchantVenueListItem]
+    total: int
+    page: int
+    limit: int
+    pages: int

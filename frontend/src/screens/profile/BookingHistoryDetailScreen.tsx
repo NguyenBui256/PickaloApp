@@ -11,8 +11,13 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { Booking, formatBookingTime, formatBookingDate } from '../../constants/mock-data';
+import type { BookingListItem } from '../../types/api-types';
+import { useAuthStore } from '../../store/auth-store';
 
+// Helpers
+const formatBookingTime = (b: BookingListItem) => `${b.start_time} - ${b.end_time}`;
+const formatBookingDate = (b: BookingListItem) =>
+  new Date(b.booking_date).toLocaleDateString('vi-VN');
 
 // Color constants from user specs
 const PRIMARY_GREEN = '#064e3b';
@@ -33,7 +38,12 @@ const InfoItem = ({ label, value, isYellow, isClickable }: InfoItemProps) => (
     <View style={styles.infoValueRow}>
       <Text style={[styles.infoValue, isYellow && styles.yellowText]}>{value}</Text>
       {isClickable && (
-        <MaterialCommunityIcons name="phone" size={16} color={COLORS.WHITE} style={styles.clickableIcon} />
+        <MaterialCommunityIcons
+          name="phone"
+          size={16}
+          color={COLORS.WHITE}
+          style={styles.clickableIcon}
+        />
       )}
     </View>
   </View>
@@ -42,7 +52,8 @@ const InfoItem = ({ label, value, isYellow, isClickable }: InfoItemProps) => (
 export const BookingHistoryDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { booking } = route.params as { booking: Booking };
+  const user = useAuthStore(state => state.user);
+  const { booking } = route.params as { booking: BookingListItem };
 
   const [activeTab, setActiveTab] = useState('Thông tin');
 
@@ -55,9 +66,9 @@ export const BookingHistoryDetailScreen: React.FC = () => {
       case 'CONFIRMED':
         return { text: 'ĐÃ XÁC NHẬN', color: '#16A34A' };
       case 'COMPLETED':
-        return { 
-          text: booking.review_id ? 'XEM ĐÁNH GIÁ' : 'ĐÁNH GIÁ NGAY', 
-          color: COLORS.PRIMARY 
+        return {
+          text: booking.review_id ? 'XEM ĐÁNH GIÁ' : 'ĐÁNH GIÁ NGAY',
+          color: COLORS.PRIMARY,
         };
       default:
         return { text: 'CHỜ XÁC NHẬN', color: '#CA8A04' };
@@ -70,7 +81,7 @@ export const BookingHistoryDetailScreen: React.FC = () => {
         venueId: booking.venue_id,
         venueName: booking.venue_name,
         bookingId: booking.id,
-        reviewId: booking.review_id
+        reviewId: booking.review_id,
       });
     }
   };
@@ -94,12 +105,10 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
           <View style={styles.tabBar}>
             {tabs.map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={styles.tabItem}
-                onPress={() => setActiveTab(tab)}
-              >
-                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+              <TouchableOpacity key={tab} style={styles.tabItem} onPress={() => setActiveTab(tab)}>
+                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                  {tab}
+                </Text>
                 {activeTab === tab && <View style={styles.activeIndicator} />}
               </TouchableOpacity>
             ))}
@@ -116,28 +125,36 @@ export const BookingHistoryDetailScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.userDetail}>
-            <Text style={styles.userName}>Phạm Ngọc Long</Text>
+            <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
             <Text style={styles.userSub}>Đặt lịch ngày trực quan</Text>
-            <Text style={styles.userPhone}>+84 0303030303</Text>
+            <Text style={styles.userPhone}>{user?.phone || 'Chưa cập nhật'}</Text>
           </View>
         </View>
 
         {activeTab === 'Thông tin' && (
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={COLORS.WHITE} />
+              <MaterialCommunityIcons
+                name="clipboard-text-outline"
+                size={24}
+                color={COLORS.WHITE}
+              />
               <Text style={styles.sectionTitle}>Thông tin</Text>
             </View>
 
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
-              <InfoItem label="Câu lạc bộ" value={booking.venue_name} />
-              <InfoItem label="Trạng thái" value={booking.status === 'CANCELLED' ? 'Bạn đã hủy đơn' : 'Đã thanh toán'} isYellow />
+              <InfoItem label="Câu lạc bộ" value={booking.venue_name ?? ''} />
+              <InfoItem
+                label="Trạng thái"
+                value={booking.status === 'CANCELLED' ? 'Bạn đã hủy đơn' : 'Đã thanh toán'}
+                isYellow
+              />
               <InfoItem label="Thời gian" value={formatBookingTime(booking)} />
               <InfoItem label="Ngày tháng" value={formatBookingDate(booking)} />
               <InfoItem label="Thanh phí" value="Chưa thanh toán" isYellow />
               <InfoItem label="Số điện thoại" value="0333333333" isClickable />
-              <InfoItem label="Địa chỉ" value={booking.venue_address} />
+              <InfoItem label="Địa chỉ" value={booking.venue_address ?? ''} />
               <View style={styles.noteBox}>
                 <Text style={styles.noteText}>SÂN NGOÀI TRỜI</Text>
               </View>
@@ -154,7 +171,11 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
         {activeTab !== 'Thông tin' && (
           <View style={styles.emptyTab}>
-            <MaterialCommunityIcons name="dots-horizontal" size={40} color="rgba(255,255,255,0.3)" />
+            <MaterialCommunityIcons
+              name="dots-horizontal"
+              size={40}
+              color="rgba(255,255,255,0.3)"
+            />
             <Text style={styles.emptyText}>Đang cập nhật...</Text>
           </View>
         )}
@@ -164,7 +185,7 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
       {/* Action Button */}
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}
           onPress={handleActionPress}
         >
@@ -266,9 +287,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  infoSection: {
-
-  },
+  infoSection: {},
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',

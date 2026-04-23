@@ -328,6 +328,12 @@ def _booking_to_response(booking: Any) -> BookingResponse:
 
 def _booking_to_list_item(booking: Any) -> BookingListItem:
     """Convert Booking model to BookingListItem schema."""
+    customer_name = None
+    customer_phone = None
+    if hasattr(booking, 'user') and booking.user:
+        customer_name = booking.user.full_name
+        customer_phone = booking.user.phone
+
     return BookingListItem(
         id=str(booking.id),
         venue_id=str(booking.venue_id),
@@ -339,4 +345,6 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         is_paid=booking.is_paid,
         is_cancelable=booking.is_cancelable,
         created_at=booking.created_at.isoformat(),
+        customer_name=customer_name,
+        customer_phone=customer_phone,
     )
