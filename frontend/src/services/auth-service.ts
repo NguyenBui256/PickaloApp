@@ -22,7 +22,7 @@
 
 // @ts-ignore — apiClient sẽ dùng khi bỏ comment API thật
 import { apiClient } from './api-client';
-import { MOCK_USER, MOCK_OWNER } from '@constants/mock-data';
+import { MOCK_USER, MOCK_OWNER, MOCK_ADMIN } from '@constants/mock-data';
 import type {
   LoginRequest,
   RegisterRequest,
@@ -57,6 +57,28 @@ import type {
 // ===== MOCK FALLBACK =====
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   console.log('[MOCK] login:', data.phone);
+
+  // Admin Login Bypass
+  if (data.phone.endsWith('66668888') && data.password === '123456') {
+    return {
+      access_token: 'mock-admin-token-' + Date.now(),
+      refresh_token: 'mock-admin-refresh-token-' + Date.now(),
+      token_type: 'Bearer',
+      expires_in: 3600,
+      user: {
+        id: MOCK_ADMIN.id,
+        phone: MOCK_ADMIN.phone,
+        full_name: MOCK_ADMIN.full_name,
+        email: MOCK_ADMIN.email,
+        avatar_url: MOCK_ADMIN.avatar_url,
+        date_of_birth: null,
+        role: MOCK_ADMIN.role as UserRole,
+        is_active: MOCK_ADMIN.is_active,
+        is_verified: MOCK_ADMIN.is_verified,
+      },
+    };
+  }
+
   const isOwner = data.phone.includes('123456789');
   const user = isOwner ? MOCK_OWNER : MOCK_USER;
 

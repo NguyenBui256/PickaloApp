@@ -527,3 +527,47 @@ export interface ReviewListResponse {
   page: number;
   pages: number;
 }
+
+// ==========================================
+// ADMIN SCHEMAS (MOCK/FUTURE BE)
+// ==========================================
+
+export interface AdminStatsResponse {
+  total_users: number;
+  total_merchants: number;
+  total_venues: number;
+  total_bookings: number;
+  revenue_total: number;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+  role: UserRole;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+}
+
+export interface AdminVenueListItem {
+  id: string;
+  name: string;
+  owner_name: string;
+  address: string;
+  status: 'ACTIVE' | 'PENDING' | 'DELETED';
+  created_at: string;
+}
+
+export interface AdminReportedPostItem {
+  id: string;
+  author_name: string;
+  author_id: string;
+  content: string;
+  report_reason: string;
+  status: 'PENDING' | 'RESOLVED';
+  venue_name?: string;
+  venue_image?: string;
+  created_at: string;
+}

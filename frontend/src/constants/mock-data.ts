@@ -64,6 +64,54 @@ export const VENUES = [
     lat: 20.9785,
     lng: 105.7885,
   },
+  {
+    id: 'v-2',
+    name: 'Sân Pickleball LVK Vạn Phúc',
+    district: 'Hà Đông',
+    address: 'Vạn Phúc, Hà Đông, Hà Nội',
+    distance: '2.5 km',
+    images: ['https://images.unsplash.com/photo-1626225000494-06d967b51b32?w=800'],
+    image: 'https://images.unsplash.com/photo-1626225000494-06d967b51b32?w=800',
+    logo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100',
+    hours: '06:00 - 22:00',
+    operating_hours: { open: '06:00', close: '22:00' },
+    badges: ['Sân mới'],
+    isFavorite: false,
+    fullAddress: 'Làng lụa Vạn Phúc, Hà Đông, Hà Nội',
+    phone: '0988.888.888',
+    bookingLink: '',
+    category: 'Pickleball',
+    venue_type: 'Pickleball',
+    rating: 0,
+    is_verified: false,
+    base_price_per_hour: 120000,
+    lat: 20.9800,
+    lng: 105.7700,
+  },
+  {
+    id: 'v-3',
+    name: 'Sân Cũ Đã Xóa',
+    district: 'Thanh Xuân',
+    address: 'Thanh Xuân, Hà Nội',
+    distance: '3.0 km',
+    images: ['https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800'],
+    image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800',
+    logo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100',
+    hours: '06:00 - 22:00',
+    operating_hours: { open: '06:00', close: '22:00' },
+    badges: ['Đã xóa'],
+    isFavorite: false,
+    fullAddress: 'Quận Thanh Xuân, Hà Nội',
+    phone: '0911.111.111',
+    bookingLink: '',
+    category: 'Pickleball',
+    venue_type: 'Pickleball',
+    rating: 0,
+    is_verified: true,
+    base_price_per_hour: 100000,
+    lat: 20.9900,
+    lng: 105.8100,
+  },
 ];
 
 // Chưa có API filters
@@ -384,5 +432,114 @@ export const OWNER_SERVICES = [
   { id: 's2', name: 'Nước tăng lực', price: 15000, unit: 'Lon' },
   { id: 's3', name: 'Thuê vợt Pickleball', price: 30000, unit: 'Cái/buổi' },
   { id: 's4', name: 'Thuê giày thể thao', price: 20000, unit: 'Đôi/buổi' },
-  { id: 's5', name: 'Thuê áo Bib', price: 10000, unit: 'Cái/buổi' },
 ];
+
+// Admin Side: Statistics
+export const ADMIN_STATS = {
+  total_users: 1250,
+  total_merchants: 45,
+  total_venues: 68,
+  total_bookings: 3420,
+  revenue_total: 850000000, // VND
+};
+
+// Admin Side: User management (Players and Merchants)
+export const ADMIN_USERS = [
+  {
+    id: 'u-1',
+    full_name: 'Nguyễn Văn A',
+    phone: '0912345678',
+    email: 'vana@example.com',
+    role: 'USER',
+    is_active: true,
+    is_verified: true,
+    created_at: '2026-01-10T08:00:00Z',
+  },
+  {
+    id: 'u-2',
+    full_name: 'Trần Thị B',
+    phone: '0988777666',
+    email: 'thib@example.com',
+    role: 'USER',
+    is_active: false, // Bị khóa
+    is_verified: true,
+    created_at: '2026-02-15T10:30:00Z',
+  },
+  {
+    id: 'm-1',
+    full_name: 'Chủ Sân LVK',
+    phone: '0901234567',
+    email: 'lvk@pickleball.vn',
+    role: 'MERCHANT',
+    is_active: true,
+    is_verified: true,
+    created_at: '2025-12-01T09:00:00Z',
+  },
+];
+
+// Admin Side: Venue management
+export const ADMIN_VENUES = [
+  {
+    id: '1',
+    name: 'LVK Pickleball Club',
+    owner_name: 'Chủ Sân LVK',
+    address: 'Hà Đông, Hà Nội',
+    status: 'ACTIVE',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'v-2',
+    name: 'Sân Pickleball LVK Vạn Phúc',
+    owner_name: 'Chủ Sân LVK',
+    address: 'Vạn Phúc, Hà Đông, Hà Nội',
+    status: 'PENDING',
+    created_at: '2026-04-20T14:00:00Z',
+  },
+  {
+    id: 'v-3',
+    name: 'Sân Cũ Đã Xóa',
+    owner_name: 'Người Dùng X',
+    address: 'Thanh Xuân, Hà Nội',
+    status: 'DELETED',
+    created_at: '2025-11-20T10:00:00Z',
+  },
+];
+
+// Admin Side: Post management (Reported posts)
+export const ADMIN_REPORTED_POSTS = [
+  {
+    id: 'p-1',
+    author_name: 'Nguyễn Văn A',
+    author_id: 'u-1',
+    content: 'Cần tìm đối thủ trình 3.0-3.5 chơi tại LVK Hà Đông tối nay.',
+    report_reason: 'Spam nội dung',
+    status: 'PENDING',
+    venue_name: 'Sân Pickleball LVK Hà Đông',
+    venue_image: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?q=80&w=400',
+    created_at: '2026-04-23T10:00:00Z',
+  },
+  {
+    id: 'p-2',
+    author_name: 'Trần Thị B',
+    author_id: 'u-2',
+    content: 'Bán vợt Pickleball cũ giá rẻ, liên hệ Zalo 09xx...',
+    report_reason: 'Vi phạm quy định đăng tin (Quảng cáo)',
+    status: 'PENDING',
+    venue_name: 'Pickalo Quận 7',
+    venue_image: 'https://images.unsplash.com/photo-1626225000494-06d967b51b32?q=80&w=400',
+    created_at: '2026-04-23T15:30:00Z',
+  },
+];
+
+export const MOCK_ADMIN = {
+  id: "admin-001",
+  full_name: "Hệ thống Quản trị",
+  email: "admin@alobo.vn",
+  phone: "66668888",
+  role: "ADMIN",
+  avatar_url: "https://i.pravatar.cc/150?u=admin",
+  is_active: true,
+  is_verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
