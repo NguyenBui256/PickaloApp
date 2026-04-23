@@ -35,6 +35,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
 import { OwnerNavigator } from './OwnerNavigator';
+import { AdminNavigator } from './AdminNavigator';
 
 /**
  * Screen types for type-safe navigation.
@@ -217,7 +218,9 @@ export function AppNavigator(): React.JSX.Element {
       >
         {isAuthenticated ? (
           <>
-            {user?.role === 'MERCHANT' ? (
+            {user?.role === 'ADMIN' ? (
+              <Stack.Screen name="Main" component={AdminNavigator} />
+            ) : user?.role === 'MERCHANT' ? (
               <Stack.Screen name="Main" component={OwnerNavigator} />
             ) : (
               <Stack.Screen name="Main" component={MainTabs} />
