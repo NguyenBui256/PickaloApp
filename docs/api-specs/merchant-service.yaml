@@ -1,0 +1,315 @@
+# ============================================
+# Merchant Service — OpenAPI 3.0 Specification
+# Docs: https://swagger.io/specification/
+# ============================================
+openapi: 3.0.3
+info:
+  title: Merchant Service API
+  description: |
+    API specification for Merchant Service.
+    Handles booking management, approvals, statistics, and revenue tracking for venue owners.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8088
+    description: Local development
+
+tags:
+  - name: merchant-bookings
+    description: Booking management for venue owners
+  - name: merchant-stats
+    description: Business metrics and revenue reporting
+
+paths:
+  /api/v1/merchant/bookings/stats:
+    get:
+      tags:
+        - merchant-stats
+      summary: Get merchant booking statistics
+      description: Returns revenue and booking counts for all venues owned by the merchant.
+      operationId: getMerchantStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantStatsResponse'
+
+  /api/v1/merchant/bookings:
+    get:
+      tags:
+        - merchant-bookings
+      summary: List all bookings for merchant venues
+      operationId: listMerchantBookings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED, REJECTED]
+        - name: venue_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A list of bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+
+  /api/v1/merchant/bookings/{booking_id}:
+    get:
+      tags:
+        - merchant-bookings
+      summary: Get booking details as merchant
+      operationId: getMerchantBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detailed booking information with user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+
+  /api/v1/merchant/bookings/{booking_id}/approve:
+    post:
+      tags:
+        - merchant-bookings
+      summary: Approve a pending booking
+      operationId: approveBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking confirmed successfully
+
+  /api/v1/merchant/bookings/{booking_id}/reject:
+    post:
+      tags:
+        - merchant-bookings
+      summary: Reject a pending booking
+      operationId: rejectBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking rejected successfully
+
+  /api/v1/merchant/bookings/{booking_id}/complete:
+    post:
+      tags:
+        - merchant-bookings
+      summary: Mark booking as completed
+      description: Merchant confirms the user has finished their session.
+      operationId: completeBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking completed successfully
+
+  /api/v1/merchant/bookings/venues/{venue_id}/bookings:
+    get:
+      tags:
+        - merchant-bookings
+      summary: Get bookings for a specific venue
+      operationId: getVenueBookings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: venue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: booking_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of bookings for the venue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingListItem'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MerchantStatsResponse:
+      type: object
+      properties:
+        venues:
+          type: array
+          items:
+            $ref: '#/components/schemas/MerchantVenueStats'
+        currency:
+          type: string
+          example: "VND"
+
+    MerchantVenueStats:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        total_bookings:
+          type: integer
+        revenue_mtd:
+          type: number
+        rating:
+          type: number
+
+    BookingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingListItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    BookingListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venue_name:
+          type: string
+        booking_date:
+          type: string
+        total_price:
+          type: number
+        status:
+          type: string
+        is_paid:
+          type: boolean
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venue_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        booking_date:
+          type: string
+        total_price:
+          type: number
+        status:
+          type: string
+        is_paid:
+          type: boolean
+        notes:
+          type: string
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              court_name:
+                type: string
+              start_time:
+                type: string
+              end_time:
+                type: string

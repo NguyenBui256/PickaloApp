@@ -9,21 +9,35 @@ from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_merchant, DBSession
 from app.models.user import User
-from app.models.booking import BookingStatus
+from app.models.booking import Booking, BookingStatus, BookingSlot
 from app.schemas.booking import (
     BookingResponse,
     BookingListItem,
     BookingListResponse,
     BookingApproveReject,
     BookingCancel,
+    MerchantStatsResponse,
 )
 from app.services.booking import BookingService, get_booking_service
 
 router = APIRouter(prefix="/merchant/bookings", tags=["merchant-bookings"])
+
+
+@router.get("/stats", response_model=MerchantStatsResponse)
+async def get_merchant_booking_stats(
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+) -> MerchantStatsResponse:
+    """
+    Get booking statistics and revenue for all merchant's venues.
+    """
+    stats = await booking_service.get_merchant_stats(merchant_id=current_user.id)
+    return MerchantStatsResponse(**stats)
 
 
 @router.get("", response_model=BookingListResponse)
@@ -112,6 +126,7 @@ async def get_merchant_booking(
         .options(
             selectinload(Booking.venue),
             selectinload(Booking.user),
+            selectinload(Booking.slots).selectinload(BookingSlot.court),
             selectinload(Booking.booking_services),
         )
         .where(Booking.id == booking.id)
@@ -143,6 +158,35 @@ async def approve_booking(
     await session.refresh(booking)
 
     return _booking_to_response(booking)
+
+
+@router.post("/{booking_id}/complete", response_model=BookingResponse)
+async def complete_booking(
+    booking_id: str,
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    session: DBSession,
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+) -> BookingResponse:
+    """
+    Mark a confirmed booking as completed.
+
+    Merchant confirms that the session has ended.
+    """
+    try:
+        booking = await booking_service.complete_booking(
+            uuid.UUID(booking_id),
+            current_user.id,
+        )
+
+        await session.commit()
+        await session.refresh(booking)
+
+        return _booking_to_response(booking)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.post("/{booking_id}/reject", response_model=BookingResponse)
@@ -244,17 +288,24 @@ def _booking_to_response(booking: Any) -> BookingResponse:
                 "total": bs.total_price,
             })
 
+    # Slots
+    slots = []
+    if hasattr(booking, 'slots') and booking.slots:
+        for s in booking.slots:
+            slots.append({
+                "id": str(s.id),
+                "court_id": str(s.court_id),
+                "court_name": s.court.name if s.court else None,
+                "start_time": s.start_time.strftime("%H:%M"),
+                "end_time": s.end_time.strftime("%H:%M"),
+                "price": s.price,
+            })
+
     return BookingResponse(
         id=str(booking.id),
         user_id=str(booking.user_id),
         venue_id=str(booking.venue_id),
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
-        duration_minutes=booking.duration_minutes,
-        base_price=booking.base_price,
-        price_factor=booking.price_factor,
-        service_fee=booking.service_fee,
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,
@@ -270,6 +321,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         updated_at=booking.updated_at.isoformat(),
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
+        slots=slots,
         services=services,
     )
 
@@ -282,8 +334,6 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
         booking_date=booking.booking_date.isoformat(),
-        start_time=booking.start_time.strftime("%H:%M"),
-        end_time=booking.end_time.strftime("%H:%M"),
         total_price=booking.total_price,
         status=booking.status,
         is_paid=booking.is_paid,

@@ -1,4 +1,20 @@
 {
-  "name": "ALOBOBooking",
-  "displayName": "ALOBO Booking"
+  "name": "alobo-booking",
+  "expo": {
+    "name": "ALOBO Booking",
+    "slug": "alobo-booking",
+    "version": "0.1.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": true
+    },
+    "android": {
+      "versionCode": 1
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
+  }
 }

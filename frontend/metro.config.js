@@ -2,22 +2,21 @@
  * Metro configuration for React Native with SVG transformer support.
  */
 
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
-const config = {
-  resolver: {
-    assetExts: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ttf', 'otf'],
-    sourceExts: ['jsx', 'js', 'ts', 'tsx', 'svg'],
-  },
-  transformer: {
-    getTransformOptions: async () => ({
-      transform: {
-        experimentalImportSupport: false,
-        inlineRequires: true,
-      },
-    }),
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
-  },
+const config = getDefaultConfig(__dirname);
+
+const { transformer, resolver } = config;
+
+config.transformer = {
+  ...transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer'),
+};
+config.resolver = {
+  ...resolver,
+  assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
+  sourceExts: [...resolver.sourceExts, 'svg'],
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = config;
+

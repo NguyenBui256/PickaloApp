@@ -23,10 +23,13 @@ from app.models import (
     PricingTimeSlot,
     VenueService,
     Booking,
+    BookingSlot,
     BookingService,
+    Court,
     Post,
     Comment,
     AdminAction,
+    VenueReview,
 )
 
 # Alembic Config object
@@ -45,6 +48,29 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def include_object(object, name, type_, reflected, compare_to):
+    """
+    Exclude PostGIS and Tiger Geocoder system tables from migrations.
+    """
+    if type_ == "table" and reflected:
+        # List of PostGIS/Tiger system tables to exclude
+        exclude_tables = [
+            "spatial_ref_sys", "topology", "layer", "loader_platform",
+            "loader_variables", "loader_lookuptables", "zip_lookup",
+            "zip_lookup_base", "zip_lookup_all", "geocode_settings",
+            "geocode_settings_default", "pagc_lex", "pagc_rules",
+            "pagc_gaz", "tabblock", "tabblock20", "zip_state",
+            "zip_state_loc", "state", "county", "tract", "bg",
+            "faces", "edges", "addr", "addrfeat", "place", "cousub",
+            "zcta5", "featnames", "place_lookup", "county_lookup",
+            "secondary_unit_lookup", "street_type_lookup",
+            "state_lookup", "direction_lookup", "countysub_lookup"
+        ]
+        if name in exclude_tables:
+            return False
+    return True
+
+
 def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
@@ -59,6 +85,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -71,6 +98,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.venue import Venue
     from app.models.venue_services import VenueService
+    from app.models.court import Court
 
 
 class BookingStatus(str, Enum):
@@ -47,7 +48,7 @@ class Booking(BaseModel):
         base_price: Price before multipliers
         price_factor: Dynamic pricing multiplier applied
         service_fee: Platform service fee
-        total_price: Final price to pay
+        total_price: Final price pay
         status: Current booking state
         payment_method: Payment gateway used
         payment_id: Transaction ID from payment provider
@@ -67,40 +68,15 @@ class Booking(BaseModel):
         index=True,
     )
 
-    # Schedule
+    # Schedule information moved to BookingSlot
+    # We keep booking_date in Booking as a reference for the primary day of booking
     booking_date: Mapped[date] = mapped_column(
         Date,
         nullable=False,
         index=True,
     )
-    start_time: Mapped[time] = mapped_column(
-        Time,
-        nullable=False,
-    )
-    end_time: Mapped[time] = mapped_column(
-        Time,
-        nullable=False,
-    )
-    duration_minutes: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-    )
 
-    # Pricing breakdown
-    base_price: Mapped[Decimal] = mapped_column(
-        Numeric(10, 2),
-        nullable=False,
-    )
-    price_factor: Mapped[Decimal] = mapped_column(
-        Numeric(3, 2),
-        nullable=False,
-        default=Decimal("1.0"),
-    )
-    service_fee: Mapped[Decimal] = mapped_column(
-        Numeric(10, 2),
-        nullable=False,
-        default=Decimal("0"),
-    )
+    # Pricing (Total aggregated from slots)
     total_price: Mapped[Decimal] = mapped_column(
         Numeric(10, 2),
         nullable=False,
@@ -156,6 +132,12 @@ class Booking(BaseModel):
         back_populates="bookings",
         lazy="selectin",
     )
+    slots: Mapped[list["BookingSlot"]] = relationship(
+        "BookingSlot",
+        back_populates="booking",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
     booking_services: Mapped[list["BookingService"]] = relationship(
         "BookingService",
         back_populates="booking",
@@ -183,11 +165,22 @@ class Booking(BaseModel):
         """Check if merchant can approve this booking."""
         return self.status == BookingStatus.PENDING and self.is_paid
 
+    @property
+    def can_be_completed(self) -> bool:
+        """Check if booking can be marked as completed."""
+        return self.status == BookingStatus.CONFIRMED
+
     def approve(self) -> None:
         """Approve the booking (merchant action)."""
         if not self.can_be_approved:
             raise ValueError("Booking cannot be approved")
         self.status = BookingStatus.CONFIRMED
+
+    def complete(self) -> None:
+        """Mark the booking as completed (merchant action)."""
+        if not self.can_be_completed:
+            raise ValueError("Booking cannot be completed")
+        self.status = BookingStatus.COMPLETED
 
     def cancel(self, cancelled_by: str) -> None:
         """
@@ -228,6 +221,50 @@ class Booking(BaseModel):
         return (
             f"Booking(id={self.id!r}, status={self.status.value}, "
             f"venue_id={self.venue_id!r}, date={self.booking_date})"
+        )
+
+
+class BookingSlot(BaseModel):
+    """
+    Individual court time slot within a booking.
+    """
+    __tablename__ = "booking_slots"
+
+    booking_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("bookings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    court_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("courts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    booking_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False,
+    )
+    start_time: Mapped[time] = mapped_column(
+        Time,
+        nullable=False,
+    )
+    end_time: Mapped[time] = mapped_column(
+        Time,
+        nullable=False,
+    )
+    price: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
+
+    # Relationships
+    booking: Mapped["Booking"] = relationship("Booking", back_populates="slots")
+    court: Mapped["Court"] = relationship("Court", back_populates="booking_slots")
+
+    def __repr__(self) -> str:
+        return (
+            f"BookingSlot(id={self.id!r}, court_id={self.court_id!r}, "
+            f"time={self.start_time}-{self.end_time})"
         )
 
 

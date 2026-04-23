@@ -18,6 +18,7 @@ from geoalchemy2 import functions as geofunc
 from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
 from app.models.booking import Booking, BookingStatus
+from app.models.court import Court
 
 
 class VenueService:
@@ -649,17 +650,13 @@ class VenueService:
         close_time = hours.get("close", "23:00")
 
         # Get existing bookings for the date
-        start_of_day = datetime.combine(date.date(), time.min)
-        end_of_day = datetime.combine(date.date(), time.max)
-
         booking_result = await self.session.execute(
             select(Booking).where(
                 Booking.venue_id == venue_id,
-                Booking.start_time >= start_of_day,
-                Booking.start_time < end_of_day,
+                Booking.booking_date == date.date(),
                 Booking.status.in_([
                     BookingStatus.PENDING,
-                    BookingStatus.APPROVED,
+                    BookingStatus.CONFIRMED,
                     BookingStatus.COMPLETED,
                 ]),
             )
@@ -677,7 +674,7 @@ class VenueService:
 
             # Check if slot is booked
             is_booked = any(
-                b.start_time < slot_end and b.start_time + timedelta(hours=b.duration_hours) > slot_start
+                b.start_time < slot_end.time() and b.end_time > slot_start.time()
                 for b in bookings
             )
 
@@ -723,6 +720,63 @@ class VenueService:
             List of district names
         """
         return self.HANOI_DISTRICTS.copy()
+
+    # ===== Court Management =====
+
+    async def get_venue_courts(self, venue_id: uuid.UUID) -> list[Court]:
+        """Get all courts for a venue."""
+        result = await self.session.execute(
+            select(Court).where(Court.venue_id == venue_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_court(
+        self,
+        venue_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+        name: str,
+        is_active: bool = True,
+    ) -> Court:
+        """Create a new court for a venue."""
+        # Verify ownership
+        venue = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to add courts to this venue")
+
+        court = Court(
+            venue_id=venue_id,
+            name=name,
+            is_active=is_active,
+        )
+        self.session.add(court)
+        await self.session.flush()
+        return court
+
+    async def update_court(
+        self,
+        court_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+        **updates: Any,
+    ) -> Court | None:
+        """Update court details."""
+        result = await self.session.execute(
+            select(Court).where(Court.id == court_id)
+        )
+        court = result.scalar_one_or_none()
+        if not court:
+            return None
+
+        # Verify ownership
+        venue = await self.get_venue_by_id(court.venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to update this court")
+
+        for field, value in updates.items():
+            if value is not None and hasattr(court, field):
+                setattr(court, field, value)
+
+        await self.session.flush()
+        return court
 
 
 async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -> VenueService:
