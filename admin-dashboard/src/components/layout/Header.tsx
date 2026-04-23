@@ -15,7 +15,7 @@ export function Header() {
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
-          <Button variant="ghost" size="sm" onPress={logout}>
+          <Button variant="ghost" size="sm" onClick={logout}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>

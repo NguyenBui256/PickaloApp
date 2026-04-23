@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-04-09T17:58:23.855Z",
+  "testConfig": {
+    "baseUrl": "http://localhost:3000",
+    "apiBaseUrl": "http://localhost:8000/api/v1",
+    "adminCredentials": {
+      "phone": "+84123456789",
+      "password": "Admin@123"
+    }
+  },
+  "results": {
+    "passed": 7,
+    "failed": 1,
+    "errors": [],
+    "screenshots": [
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Authentication-Complete-1775757503703.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-API-Root-1775757503712.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-Venues-List-1775757503729.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-Bookings-List-1775757503816.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\Frontend-Main-Page-1775757503843.json"
+    ],
+    "apiTests": [
+      {
+        "name": "Admin Login API",
+        "status": "PASS"
+      },
+      {
+        "name": "API Root API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Venues List API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Users List API",
+        "status": "NOT_FOUND",
+        "statusCode": 404
+      },
+      {
+        "name": "Bookings List API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Merchants List API",
+        "status": "NOT_FOUND",
+        "statusCode": 404
+      }
+    ],
+    "frontendTests": [
+      {
+        "name": "Main Page Access",
+        "status": "PASS"
+      },
+      {
+        "name": "React Detection",
+        "status": "PASS"
+      },
+      {
+        "name": "Auth Flow - No Token",
+        "status": "FAIL"
+      }
+    ]
+  },
+  "summary": {
+    "totalTests": 8,
+    "passRate": "87.50%",
+    "status": "FAIL",
+    "apiTests": 6,
+    "frontendTests": 3,
+    "screenshots": 5
+  },
+  "recommendations": [
+    "Address failed tests to improve reliability",
+    "Consider implementing missing API endpoints",
+    "Review frontend components and routing",
+    "Test coverage below 90% - add more test cases",
+    "Implement regular automated testing in CI/CD pipeline",
+    "Add integration tests for complete user workflows"
+  ]
+}

@@ -21,6 +21,7 @@ from app.schemas.analytics import (
     VenuePerformanceResponse,
     AnalyticsPeriod,
 )
+from app.services.analytics import get_analytics_service
 
 router = APIRouter(prefix="/admin/analytics", tags=["analytics"])
 
@@ -28,10 +29,10 @@ router = APIRouter(prefix="/admin/analytics", tags=["analytics"])
 @router.get("/revenue", response_model=RevenueTrendResponse)
 async def get_revenue_trends(
     admin: Annotated[User, Depends(get_admin)],
+    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
     start_date: date = Query(..., description="Start date for analytics"),
     end_date: date | None = None,
     period_type: str = Query("daily", regex="^(daily|weekly|monthly)$"),
-    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
 ) -> RevenueTrendResponse:
     """
     Get revenue trends for a time period.
@@ -74,9 +75,9 @@ async def get_revenue_trends(
 @router.get("/bookings", response_model=BookingStatsResponse)
 async def get_booking_statistics(
     admin: Annotated[User, Depends(get_admin)],
+    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
     start_date: date = Query(..., description="Start date for analytics"),
     end_date: date | None = None,
-    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
 ) -> BookingStatsResponse:
     """
     Get booking statistics for a time period.
@@ -109,9 +110,9 @@ async def get_booking_statistics(
 @router.get("/users", response_model=UserGrowthResponse)
 async def get_user_growth(
     admin: Annotated[User, Depends(get_admin)],
+    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
     start_date: date = Query(..., description="Start date for analytics"),
     end_date: date | None = None,
-    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
 ) -> UserGrowthResponse:
     """
     Get user growth analytics for a time period.
@@ -144,10 +145,10 @@ async def get_user_growth(
 @router.get("/venues", response_model=VenuePerformanceResponse)
 async def get_venue_performance(
     admin: Annotated[User, Depends(get_admin)],
+    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
     start_date: date = Query(..., description="Start date for analytics"),
     end_date: date | None = None,
     limit: int = Query(10, ge=1, le=100, description="Number of top venues to return"),
-    analytics_service: Annotated["AnalyticsService", Depends(get_analytics_service)],
 ) -> VenuePerformanceResponse:
     """
     Get venue performance rankings.
@@ -177,7 +178,3 @@ async def get_venue_performance(
     )
 
     return VenuePerformanceResponse(**performance)
-
-
-# Import at module level for dependency
-from app.services.analytics import get_analytics_service

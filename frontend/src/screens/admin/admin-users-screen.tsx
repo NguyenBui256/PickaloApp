@@ -5,21 +5,14 @@
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import type { AdminNavigationProp } from '@navigation/admin-navigator';
 
 interface AdminUsersScreenProps {
   navigation: AdminNavigationProp;
 }
 
-export function AdminUsersScreen({
-  navigation,
-}: AdminUsersScreenProps): React.JSX.Element {
+export function AdminUsersScreen({ navigation }: AdminUsersScreenProps): React.JSX.Element {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>

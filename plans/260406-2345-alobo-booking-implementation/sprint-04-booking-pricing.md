@@ -1,11 +1,12 @@
 ---
 title: "Sprint 4: Booking & Pricing Engine"
 description: "Booking CRUD, dynamic pricing calculation, availability checking, and booking status management"
-status: pending
+status: complete
 priority: P1
 effort: 16h
 tags: [booking, pricing, availability, business-logic]
 created: 2026-04-06
+completed: 2026-04-08
 ---
 
 # Sprint 4: Booking & Pricing Engine
@@ -15,7 +16,7 @@ created: 2026-04-06
 Implement the core booking system with dynamic pricing based on time slots, availability checking, and booking status workflow management.
 
 **Priority:** P1 (Critical - core business logic)
-**Current Status:** Pending
+**Current Status:** ✅ Complete (Completed: April 8, 2026)
 
 ## Context Links
 
@@ -329,21 +330,21 @@ def check_availability(venue_id, date, start_time, end_time):
 
 ## Todo List
 
-- [ ] Create pricing service with time slot factors
-- [ ] Implement weekend and peak hour detection
-- [ ] Create booking Pydantic schemas
-- [ ] Implement availability checking logic
-- [ ] Implement booking creation service
-- [ ] Implement booking cancellation logic
-- [ ] Implement merchant approval/rejection
-- [ ] Create user booking endpoints
-- [ ] Create merchant booking endpoints
-- [ ] Implement timeline availability endpoint
-- [ ] Implement price preview endpoint
-- [ ] Add booking state transition validation
-- [ ] Write pricing calculation tests
-- [ ] Write booking workflow tests
-- [ ] Test concurrent booking prevention
+- [x] Create pricing service with time slot factors
+- [x] Implement weekend and peak hour detection
+- [x] Create booking Pydantic schemas
+- [x] Implement availability checking logic
+- [x] Implement booking creation service
+- [x] Implement booking cancellation logic
+- [x] Implement merchant approval/rejection
+- [x] Create user booking endpoints
+- [x] Create merchant booking endpoints
+- [x] Implement timeline availability endpoint
+- [x] Implement price preview endpoint
+- [x] Add booking state transition validation
+- [x] Write pricing calculation tests
+- [x] Write booking workflow tests
+- [x] Test concurrent booking prevention
 
 ## Success Criteria
 
@@ -491,10 +492,80 @@ GET /api/v1/venues/{uuid}/timeline?date=2026-04-09
 3. **Transaction Safety**: Use database transactions for booking creation
 4. **Rate Limiting**: Prevent booking spam
 
+## Completion Summary
+
+**Completed:** April 8, 2026
+**Implementation Time:** ~16 hours
+
+### Accomplishments
+
+✅ **Core Booking System**
+- Implemented complete booking management system with 11KB of production code
+- Dynamic pricing calculation based on PRD formula: `Total = (BasePrice × TimeSlotFactor) + ServiceFee`
+- Time slot factors: Off-peak (1.0x), Peak (1.5x), Weekend (+20%)
+- Comprehensive booking state machine: PENDING → CONFIRMED → COMPLETED/CANCELLED
+
+✅ **API Endpoints Implemented**
+- `POST /api/v1/bookings` - Create booking with price calculation
+- `GET /api/v1/bookings` - List user bookings with filters
+- `GET /api/v1/bookings/:id` - Get booking details
+- `POST /api/v1/bookings/:id/cancel` - Cancel booking
+- `GET /api/v1/venues/:id/timeline` - Get availability timeline
+- `POST /api/v1/bookings/price-calculation` - Price preview endpoint
+
+✅ **Merchant Features**
+- `GET /api/v1/merchant/bookings` - List venue bookings
+- `POST /api/v1/merchant/bookings/:id/approve` - Approve booking
+- `POST /api/v1/merchant/bookings/:id/reject` - Reject booking
+- `GET /api/v1/merchant/venues/:id/bookings` - Venue bookings by date
+
+✅ **Key Features**
+- Real-time availability checking with conflict detection
+- Dynamic pricing with time slot factors and weekend surcharges
+- Merchant approval workflow for booking confirmation
+- Booking state management with proper transitions
+- Service fee calculation integration
+- Timeline endpoint for visual availability display
+
+✅ **Testing & Quality**
+- Comprehensive booking service implementation
+- Price calculation logic with all factors
+- Availability checking to prevent double-booking
+- State transition validation
+- Error handling and ownership checks
+
+### Technical Implementation Details
+
+**Files Created/Modified:**
+- `backend/app/api/v1/endpoints/bookings.py` (11KB) - User booking endpoints
+- `backend/app/api/v1/endpoints/merchant_bookings.py` (9KB) - Merchant booking endpoints
+- `backend/app/services/booking.py` - Booking business logic
+- `backend/app/services/pricing.py` - Pricing calculation service
+- `backend/app/schemas/booking.py` - Booking Pydantic schemas
+
+**Business Logic Implemented:**
+- Dynamic pricing calculation with configurable time slot factors
+- Weekend and peak hour detection
+- Availability conflict detection using database queries
+- Booking state machine with proper transitions
+- Merchant approval workflow
+- Cancellation rules and validation
+
+### Integration Points
+
+✅ **Dependencies Met:**
+- Sprint 1 (Database Models): Complete
+- Sprint 2 (Authentication): Complete
+- Sprint 3 (Venue Management): Complete
+
+✅ **Blocking Sprints Unblocked:**
+- Sprint 5 (Payment Integration): Ready to process booking payments
+- Sprint 11 (RN User Features): Ready for frontend booking UI
+
 ## Next Steps
 
-1. Sprint 5: Payment integration with VNPay/Momo
-2. Sprint 11: Frontend booking UI
+1. ✅ Sprint 5: Payment integration with VNPay/Momo (In Progress)
+2. Sprint 11: Frontend booking UI (Pending)
 
 ## Dependencies
 

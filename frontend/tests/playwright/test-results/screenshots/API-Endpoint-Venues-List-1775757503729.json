@@ -1,0 +1,35 @@
+{
+  "test": "API-Endpoint-Venues List",
+  "timestamp": "2026-04-09T17:58:23.729Z",
+  "data": {
+    "endpoint": "/venues",
+    "status": 200,
+    "dataSize": 52
+  },
+  "results": {
+    "passed": 4,
+    "failed": 0,
+    "errors": [],
+    "screenshots": [
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Authentication-Complete-1775757503703.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-API-Root-1775757503712.json"
+    ],
+    "apiTests": [
+      {
+        "name": "Admin Login API",
+        "status": "PASS"
+      },
+      {
+        "name": "API Root API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Venues List API",
+        "status": "PASS",
+        "statusCode": 200
+      }
+    ],
+    "frontendTests": []
+  }
+}

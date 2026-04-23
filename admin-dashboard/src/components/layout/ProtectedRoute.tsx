@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { isTokenExpired } from '@/lib/auth'
+import { isAuthenticated, isTokenExpired } from '@/lib/auth'
 
 interface ProtectedRouteProps {
   children: React.ReactNode

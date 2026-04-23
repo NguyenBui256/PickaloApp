@@ -1,0 +1,46 @@
+{
+  "test": "API-Endpoint-Bookings List",
+  "timestamp": "2026-04-09T17:59:13.698Z",
+  "data": {
+    "endpoint": "/bookings",
+    "status": 200,
+    "dataSize": 52
+  },
+  "results": {
+    "passed": 5,
+    "failed": 0,
+    "errors": [],
+    "screenshots": [
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Authentication-Complete-1775757553639.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-API-Root-1775757553650.json",
+      "D:\\PTIT\\PickaloApp\\frontend\\tests\\playwright\\test-results\\screenshots\\API-Endpoint-Venues-List-1775757553667.json"
+    ],
+    "apiTests": [
+      {
+        "name": "Admin Login API",
+        "status": "PASS"
+      },
+      {
+        "name": "API Root API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Venues List API",
+        "status": "PASS",
+        "statusCode": 200
+      },
+      {
+        "name": "Users List API",
+        "status": "NOT_FOUND",
+        "statusCode": 404
+      },
+      {
+        "name": "Bookings List API",
+        "status": "PASS",
+        "statusCode": 200
+      }
+    ],
+    "frontendTests": []
+  }
+}

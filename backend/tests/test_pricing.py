@@ -40,8 +40,8 @@ class TestPricingService:
         service = PricingService(session=None)
 
         # Saturday (5) and Sunday (6)
-        assert service.is_weekend(date(2026, 4, 12)) is True  # Saturday
-        assert service.is_weekend(date(2026, 4, 13)) is True  # Sunday
+        assert service.is_weekend(date(2026, 4, 11)) is True  # Saturday
+        assert service.is_weekend(date(2026, 4, 12)) is True  # Sunday
 
     @pytest.mark.asyncio
     async def test_is_weekend_false(self):
@@ -49,9 +49,9 @@ class TestPricingService:
         service = PricingService(session=None)
 
         # Monday-Friday
-        assert service.is_weekend(date(2026, 4, 9)) is False   # Wednesday
-        assert service.is_weekend(date(2026, 4, 10)) is False  # Thursday
-        assert service.is_weekend(date(2026, 4, 11)) is False  # Friday
+        assert service.is_weekend(date(2026, 4, 9)) is False   # Thursday
+        assert service.is_weekend(date(2026, 4, 10)) is False  # Friday
+        assert service.is_weekend(date(2026, 4, 8)) is False   # Wednesday
 
     @pytest.mark.asyncio
     async def test_calculate_duration_minutes(self):
@@ -85,7 +85,7 @@ class TestPricingService:
         service = PricingService(session=None)
 
         factor = service.get_default_price_factor(
-            booking_date=date(2026, 4, 9),  # Wednesday
+            booking_date=date(2026, 4, 9),  # Thursday
             start_time="10:00",
         )
 
@@ -97,7 +97,7 @@ class TestPricingService:
         service = PricingService(session=None)
 
         factor = service.get_default_price_factor(
-            booking_date=date(2026, 4, 9),  # Wednesday
+            booking_date=date(2026, 4, 9),  # Thursday
             start_time="18:00",
         )
 
@@ -109,7 +109,7 @@ class TestPricingService:
         service = PricingService(session=None)
 
         factor = service.get_default_price_factor(
-            booking_date=date(2026, 4, 12),  # Saturday
+            booking_date=date(2026, 4, 11),  # Saturday
             start_time="10:00",
         )
 
@@ -121,7 +121,7 @@ class TestPricingService:
         service = PricingService(session=None)
 
         factor = service.get_default_price_factor(
-            booking_date=date(2026, 4, 12),  # Saturday
+            booking_date=date(2026, 4, 11),  # Saturday
             start_time="18:00",
         )
 
@@ -132,11 +132,11 @@ class TestPricingService:
         """Test day type enum conversion."""
         service = PricingService(session=None)
 
-        assert service.get_day_type(date(2026, 4, 9)).value == "WEEKDAY"
-        assert service.get_day_type(date(2026, 4, 10)).value == "WEEKDAY"
-        assert service.get_day_type(date(2026, 4, 11)).value == "WEEKDAY"
-        assert service.get_day_type(date(2026, 4, 12)).value == "WEEKEND"
-        assert service.get_day_type(date(2026, 4, 13)).value == "WEEKEND"
+        assert service.get_day_type(date(2026, 4, 8)).value == "WEEKDAY"   # Wednesday
+        assert service.get_day_type(date(2026, 4, 9)).value == "WEEKDAY"   # Thursday
+        assert service.get_day_type(date(2026, 4, 10)).value == "WEEKDAY"  # Friday
+        assert service.get_day_type(date(2026, 4, 11)).value == "WEEKEND"  # Saturday
+        assert service.get_day_type(date(2026, 4, 12)).value == "WEEKEND"  # Sunday
 
 
 class TestPricingFormulas:
@@ -145,7 +145,7 @@ class TestPricingFormulas:
     @pytest.mark.asyncio
     async def test_formula_off_peak_weekday_1_hour(self):
         """Test: base_price × 1.0 = 300,000 VND."""
-        # Wednesday 10:00-11:00, base 300,000
+        # Thursday 10:00-11:00, base 300,000
         base_price = Decimal("300000")
         duration = Decimal("1.0")
         factor = Decimal("1.0")
@@ -163,7 +163,7 @@ class TestPricingFormulas:
     @pytest.mark.asyncio
     async def test_formula_peak_weekday_1_hour(self):
         """Test: base_price × 1.5 = 450,000 VND."""
-        # Wednesday 18:00-19:00, base 300,000
+        # Thursday 18:00-19:00, base 300,000
         base_price = Decimal("300000")
         duration = Decimal("1.0")
         factor = Decimal("1.5")

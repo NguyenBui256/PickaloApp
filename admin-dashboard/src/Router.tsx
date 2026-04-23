@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { isAuthenticated } from '@/lib/auth'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { Header } from '@/components/layout/Header'
@@ -7,7 +8,26 @@ import LoginPage from './pages/Login'
 import DashboardPage from './pages/Dashboard'
 
 export default function Router() {
-  if (!isAuthenticated()) {
+  const [authenticated, setAuthenticated] = useState(isAuthenticated())
+
+  useEffect(() => {
+    // Check authentication status whenever localStorage changes
+    const checkAuth = () => {
+      setAuthenticated(isAuthenticated())
+    }
+
+    // Listen for storage changes (in case user logs in/out in another tab)
+    window.addEventListener('storage', checkAuth)
+
+    // Also check on mount in case auth status changed
+    checkAuth()
+
+    return () => {
+      window.removeEventListener('storage', checkAuth)
+    }
+  }, [])
+
+  if (!authenticated) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />

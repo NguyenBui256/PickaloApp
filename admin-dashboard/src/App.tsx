@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
   },
 })
 
-export default function Root() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

@@ -1,8 +1,6 @@
 # ALOBO Booking - Local Development Environment
 # Run with: docker-compose up -d
 
-version: "3.8"
-
 services:
   # PostgreSQL with PostGIS extension
   postgres:

@@ -2,18 +2,19 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { MetricCard } from '@/components/admin/MetricCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { DashboardMetrics } from '@/types/api'
 
 export default function DashboardPage() {
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['dashboard-metrics'],
-    queryFn: () => api.get<{ data: DashboardMetrics }>('/admin/dashboard'),
+    queryFn: () => api.get<DashboardMetrics>('/admin/dashboard'),
   })
 
   if (isLoading) {
     return <div className="p-8">Loading...</div>
   }
 
-  const data = metrics?.data
+  const data = metrics
 
   return (
     <div className="space-y-6 p-8">

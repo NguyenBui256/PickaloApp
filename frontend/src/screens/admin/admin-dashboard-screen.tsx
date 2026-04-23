@@ -5,22 +5,14 @@
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import type { AdminNavigationProp } from '@navigation/admin-navigator';
 
 interface AdminDashboardScreenProps {
   navigation: AdminNavigationProp;
 }
 
-export function AdminDashboardScreen({
-  navigation,
-}: AdminDashboardScreenProps): React.JSX.Element {
+export function AdminDashboardScreen({ navigation }: AdminDashboardScreenProps): React.JSX.Element {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = React.useCallback(() => {
@@ -35,9 +27,7 @@ export function AdminDashboardScreen({
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
         <Text style={styles.title}>Admin Dashboard</Text>
@@ -45,9 +35,7 @@ export function AdminDashboardScreen({
       </View>
 
       <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>
-          Dashboard metrics will be displayed here:
-        </Text>
+        <Text style={styles.placeholderText}>Dashboard metrics will be displayed here:</Text>
         <Text style={styles.placeholderBullet}>• Total users</Text>
         <Text style={styles.placeholderBullet}>• Total merchants</Text>
         <Text style={styles.placeholderBullet}>• Total venues</Text>
@@ -56,9 +44,7 @@ export function AdminDashboardScreen({
         <Text style={styles.placeholderBullet}>• Growth charts</Text>
       </View>
 
-      <Text style={styles.note}>
-        Full implementation coming in Phase 4 & 5
-      </Text>
+      <Text style={styles.note}>Full implementation coming in Phase 4 & 5</Text>
     </ScrollView>
   );
 }

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+</head>
+<body>
+    <h1>Admin Dashboard Login Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="result"></div>
+
+    <script>
+    async function testLogin() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'Testing login...';
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: '+84123456789',
+                    password: 'Admin@123'
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h2>Login Successful!</h2>
+                    <p>Access Token: ${data.access_token.substring(0, 20)}...</p>
+                    <p>User: ${data.user.full_name}</p>
+                    <p>Role: ${data.user.role}</p>
+                `;
+
+                // Test storing token
+                localStorage.setItem('access_token', data.access_token);
+                resultDiv.innerHTML += '<p>Token stored in localStorage!</p>';
+
+                // Test dashboard API
+                setTimeout(() => testDashboardAPI(data.access_token), 1000);
+            } else {
+                resultDiv.innerHTML = 'Login failed: ' + response.status;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = 'Error: ' + error.message;
+        }
+    }
+
+    async function testDashboardAPI(token) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML += '<br><h2>Testing Dashboard API...</h2>';
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/admin/dashboard', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML += `
+                    <h3>Dashboard Metrics:</h3>
+                    <p>Total Users: ${data.total_users}</p>
+                    <p>Total Venues: ${data.total_venues}</p>
+                    <p>Total Bookings: ${data.total_bookings}</p>
+                    <p>Active Users: ${data.active_users}</p>
+                    <p>Verified Venues: ${data.verified_venues}</p>
+                    <p>Pending Verifications: ${data.pending_verifications}</p>
+                    <p>Total Revenue: ${data.total_revenue}</p>
+                `;
+            } else {
+                resultDiv.innerHTML += 'Dashboard API failed: ' + response.status;
+            }
+        } catch (error) {
+            resultDiv.innerHTML += 'Dashboard API Error: ' + error.message;
+        }
+    }
+    </script>
+</body>
+</html>

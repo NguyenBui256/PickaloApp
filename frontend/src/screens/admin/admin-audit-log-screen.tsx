@@ -5,21 +5,14 @@
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import type { AdminNavigationProp } from '@navigation/admin-navigator';
 
 interface AdminAuditLogScreenProps {
   navigation: AdminNavigationProp;
 }
 
-export function AdminAuditLogScreen({
-  navigation,
-}: AdminAuditLogScreenProps): React.JSX.Element {
+export function AdminAuditLogScreen({ navigation }: AdminAuditLogScreenProps): React.JSX.Element {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>

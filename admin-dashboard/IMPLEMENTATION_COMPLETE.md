@@ -290,3 +290,44 @@ To complete the remaining pages, implement:
 5. Navigate between pages
 
 **The foundation is solid and ready for the remaining management pages to be implemented!**
+
+---
+
+## 🐛 Troubleshooting
+
+### Login Issues
+
+**Issue:** "Not authenticated" error when trying to login
+
+**Root Cause:** The API client was requiring authentication headers for the login endpoint itself, creating a circular dependency.
+
+**Solution Implemented:**
+1. Updated `api.post()` and other API methods to accept optional `requireAuth` parameter
+2. Changed `login()` function to call `api.post('/auth/login', body, false)` to disable auth requirement
+3. Fixed Dashboard TypeScript types to match backend response structure
+
+**Verification:**
+```bash
+# Test login through Vite proxy
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+84123456789","password":"Admin@123"}'
+
+# Test admin dashboard with token
+curl -X GET http://localhost:3000/api/admin/dashboard \
+  -H "Authorization: Bearer <your_token>"
+```
+
+**Docker Setup Notes:**
+- Ensure all services are running: `docker-compose up -d`
+- Check service health: `docker-compose ps`
+- View logs: `docker-compose logs admin-dashboard` or `docker-compose logs backend`
+- Database: PostgreSQL with PostGIS on port 5432
+- Backend: FastAPI on port 8000
+- Frontend: Vite dev server on port 3000
+
+**Common Issues:**
+- **White screen**: Check Vite proxy configuration and component imports
+- **CORS errors**: Verify backend CORS settings allow frontend origin
+- **Database connection errors**: Ensure postgres container is healthy
+- **401 Unauthorized**: Check token expiration and role verification
