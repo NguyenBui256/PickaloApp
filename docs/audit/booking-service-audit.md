@@ -28,14 +28,19 @@ Bản đối soát giữa tài liệu Backend API ([booking-service.yaml](../../
 ### C. Những gì FE cần cập nhật:
 1.  **Response Handling**: `BookingResponse` cần hiển thị thông tin các sân con đã đặt (`slots[]`) thay vì chỉ hiện tên Venue chung chung.
 
+### C. Những gì FE đã cập nhật (2026-04-23):
+1.  **Date Selection Logic:** Đã triển khai bộ chọn ngày (Date Picker) 14 ngày kể từ ngày hiện tại.
+2.  **Validation Thời gian:** Tự động khóa (disable) các khung giờ đã trôi qua trong ngày hiện tại dựa trên giờ hệ thống (`now()`).
+3.  **Maintenance Support:** Đã thêm trạng thái `MAINTENANCE` (Màu cam) để hiển thị các sân đang bảo trì, không cho phép đặt.
+
 ---
 
 ## 3. Đề xuất hành động
 
 1.  **Frontend**: Cập nhật `BookingCreateRequest` và `BookingPricePreviewRequest` trong `api-types.ts` để sử dụng cấu trúc mảng `slots`.
 2.  **Frontend**: Cập nhật hàm `createBooking` và `calculateBookingPrice` để truyền data đúng format mới.
-3.  **Backend**: Bổ sung endpoint `/timeline` vào spec và triển khai thực tế.
+3.  **Backend**: Bổ sung endpoint `/availability` hoặc `/timeline` vào spec. Cần trả về đầy đủ các trạng thái: `AVAILABLE`, `BOOKED`, `MAINTENANCE`, `EVENT`.
 
 ---
-*Ngày audit: 2026-04-22*
+*Ngày audit: 2026-04-23 (Cập nhật logic Date/Time)*
 *Người thực hiện: Antigravity AI*
