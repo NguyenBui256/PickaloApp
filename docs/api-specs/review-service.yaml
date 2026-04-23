@@ -173,19 +173,36 @@ components:
         id:
           type: string
           format: uuid
-        user_id:
-          type: string
-          format: uuid
         venue_id:
           type: string
           format: uuid
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            full_name:
+              type: string
+            avatar_url:
+              type: string
+              nullable: true
         rating:
           type: integer
+          minimum: 1
+          maximum: 5
         comment:
           type: string
-        user_name:
-          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+          nullable: true
         created_at:
+          type: string
+          format: date-time
+        updated_at:
           type: string
           format: date-time
 
@@ -199,6 +216,8 @@ components:
         total:
           type: integer
         page:
+          type: integer
+        limit:
           type: integer
         pages:
           type: integer

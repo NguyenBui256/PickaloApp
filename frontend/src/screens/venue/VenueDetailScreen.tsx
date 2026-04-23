@@ -87,8 +87,8 @@ export const VenueDetailScreen: React.FC = () => {
       'Bạn có chắc chắn muốn xóa sân này khỏi hệ thống? Sân sẽ được đưa vào danh sách tạm xóa.',
       [
         { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Xóa sân', 
+        {
+          text: 'Xóa sân',
           style: 'destructive',
           onPress: async () => {
             setIsDeleting(true);
@@ -157,10 +157,10 @@ export const VenueDetailScreen: React.FC = () => {
                 <View key={item.id} style={styles.reviewItem}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.userAvatarPlaceholder}>
-                      <Text style={styles.avatarText}>{item.user_name.charAt(0)}</Text>
+                      <Text style={styles.avatarText}>{item.user.full_name.charAt(0)}</Text>
                     </View>
                     <View style={styles.reviewUserInfo}>
-                      <Text style={styles.reviewUserName}>{item.user_name}</Text>
+                      <Text style={styles.reviewUserName}>{item.user.full_name}</Text>
                       <View style={styles.starsRow}>
                         {[1, 2, 3, 4, 5].map((s) => (
                           <MaterialCommunityIcons
@@ -214,8 +214,8 @@ export const VenueDetailScreen: React.FC = () => {
 
               <View style={styles.headerRight}>
                 {isAdmin ? (
-                  <TouchableOpacity 
-                    style={[styles.circularBtn, { backgroundColor: '#F44336' }]} 
+                  <TouchableOpacity
+                    style={[styles.circularBtn, { backgroundColor: '#F44336' }]}
                     onPress={handleAdminDelete}
                     disabled={isDeleting}
                   >

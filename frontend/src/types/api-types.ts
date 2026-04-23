@@ -509,15 +509,22 @@ export interface ReviewUpdateRequest {
   images?: string[] | null;
 }
 
+export interface ReviewUser {
+  id: string;
+  full_name: string;
+  avatar_url?: string | null;
+}
+
 /** Backend: ReviewResponse — GET /venues/{id}/reviews, POST /venues/{id}/reviews */
 export interface ReviewResponse {
   id: string;
-  user_id: string;
   venue_id: string;
+  user: ReviewUser;
   rating: number;
   comment?: string | null;
-  user_name: string;
+  images?: string[] | null;
   created_at: string;
+  updated_at: string;
 }
 
 /** Backend: ReviewListResponse — GET /venues/{id}/reviews */
@@ -525,6 +532,7 @@ export interface ReviewListResponse {
   items: ReviewResponse[];
   total: number;
   page: number;
+  limit: number;
   pages: number;
 }
 
