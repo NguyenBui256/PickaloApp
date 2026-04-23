@@ -16,6 +16,8 @@ import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
 import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
+import { useAuthStore } from '../../store/auth-store';
+import { updateVenueStatus } from '../../services/admin-service';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
@@ -28,6 +30,9 @@ type VenueDetailsRouteProp = RouteProp<RootStackParamList, 'VenueDetails'>;
 const TABS = ['Thông tin', 'Dịch vụ', 'Hình ảnh', 'Điều khoản & quy định', 'Đánh giá'];
 
 export const VenueDetailScreen: React.FC = () => {
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
+
   const navigation = useNavigation<any>();
   const route = useRoute<VenueDetailsRouteProp>();
   const { venueId } = route.params;
@@ -38,6 +43,7 @@ export const VenueDetailScreen: React.FC = () => {
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchVenueById(venueId).then(res => {
@@ -74,6 +80,32 @@ export const VenueDetailScreen: React.FC = () => {
       </View>
     );
   }
+
+  const handleAdminDelete = () => {
+    Alert.alert(
+      'Xác nhận xóa sân',
+      'Bạn có chắc chắn muốn xóa sân này khỏi hệ thống? Sân sẽ được đưa vào danh sách tạm xóa.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa sân', 
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await updateVenueStatus(venueId, 'DELETED');
+              Alert.alert('Thành công', 'Đã xóa sân thành công');
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể xóa sân lúc này');
+            } finally {
+              setIsDeleting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const handleShare = async () => {
     try {
@@ -181,24 +213,37 @@ export const VenueDetailScreen: React.FC = () => {
               </TouchableOpacity>
 
               <View style={styles.headerRight}>
-                <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
-                  <MaterialCommunityIcons name="share-variant" size={22} color={COLORS.BLACK} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setIsFavorite(!isFavorite)}
-                  style={styles.circularBtn}
-                >
-                  <MaterialCommunityIcons                     name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={22}
-                    color={isFavorite ? COLORS.ERROR : COLORS.BLACK}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.bookNowBtn}
-                  onPress={handleBookPress}
-                >
-                  <Text style={styles.bookNowText}>Đặt lịch</Text>
-                </TouchableOpacity>
+                {isAdmin ? (
+                  <TouchableOpacity 
+                    style={[styles.circularBtn, { backgroundColor: '#F44336' }]} 
+                    onPress={handleAdminDelete}
+                    disabled={isDeleting}
+                  >
+                    <MaterialCommunityIcons name="trash-can-outline" size={22} color={COLORS.WHITE} />
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
+                      <MaterialCommunityIcons name="share-variant" size={22} color={COLORS.BLACK} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setIsFavorite(!isFavorite)}
+                      style={styles.circularBtn}
+                    >
+                      <MaterialCommunityIcons
+                        name={isFavorite ? 'heart' : 'heart-outline'}
+                        size={22}
+                        color={isFavorite ? COLORS.ERROR : COLORS.BLACK}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.bookNowBtn}
+                      onPress={handleBookPress}
+                    >
+                      <Text style={styles.bookNowText}>Đặt lịch</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             </View>
           </SafeAreaView>
