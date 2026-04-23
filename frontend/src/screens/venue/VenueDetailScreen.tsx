@@ -157,10 +157,10 @@ export const VenueDetailScreen: React.FC = () => {
                 <View key={item.id} style={styles.reviewItem}>
                   <View style={styles.reviewHeader}>
                     <View style={styles.userAvatarPlaceholder}>
-                      <Text style={styles.avatarText}>{item.user.full_name.charAt(0)}</Text>
+                      <Text style={styles.avatarText}>{item.user?.full_name?.charAt(0) || 'U'}</Text>
                     </View>
                     <View style={styles.reviewUserInfo}>
-                      <Text style={styles.reviewUserName}>{item.user.full_name}</Text>
+                      <Text style={styles.reviewUserName}>{item.user?.full_name || 'Người dùng'}</Text>
                       <View style={styles.starsRow}>
                         {[1, 2, 3, 4, 5].map((s) => (
                           <MaterialCommunityIcons
@@ -175,6 +175,48 @@ export const VenueDetailScreen: React.FC = () => {
                         </Text>
                       </View>
                     </View>
+
+                    {user?.id === item.user.id && (
+                      <View style={styles.reviewActions}>
+                        <TouchableOpacity
+                          onPress={() => navigation.navigate('ReviewSubmission', {
+                            venueId,
+                            venueName: venue.name,
+                            reviewId: item.id
+                          })}
+                          style={styles.actionBtn}
+                        >
+                          <MaterialCommunityIcons name="pencil-outline" size={18} color={COLORS.PRIMARY} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Alert.alert(
+                              'Xóa đánh giá',
+                              'Bạn có chắc chắn muốn xóa đánh giá này?',
+                              [
+                                { text: 'Hủy', style: 'cancel' },
+                                {
+                                  text: 'Xóa',
+                                  style: 'destructive',
+                                  onPress: async () => {
+                                    try {
+                                      await deleteReview(item.id);
+                                      setReviews(prev => prev.filter(r => r.id !== item.id));
+                                      Alert.alert('Thành công', 'Đã xóa đánh giá');
+                                    } catch (err) {
+                                      Alert.alert('Lỗi', 'Không thể xóa đánh giá lúc này');
+                                    }
+                                  }
+                                }
+                              ]
+                            );
+                          }}
+                          style={styles.actionBtn}
+                        >
+                          <MaterialCommunityIcons name="delete-outline" size={18} color={COLORS.ERROR} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.reviewComment}>{item.comment}</Text>
                 </View>
@@ -613,6 +655,14 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SECONDARY,
     lineHeight: 20,
     paddingLeft: 52,
+    marginTop: 4,
+  },
+  reviewActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    padding: 4,
   },
   emptyReviews: {
     alignItems: 'center',

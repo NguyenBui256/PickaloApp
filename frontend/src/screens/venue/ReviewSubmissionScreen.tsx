@@ -17,9 +17,9 @@ import { createReview, updateReview, deleteReview, fetchVenueReviews } from '../
 import { PrimaryButton } from '../../components/PrimaryButton';
 
 type RootStackParamList = {
-  ReviewSubmission: { 
-    venueId: string; 
-    venueName: string; 
+  ReviewSubmission: {
+    venueId: string;
+    venueName: string;
     bookingId: string;
     reviewId?: string | null;
   };
@@ -79,8 +79,8 @@ export const ReviewSubmissionScreen: React.FC = () => {
       'Bạn có chắc chắn muốn xóa đánh giá này không?',
       [
         { text: 'Hủy', style: 'cancel' },
-        { 
-          text: 'Xóa', 
+        {
+          text: 'Xóa',
           style: 'destructive',
           onPress: async () => {
             setIsDeleting(true);
