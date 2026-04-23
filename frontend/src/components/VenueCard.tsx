@@ -13,15 +13,23 @@ import COLORS from '@theme/colors';
 const { width } = Dimensions.get('window');
 
 interface VenueCardProps {
-  name: string;
-  address: string;
+  id?: string;
+  name?: string | null;
+  address?: string | null;
   distance?: string;           // FE-only: tự tính từ location + user GPS. BE không trả.
-  images?: string[];            // BE: VenueListItem.images
-  image?: string;               // FE-only fallback: derive từ images[0]
-  logo?: string;                // BE: VenueListItem.logo (nullable)
-  hours?: string;               // FE-only: derive từ operating_hours
-  operating_hours?: { open: string; close: string }; // BE: OperatingHours
-  badges?: string[];            // FE-only: không có trong BE
+  images?: string[] | null;            // BE: VenueListItem.images
+  image?: string | null;               // FE-only fallback: derive từ images[0]
+  logo?: string | null;                // BE: VenueListItem.logo (nullable)
+  hours?: string | null;               // FE-only: derive từ operating_hours
+  operating_hours?: { open: string; close: string } | null; // BE: OperatingHours
+  badges?: string[] | null;            // FE-only: không có trong BE
+  amenities?: string[] | null;         // BE: VenueListItem.amenities
+  category?: string | null;            // BE: VenueListItem.category
+  rating?: number | null;              // BE: VenueListItem.rating
+  review_count?: number | null;        // BE: VenueListItem.review_count
+  fullAddress?: string | null;         // BE: VenueListItem.fullAddress
+  district?: string | null;            // BE: VenueListItem.district
+  is_verified?: boolean;               // BE: is_verified column
   is_favorite?: boolean;         // BE: is_favorite column
   onPress: () => void;
   onFavoriteToggle: () => void;
@@ -29,6 +37,7 @@ interface VenueCardProps {
 }
 
 export const VenueCard: React.FC<VenueCardProps> = ({
+  id,
   name,
   address,
   distance = '',
@@ -54,7 +63,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       <View style={styles.imageContainer}>
         <Image source={{ uri: displayImage }} style={styles.image} />
 
-        <View style={styles.badgeContainer}>
+        {/* <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
             <View
               key={index}
@@ -66,11 +75,11 @@ export const VenueCard: React.FC<VenueCardProps> = ({
               <Text style={styles.badgeText}>{badge}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         <View style={styles.topActions}>
           <TouchableOpacity style={styles.actionCircle} onPress={onFavoriteToggle}>
-            <MaterialCommunityIcons               name={is_favorite ? 'heart' : 'heart-outline'}
+            <MaterialCommunityIcons name={is_favorite ? 'heart' : 'heart-outline'}
               size={20}
               color={is_favorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
             />
@@ -86,9 +95,9 @@ export const VenueCard: React.FC<VenueCardProps> = ({
         <View style={styles.infoSection}>
           <Image source={{ uri: displayLogo }} style={styles.logo} />
           <View style={styles.details}>
-            <Text style={styles.name} numberOfLines={1}>{name}</Text>
+            <Text style={styles.name} numberOfLines={1}>{name || 'Tên sân'}</Text>
             <Text style={styles.distance}>{distance}</Text>
-            <Text style={styles.address} numberOfLines={1}>{address}</Text>
+            <Text style={styles.address} numberOfLines={1}>{address || 'Chưa có địa chỉ'}</Text>
             <View style={styles.hoursRow}>
               <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.hoursText}>{displayHours}</Text>
