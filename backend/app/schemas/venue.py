@@ -4,6 +4,7 @@ Venue schemas for request and response.
 Pydantic models for venue data validation and serialization.
 """
 
+from uuid import UUID
 from decimal import Decimal
 from typing import Annotated, Literal
 from pydantic import BaseModel, Field, field_validator
@@ -115,8 +116,8 @@ class VenueResponse(VenueBase):
 class CourtResponse(BaseModel):
     """Court response schema."""
 
-    id: str
-    venue_id: str
+    id: UUID
+    venue_id: UUID
     name: str
     is_active: bool
 
