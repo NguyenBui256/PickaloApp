@@ -711,4 +711,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  paddingForMap: {
+    height: 180,
+  },
 });

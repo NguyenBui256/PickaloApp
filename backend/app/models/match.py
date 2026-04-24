@@ -45,6 +45,7 @@ class MatchRequestStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
 
 
 class Match(BaseModel):

@@ -183,6 +183,7 @@ class BookingResponse(BaseModel):
     venue_address: str | None = None
     customer_name: str | None = None
     customer_phone: str | None = None
+    match_id: uuid.UUID | None = None
     slots: list[BookingSlotResponse] = []
     services: list[BookingServiceItem] = []
 
@@ -202,6 +203,7 @@ class BookingListItem(BaseModel):
     is_paid: bool
     is_cancelable: bool
     has_match: bool = False
+    match_id: uuid.UUID | None = None
     created_at: datetime
     customer_name: str | None = None
     customer_phone: str | None = None

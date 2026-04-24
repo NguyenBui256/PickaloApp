@@ -52,7 +52,7 @@ export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
 // ==========================================
 export type MatchStatus = 'OPEN' | 'FULL' | 'CANCELLED' | 'CLOSED';
 export type MatchSkillLevel = 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
 
 // ==========================================
 // COMMON SCHEMAS
@@ -664,7 +664,20 @@ export interface AdminReportedPostItem {
   post_type: string;
   status: string;
   created_at: string;
-  comments_count: number;
+  updated_at: string;
+  location?: Coordinates; // Only present in /nearby search
+  distance?: number;      // Only present in /nearby search
+  venue_id?: string;
+  venue_name?: string;
+  venue_address?: string;
+  host_name?: string;
+  start_time?: string;
+  end_time?: string;
+  booking_date?: string;
+  my_request_status?: MatchRequestStatus | null;
+  my_request_id?: string;
+  is_host?: boolean;
+  host_id?: string;
 }
 
 export interface BookingAdminDetail extends BookingAdminListItem {

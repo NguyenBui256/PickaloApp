@@ -34,6 +34,8 @@ class ChatRoom(BaseModel):
     )
     
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    hidden_for_host: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    hidden_for_requester: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
     match_request: Mapped["MatchRequest"] = relationship(

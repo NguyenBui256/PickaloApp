@@ -24,6 +24,9 @@ PICKLEBALL_TEMPLATES = [
         "lng": 105.816989,
         "base_price": Decimal("220000"),
         "description": "Tổ hợp sân Pickleball hiện đại tại Đại Kim, không gian rộng rãi, thoáng đãng.",
+        "cover_image": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800",
+        "logo": "https://api.dicebear.com/7.x/identicon/svg?seed=daikim",
+        "booking_link": "https://facebook.com/daikimpickleball"
     },
     {
         "name": "Sân bóng Pickleball Taydo Hoàng Mai",
@@ -32,6 +35,9 @@ PICKLEBALL_TEMPLATES = [
         "lng": 105.8654085,
         "base_price": Decimal("200000"),
         "description": "Sân chơi chất lượng cao tại Yên Sở, phục vụ cộng đồng yêu thể thao khu vực Hoàng Mai.",
+        "cover_image": "https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=800",
+        "logo": "https://api.dicebear.com/7.x/identicon/svg?seed=taydo",
+        "booking_link": "https://taydo-pickleball.vn"
     },
     {
         "name": "Sân Pickleball-Tennis CT3BX2 Bắc Linh Đàm",
@@ -40,6 +46,9 @@ PICKLEBALL_TEMPLATES = [
         "lng": 105.8232955,
         "base_price": Decimal("210000"),
         "description": "Sân kết hợp Pickleball và Tennis tại khu đô thị Bắc Linh Đàm, tiện nghi đầy đủ.",
+        "cover_image": "https://images.unsplash.com/photo-1595435063461-8094776f8273?w=800",
+        "logo": "https://api.dicebear.com/7.x/identicon/svg?seed=ct3bx2",
+        "booking_link": "https://linhdam-sports.com"
     },
     {
         "name": "Eco Pickleball Club",
@@ -48,6 +57,9 @@ PICKLEBALL_TEMPLATES = [
         "lng": 105.8062376,
         "base_price": Decimal("230000"),
         "description": "Câu lạc bộ Pickleball phong cách xanh, gần gũi thiên nhiên, mặt sân tiêu chuẩn quốc tế.",
+        "cover_image": "https://images.unsplash.com/photo-1587280508204-ad7ef220d720?w=800",
+        "logo": "https://api.dicebear.com/7.x/identicon/svg?seed=eco",
+        "booking_link": "https://eco-pickleball.com"
     }
 ]
 
@@ -125,7 +137,10 @@ async def create_new_pickleball_venues(session: AsyncSession):
             amenities=["Parking", "Wifi", "Drinks", "Locker Room"],
             is_active=True,
             is_verified=True,
-            images=["https://example.com/pball1.jpg", "https://example.com/pball2.jpg"]
+            images=["https://example.com/pball1.jpg", "https://example.com/pball2.jpg"],
+            cover_image=template.get("cover_image"),
+            logo=template.get("logo"),
+            booking_link=template.get("booking_link")
         )
         session.add(venue)
         await session.flush()

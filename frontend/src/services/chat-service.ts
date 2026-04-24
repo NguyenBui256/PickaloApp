@@ -23,7 +23,6 @@ export const chatService = {
     return apiClient.get<any[]>('/chat/rooms');
   },
 
-
   /**
    * Construct WebSocket URL for real-time chat
    */
@@ -32,5 +31,16 @@ export const chatService = {
     // Convert http/https to ws/wss
     const wsBaseUrl = baseUrl.replace(/^http/, 'ws');
     return `${wsBaseUrl}/chat/ws/${roomId}?token=${token}`;
+  },
+
+  sendMessage: (roomId: string, content: string) => {
+    // Logic handled by WebSocket in ChatScreen
+  },
+
+  /**
+   * Hide/Delete chat room for current user
+   */
+  hideChatRoom: async (roomId: string): Promise<void> => {
+    return apiClient.post(`/chat/rooms/${roomId}/hide`);
   },
 };

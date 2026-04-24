@@ -79,6 +79,30 @@ async def get_current_user(
 
     return await get_current_user_from_token(credentials.credentials, session)
 
+
+async def get_current_user_optional(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
+    session: DBSession,
+) -> User | None:
+    """
+    Get current User if token is provided, otherwise return None.
+    Allows endpoints to be used by both guests and authenticated users.
+    """
+    if credentials is None:
+        return None
+
+    try:
+        user_id = verify_token(credentials.credentials)
+        if user_id is None:
+            return None
+        
+        result = await session.execute(
+            select(User).where(User.id == UUID(user_id), User.deleted_at.is_(None))
+        )
+        return result.scalar_one_or_none()
+    except Exception:
+        return None
+
     # Get user from database
     result = await session.execute(
         select(User).where(

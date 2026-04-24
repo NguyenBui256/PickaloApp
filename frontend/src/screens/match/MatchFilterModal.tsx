@@ -18,6 +18,7 @@ interface MatchFilterModalProps {
   onClose: () => void;
   onApply: (filters: any) => void;
   initialFilters: any;
+  mode?: 'venue' | 'match';
 }
 
 export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
@@ -25,6 +26,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
   onClose,
   onApply,
   initialFilters,
+  mode = 'match',
 }) => {
   const [skillLevel, setSkillLevel] = useState(initialFilters.skillLevel || 'ALL');
   const [members, setMembers] = useState(initialFilters.members || 'Any');
@@ -105,54 +107,58 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Bộ lọc tìm kèo</Text>
+            <Text style={styles.title}>{mode === 'venue' ? 'Bộ lọc tìm sân' : 'Bộ lọc tìm kèo'}</Text>
             <TouchableOpacity onPress={onClose}>
               <MaterialCommunityIcons name="close" size={24} color={COLORS.TEXT_PRIMARY} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content} nestedScrollEnabled>
-            {/* DATE SELECTOR */}
-            <Text style={styles.sectionTitle}>Ngày diễn ra</Text>
-            <TouchableOpacity
-              style={styles.pickerField}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <MaterialCommunityIcons name="calendar" size={20} color={COLORS.PRIMARY} />
-              <Text style={styles.pickerFieldText}>
-                {selectedDate ? selectedDate.toLocaleDateString('vi-VN') : 'Chọn ngày diễn ra'}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.GRAY_MEDIUM} />
-            </TouchableOpacity>
-
-            {showDatePicker && (
-              <DateTimePicker
-                value={selectedDate || new Date()}
-                mode="date"
-                display="default"
-                minimumDate={new Date()}
-                onChange={handleDateChange}
-              />
-            )}
-
-            <Text style={styles.sectionTitle}>Trình độ yêu cầu</Text>
-            <View style={styles.chipContainer}>
-              {skillLevels.map((level) => (
+            {mode === 'match' && (
+              <>
+                {/* DATE SELECTOR */}
+                <Text style={styles.sectionTitle}>Ngày diễn ra</Text>
                 <TouchableOpacity
-                  key={level.value}
-                  style={[
-                    styles.chip,
-                    skillLevel === level.value && styles.chipActive
-                  ]}
-                  onPress={() => setSkillLevel(level.value)}
+                  style={styles.pickerField}
+                  onPress={() => setShowDatePicker(true)}
                 >
-                  <Text style={[
-                    styles.chipText,
-                    skillLevel === level.value && styles.chipTextActive
-                  ]}>{level.label}</Text>
+                  <MaterialCommunityIcons name="calendar" size={20} color={COLORS.PRIMARY} />
+                  <Text style={styles.pickerFieldText}>
+                    {selectedDate ? selectedDate.toLocaleDateString('vi-VN') : 'Chọn ngày diễn ra'}
+                  </Text>
+                  <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.GRAY_MEDIUM} />
                 </TouchableOpacity>
-              ))}
-            </View>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={selectedDate || new Date()}
+                    mode="date"
+                    display="default"
+                    minimumDate={new Date()}
+                    onChange={handleDateChange}
+                  />
+                )}
+
+                <Text style={styles.sectionTitle}>Trình độ yêu cầu</Text>
+                <View style={styles.chipContainer}>
+                  {skillLevels.map((level) => (
+                    <TouchableOpacity
+                      key={level.value}
+                      style={[
+                        styles.chip,
+                        skillLevel === level.value && styles.chipActive
+                      ]}
+                      onPress={() => setSkillLevel(level.value)}
+                    >
+                      <Text style={[
+                        styles.chipText,
+                        skillLevel === level.value && styles.chipTextActive
+                      ]}>{level.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
             {/* TIME RANGE SELECTORS */}
             <View style={styles.timeRow}>
@@ -182,24 +188,28 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
             {/* In-place Dropdown for Time */}
             {selectingTime && renderTimeDropdown(selectingTime)}
 
-            <Text style={styles.sectionTitle}>Số lượng người còn thiếu</Text>
-            <View style={styles.chipContainer}>
-              {memberOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[
-                    styles.chip,
-                    members === opt && styles.chipActive
-                  ]}
-                  onPress={() => setMembers(opt)}
-                >
-                  <Text style={[
-                    styles.chipText,
-                    members === opt && styles.chipTextActive
-                  ]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {mode === 'match' && (
+              <>
+                <Text style={styles.sectionTitle}>Số lượng người còn thiếu</Text>
+                <View style={styles.chipContainer}>
+                  {memberOptions.map((opt) => (
+                    <TouchableOpacity
+                      key={opt}
+                      style={[
+                        styles.chip,
+                        members === opt && styles.chipActive
+                      ]}
+                      onPress={() => setMembers(opt)}
+                    >
+                      <Text style={[
+                        styles.chipText,
+                        members === opt && styles.chipTextActive
+                      ]}>{opt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
 
             {/* RADIUS FILTER */}
             <Text style={styles.sectionTitle}>Khoảng cách tối đa</Text>

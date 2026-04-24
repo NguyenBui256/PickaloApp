@@ -6,13 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import type { BookingListItem } from '../../types/api-types';
-import { fetchMyBookings } from '../../services/booking-service';
+import { fetchMyBookings, cancelBooking } from '../../services/booking-service';
+import { matchService } from '../../services/match-service';
 import { CreateMatchModal } from '../match/CreateMatchModal';
 
 // Helpers
@@ -40,9 +42,13 @@ const Ribbon = ({ text }: { text: string }) => (
 const BookingCard = ({
   item,
   onPublishMatch,
+  onDeleteMatch,
+  onCancelBooking,
 }: {
   item: BookingListItem;
   onPublishMatch: (item: BookingListItem) => void;
+  onDeleteMatch: (item: BookingListItem) => void;
+  onCancelBooking: (item: BookingListItem) => void;
 }) => {
   const isCanceled = item.status === 'CANCELLED';
   const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
@@ -103,13 +109,30 @@ const BookingCard = ({
       <View style={styles.cardFooter}>
         <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
         <View style={styles.footerActions}>
-          {item.status === 'CONFIRMED' && !item.has_match && (
+          {(item.status === 'PENDING' || item.status === 'CONFIRMED') && (
             <TouchableOpacity
-              style={[styles.detailBtn, styles.publishBtn]}
-              onPress={() => onPublishMatch(item)}
+              style={[styles.detailBtn, styles.cancelBookingBtn]}
+              onPress={() => onCancelBooking(item)}
             >
-              <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở ghép kèo</Text>
+              <Text style={[styles.detailBtnText, styles.cancelBookingBtnText]}>Hủy lịch</Text>
             </TouchableOpacity>
+          )}
+          {item.status === 'CONFIRMED' && (
+            item.has_match ? (
+              <TouchableOpacity
+                style={[styles.detailBtn, styles.deleteMatchBtn]}
+                onPress={() => onDeleteMatch(item)}
+              >
+                <Text style={[styles.detailBtnText, styles.deleteMatchBtnText]}>Xóa kèo</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.detailBtn, styles.publishBtn]}
+                onPress={() => onPublishMatch(item)}
+              >
+                <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở kèo</Text>
+              </TouchableOpacity>
+            )
           )}
           {item.status === 'COMPLETED' && (
             <TouchableOpacity
@@ -132,7 +155,7 @@ const BookingCard = ({
             style={styles.detailBtn}
             onPress={() => navigation.navigate('BookingHistoryDetail', { booking: item })}
           >
-            <Text style={styles.detailBtnText}>Xem chi tiết</Text>
+            <Text style={styles.detailBtnText}>Chi tiết</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -159,6 +182,58 @@ export const BookingListScreen: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+
+  const handleDeleteMatch = async (booking: BookingListItem) => {
+    if (!booking.match_id) return;
+    
+    Alert.alert(
+      'Xóa kèo ghép',
+      'Bạn có chắc chắn muốn gỡ bỏ kèo ghép này không? Toàn bộ yêu cầu tham gia và phòng chat sẽ bị xóa.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await matchService.deleteMatch(booking.match_id as string);
+              loadBookings();
+            } catch (error) {
+              console.error('Delete match error:', error);
+              Alert.alert('Lỗi', 'Không thể xóa kèo ghép vào lúc này.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelBooking = (booking: BookingListItem) => {
+    Alert.alert(
+      'Hủy đặt lịch',
+      'Bạn có chắc chắn muốn hủy đặt lịch này không?',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Hủy lịch', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoading(true);
+              await cancelBooking(booking.id, { reason: 'Người dùng tự hủy lịch' });
+              loadBookings();
+              Alert.alert('Thành công', 'Đã hủy lịch thành công');
+            } catch (error) {
+              console.error('Cancel booking error:', error);
+              Alert.alert('Lỗi', 'Không thể hủy lịch vào lúc này. Có thể đã quá giờ hoặc phụ thuộc vào chính sách của sân.');
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -200,7 +275,12 @@ export const BookingListScreen: React.FC = () => {
         data={bookings}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <BookingCard item={item} onPublishMatch={(b) => setCreateMatchTarget(b)} />
+          <BookingCard 
+            item={item} 
+            onPublishMatch={(b) => setCreateMatchTarget(b)} 
+            onDeleteMatch={handleDeleteMatch}
+            onCancelBooking={handleCancelBooking}
+          />
         )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -407,5 +487,19 @@ const styles = StyleSheet.create({
   },
   publishBtnText: {
     color: '#F97316',
+  },
+  deleteMatchBtn: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
+  },
+  deleteMatchBtnText: {
+    color: '#EF4444',
+  },
+  cancelBookingBtn: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
+  },
+  cancelBookingBtnText: {
+    color: '#EF4444',
   },
 });

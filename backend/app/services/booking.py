@@ -315,6 +315,21 @@ class BookingService:
             note_prefix = booking.notes or ""
             booking.notes = f"{note_prefix}\n\nCancelled: {reason}".strip()
 
+        # Handle associated Match cancellation (Case 5)
+        from app.services.match import MatchService
+        from app.models.match import Match
+        
+        match_result = await self.session.execute(select(Match).where(Match.booking_id == booking_id))
+        match = match_result.scalar_one_or_none()
+        
+        if match:
+            match_service = MatchService(self.session)
+            await match_service.cancel_match(
+                match_id=match.id, 
+                owner_id=None, # System level cancellation
+                reason="Lịch đặt sân gốc đã bị hủy. Trận đấu không thể diễn ra."
+            )
+
         await self.session.flush()
         return booking
 

@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Alert } from 'react-native';
 import COLORS from '@theme/colors';
 import { chatService } from '../../services/chat-service';
+import { matchService } from '../../services/match-service';
 
 export const ChatListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -52,6 +54,31 @@ export const ChatListScreen: React.FC = () => {
     fetchRooms();
   };
 
+  const handleWithdraw = (requestId: string) => {
+    Alert.alert(
+      'Rút lui khỏi kèo',
+      'Bạn chắc chắn muốn hủy yêu cầu tham gia kèo này?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Rút lui', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await matchService.cancelJoinRequest(requestId);
+              Alert.alert('Thành công', 'Đã rút lui khỏi kèo.');
+              fetchRooms();
+            } catch (err: any) {
+              Alert.alert('Lỗi', err.detail || 'Không thể rút lui lúc này.');
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const filteredRooms = rooms.filter(room => {
     if (filter === 'ALL') return true;
     if (filter === 'TODAY') {
@@ -59,7 +86,7 @@ export const ChatListScreen: React.FC = () => {
       return room.match_date === today;
     }
     if (filter === 'PENDING') return room.status === 'PENDING';
-    if (filter === 'RESPONDED') return room.status === 'ACCEPTED' || room.status === 'REJECTED';
+    if (filter === 'RESPONDED') return room.status === 'ACCEPTED' || room.status === 'REJECTED' || room.status === 'CANCELLED';
     return true;
   });
 
@@ -67,6 +94,7 @@ export const ChatListScreen: React.FC = () => {
     switch (status) {
       case 'ACCEPTED': return { label: 'Đã duyệt', color: '#10B981', icon: 'check-decagram' };
       case 'REJECTED': return { label: 'Từ chối', color: '#EF4444', icon: 'close-octagon' };
+      case 'CANCELLED': return { label: 'Đã hủy', color: '#9CA3AF', icon: 'minus-circle-outline' };
       default: return { label: 'Đang chờ', color: '#F59E0B', icon: 'clock-outline' };
     }
   };
@@ -87,7 +115,8 @@ export const ChatListScreen: React.FC = () => {
           initialStatus: item.status,
           venueName: item.venue_name || 'Kèo chưa xác định',
           matchTime: item.start_time ? `${startTime} - ${matchDate}` : 'Giờ chưa cập nhật',
-          partnerName: item.other_party_name
+          partnerName: item.other_party_name,
+          isHost: item.is_host
         })}
       >
         <View style={styles.avatar}>
@@ -124,6 +153,17 @@ export const ChatListScreen: React.FC = () => {
               <MaterialCommunityIcons name={status.icon as any} size={14} color={status.color} />
               <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
             </View>
+            
+            {!item.is_host && (item.status === 'PENDING' || item.status === 'ACCEPTED') && (
+              <TouchableOpacity 
+                style={styles.withdrawBtn} 
+                onPress={() => handleWithdraw(item.match_request_id)}
+              >
+                <MaterialCommunityIcons name="logout" size={14} color="#EF4444" />
+                <Text style={styles.withdrawText}>Rút lui</Text>
+              </TouchableOpacity>
+            )}
+            
             <Text style={styles.lastMsg} numberOfLines={1}>Bấm để thảo luận chi tiết...</Text>
           </View>
         </View>
@@ -323,6 +363,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.GRAY_MEDIUM,
     flex: 1,
+  },
+  withdrawBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  withdrawText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
