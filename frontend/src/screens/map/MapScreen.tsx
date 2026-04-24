@@ -29,21 +29,13 @@ const INITIAL_REGION = {
   longitudeDelta: 0.1,
 };
 
-const MAP_CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: 'apps' },
-  { id: 'Pickleball', name: 'Pickleball', icon: 'tennis-ball' },
-  { id: 'Badminton', name: 'Cầu lông', icon: 'badminton' },
-  { id: 'Football 5', name: 'Bóng đá 5', icon: 'soccer-field' },
-  { id: 'Football 7', name: 'Bóng đá 7', icon: 'soccer' },
-  { id: 'Tennis', name: 'Tennis', icon: 'tennis' },
-];
+
 
 export const MapScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { destination, showRoute, targetVenueId } = route.params || {};
 
-  const [activeCategory, setActiveCategory] = useState('all');
   const [venues, setVenues] = useState<any[]>([]);
   const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
@@ -160,36 +152,95 @@ export const MapScreen = () => {
     }
   }, [routeCoords]);
 
-  const groupedMatches = useMemo(() => {
+  const timeToMinutes = (t: string | undefined): number | null => {
+    if (!t) return null;
+    const parts = t.split(':');
+    if (parts.length >= 2) {
+      return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+    return null;
+  };
+
+  // Filter groups by time and radius (Filter raw matches first, THEN group them)
+  const filteredGroupedMatches = useMemo(() => {
+    const filterStartMins = filters.startTime ? timeToMinutes(filters.startTime) : null;
+    const filterEndMins = filters.endTime ? timeToMinutes(filters.endTime) : null;
+    const radiusM = filters.radiusKm ? filters.radiusKm * 1000 : null;
+
+    const validMatches = matches.filter(m => {
+      // 1. Time check
+      if (filterStartMins !== null || filterEndMins !== null) {
+        const startMins = timeToMinutes(m.start_time);
+        const endMins = timeToMinutes(m.end_time);
+
+        if (startMins !== null && filterStartMins !== null && startMins < filterStartMins) return false;
+        if (endMins !== null && filterEndMins !== null && endMins > filterEndMins) return false;
+      }
+
+      // 2. Radius check
+      if (radiusM && userLocation) {
+        if (!m.location) return false;
+        const R = 6371000;
+        const lat1 = userLocation.latitude * Math.PI / 180;
+        const lat2 = m.location.lat * Math.PI / 180;
+        const dLat = (m.location.lat - userLocation.latitude) * Math.PI / 180;
+        const dLng = (m.location.lng - userLocation.longitude) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        if (dist > radiusM) return false;
+      }
+
+      return true;
+    });
+
+    // 3. Group the remaining valid matches by location/venue
     const groups: Record<string, { key: string, items: MatchResponse[] }> = {};
-    matches.forEach(m => {
+    validMatches.forEach(m => {
       const groupKey = m.venue_id || (m.location ? `${m.location.lat.toFixed(6)},${m.location.lng.toFixed(6)}` : 'unknown');
       if (!groups[groupKey]) {
         groups[groupKey] = { key: groupKey, items: [] };
       }
       groups[groupKey].items.push(m);
     });
-    return Object.values(groups);
-  }, [matches]);
 
-  // Filter groups by radius if set
-  const filteredGroupedMatches = useMemo(() => {
-    if (!filters.radiusKm || !userLocation) return groupedMatches;
-    const radiusM = filters.radiusKm * 1000;
-    return groupedMatches.filter(groupData => {
-      const m = groupData.items[0];
-      if (!m || !m.location) return false;
-      // Haversine distance in meters
-      const R = 6371000;
-      const lat1 = userLocation.latitude * Math.PI / 180;
-      const lat2 = m.location.lat * Math.PI / 180;
-      const dLat = (m.location.lat - userLocation.latitude) * Math.PI / 180;
-      const dLng = (m.location.lng - userLocation.longitude) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
-      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return dist <= radiusM;
-    });
-  }, [groupedMatches, filters.radiusKm, userLocation]);
+    return Object.values(groups);
+  }, [matches, filters.radiusKm, filters.startTime, filters.endTime, userLocation]);
+
+  // Filter venues by time and radius
+  const filteredVenues = useMemo(() => {
+    let result = venues;
+
+    const filterStartMins = filters.startTime ? timeToMinutes(filters.startTime) : null;
+    const filterEndMins = filters.endTime ? timeToMinutes(filters.endTime) : null;
+
+    if (filterStartMins !== null || filterEndMins !== null) {
+      result = result.filter(venue => {
+        const openMins = timeToMinutes(venue.operating_hours?.open || '05:00');
+        const closeMins = timeToMinutes(venue.operating_hours?.close || '22:00');
+
+        if (openMins !== null && filterStartMins !== null && openMins > filterStartMins) return false;
+        if (closeMins !== null && filterEndMins !== null && closeMins < filterEndMins) return false;
+
+        return true;
+      });
+    }
+
+    if (filters.radiusKm && userLocation) {
+      const radiusM = filters.radiusKm * 1000;
+      result = result.filter(venue => {
+        if (!venue.location || typeof venue.location.lat !== 'number' || typeof venue.location.lng !== 'number') return false;
+        const R = 6371000;
+        const lat1 = userLocation.latitude * Math.PI / 180;
+        const lat2 = venue.location.lat * Math.PI / 180;
+        const dLat = (venue.location.lat - userLocation.latitude) * Math.PI / 180;
+        const dLng = (venue.location.lng - userLocation.longitude) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return dist <= radiusM;
+      });
+    }
+    return result;
+  }, [venues, filters.radiusKm, filters.startTime, filters.endTime, userLocation]);
 
   const getMarkerColor = (category: string) => {
     const cat = (category || '').toLowerCase();
@@ -214,7 +265,7 @@ export const MapScreen = () => {
         showsMyLocationButton={true}
       >
         {mapMode === 'venue' ? (
-          venues.map((venue) => {
+          filteredVenues.map((venue) => {
             if (!venue.location || typeof venue.location.lat !== 'number' || typeof venue.location.lng !== 'number') {
               return null;
             }
@@ -323,38 +374,6 @@ export const MapScreen = () => {
         </View>
       </View>
 
-      {/* Category Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipsScroll}
-        contentContainerStyle={styles.chipsContainer}
-      >
-        {MAP_CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            onPress={() => setActiveCategory(cat.id)}
-            style={[
-              styles.chip,
-              activeCategory === cat.id && styles.activeChip,
-            ]}
-          >
-            <MaterialCommunityIcons name={cat.icon as any}
-              size={18}
-              color={activeCategory === cat.id ? COLORS.WHITE : COLORS.GRAY_MEDIUM}
-            />
-            <Text
-              style={[
-                styles.chipText,
-                activeCategory === cat.id && styles.activeChipText,
-              ]}
-            >
-              {cat.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
 
       {/* Floating UI: Map Controls */}
       <View style={styles.controlsLeft}>
@@ -436,6 +455,7 @@ export const MapScreen = () => {
 
       <MatchFilterModal 
         visible={showFilters}
+        mode={mapMode}
         onClose={() => setShowFilters(false)}
         initialFilters={filters}
         onApply={(newFilters) => {
@@ -517,42 +537,7 @@ const styles = StyleSheet.create({
   toggleTextActive: {
     color: COLORS.WHITE,
   },
-  chipsScroll: {
-    marginTop: 15,
-    position: 'absolute',
-    top: 160,
-    left: 20,
-    zIndex: 10,
-  },
-  chipsContainer: {
-    paddingRight: 20,
-    gap: 10,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    height: 36,
-    borderRadius: 18,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 6,
-  },
-  activeChip: {
-    backgroundColor: COLORS.PRIMARY,
-  },
-  chipText: {
-    fontSize: 13,
-    color: COLORS.GRAY_MEDIUM,
-    fontWeight: '600',
-  },
-  activeChipText: {
-    color: COLORS.WHITE,
-  },
+
   controlsLeft: {
     position: 'absolute',
     right: 16,
