@@ -15,7 +15,7 @@ import COLORS from '@theme/colors';
 import { CustomInput } from '../../../components/CustomInput';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { expoSelectMultipleImages, validateImageAsset } from '../../../utils/image-picker-expo';
+import { expoSelectMultipleImages, validateImageAsset, expoLaunchImageLibrary } from '../../../utils/image-picker-expo';
 import { uploadVenueImages } from '../../../services/image-service';
 import { getImageUrl } from '../../../utils/image-upload-helper';
 import { createVenue } from '../../../services/venue-service';
@@ -49,6 +49,7 @@ export const VenueRegistrationScreen: React.FC = () => {
   );
 
   const [tempImages, setTempImages] = useState<TempImage[]>([]);
+  const [coverImage, setCoverImage] = useState<TempImage | null>(null);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,6 +101,24 @@ export const VenueRegistrationScreen: React.FC = () => {
     }
   };
 
+  const handlePickCoverImage = async () => {
+    try {
+      const result = await expoLaunchImageLibrary({ selectionLimit: 1 });
+      if (result && !result.didCancel && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (validateImageAsset(asset)) {
+          setCoverImage({
+            uri: asset.uri,
+            type: (asset.type || 'image/jpeg') as any,
+            fileName: asset.fileName || `cover_${Date.now()}.jpg`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Pick cover image error:', error);
+    }
+  };
+
   const handleRemoveImage = (index: number) => {
     Alert.alert('Xóa ảnh', 'Bạn có chắc muốn xóa ảnh này?', [
       { text: 'Hủy', style: 'cancel' },
@@ -122,27 +141,47 @@ export const VenueRegistrationScreen: React.FC = () => {
     try {
       setIsUploading(true);
 
-      // Create FormData
-      const formData = new FormData();
-      tempImages.forEach((image) => {
-        formData.append('files', {
-          uri: image.uri,
-          type: image.type,
-          name: image.fileName,
-        } as any);
-      });
+      let finalCoverUrl = '';
+      let uploadedUrls: string[] = [];
 
-      // Upload images
-      const response = await uploadVenueImages(venueId, formData);
-      setUploadedImageUrls(response.urls);
+      if (tempImages.length > 0) {
+        const formData = new FormData();
+        tempImages.forEach((image) => {
+          formData.append('files', {
+            uri: image.uri,
+            type: image.type,
+            name: image.fileName,
+          } as any);
+        });
+
+        const response = await uploadVenueImages(venueId, formData);
+        uploadedUrls = response.urls;
+        finalCoverUrl = uploadedUrls[0];
+      }
+      
+      if (coverImage) {
+        const coverFormData = new FormData();
+        coverFormData.append('files', {
+          uri: coverImage.uri,
+          type: coverImage.type,
+          name: coverImage.fileName,
+        } as any);
+        const coverResponse = await uploadVenueImages(venueId, coverFormData);
+        finalCoverUrl = coverResponse.urls[0];
+      }
+
+      if (finalCoverUrl) {
+        await updateVenue(venueId, { cover_image: finalCoverUrl });
+      }
+
+      setUploadedImageUrls(uploadedUrls);
 
       Alert.alert(
         'Thành công',
-        `Đã đăng ký sân thành công và tải lên ${response.count} hình ảnh.`
+        `Đã đăng ký sân thành công.`
       );
     } catch (error: any) {
       console.error('Image upload error:', error);
-      // Don't show error for image upload failure, venue is already created
       console.warn('Venue created but image upload failed');
     } finally {
       setIsUploading(false);
@@ -150,7 +189,6 @@ export const VenueRegistrationScreen: React.FC = () => {
   };
 
   const handleRegister = async () => {
-    // Validation
     if (!formData.name || !formData.address || !formData.price) {
       Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc (*)');
       return;
@@ -164,7 +202,6 @@ export const VenueRegistrationScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Prepare venue data (without images first)
       const venueData = {
         name: formData.name,
         address: formData.address,
@@ -172,13 +209,18 @@ export const VenueRegistrationScreen: React.FC = () => {
         venue_type: formData.type,
         base_price_per_hour: parseInt(formData.price, 10),
         description: formData.description || undefined,
+        images: [],
+        cover_image: null,
       };
 
-      // Create venue
+      if (tempImages.length > 5) {
+        Alert.alert('Quá giới hạn', 'Sân chỉ được tối đa 5 hình ảnh.');
+        return;
+      }
+
       const response = await createVenue(venueData);
 
-      // Upload images if any were selected
-      if (tempImages.length > 0) {
+      if (tempImages.length > 0 || coverImage) {
         await uploadImagesToVenue(response.id);
       } else {
         Alert.alert(
@@ -187,7 +229,6 @@ export const VenueRegistrationScreen: React.FC = () => {
         );
       }
 
-      // Navigate back
       navigation.goBack();
     } catch (error: any) {
       console.error('Venue registration error:', error);
@@ -215,7 +256,6 @@ export const VenueRegistrationScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Basic Information Section */}
         <View style={styles.formSection}>
           <Text style={styles.label}>Thông tin cơ bản</Text>
           <CustomInput
@@ -239,7 +279,6 @@ export const VenueRegistrationScreen: React.FC = () => {
           />
         </View>
 
-        {/* Map Location Section */}
         <View style={styles.formSection}>
           <Text style={styles.label}>Vị trí trên bản đồ</Text>
           <TouchableOpacity style={styles.mapPlaceholder} onPress={handlePickLocation}>
@@ -261,7 +300,23 @@ export const VenueRegistrationScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Images Section */}
+        <View style={styles.formSection}>
+          <Text style={styles.label}>Ảnh bìa sân (*)</Text>
+          <Text style={styles.helperText}>
+            Ảnh đại diện chính hiển thị trên danh sách và trang chi tiết.
+          </Text>
+          <TouchableOpacity style={styles.coverImagePicker} onPress={handlePickCoverImage}>
+            {coverImage ? (
+              <Image source={{ uri: coverImage.uri }} style={styles.coverImagePreview} resizeMode="cover" />
+            ) : (
+              <View style={styles.coverImagePlaceholder}>
+                <MaterialCommunityIcons name="image-plus" size={40} color={COLORS.GRAY_MEDIUM} />
+                <Text style={styles.coverImageText}>Chọn ảnh bìa</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.formSection}>
           <Text style={styles.label}>Hình ảnh sân</Text>
           <Text style={styles.helperText}>
@@ -269,11 +324,10 @@ export const VenueRegistrationScreen: React.FC = () => {
           </Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-            {/* Add Image Button */}
             <TouchableOpacity
               style={styles.addImageBtn}
               onPress={handleAddImages}
-              disabled={isUploading || isSubmitting || tempImages.length >= 5}
+              disabled={isUploading || isSubmitting || (tempImages.length + uploadedImageUrls.length) >= 5}
             >
               {isUploading ? (
                 <ActivityIndicator size="small" color={COLORS.PRIMARY} />
@@ -283,7 +337,7 @@ export const VenueRegistrationScreen: React.FC = () => {
                     name="camera-plus"
                     size={30}
                     color={
-                      isUploading || isSubmitting || tempImages.length >= 5
+                      isUploading || isSubmitting || (tempImages.length + uploadedImageUrls.length) >= 5
                         ? COLORS.GRAY_LIGHT
                         : COLORS.GRAY_MEDIUM
                     }
@@ -291,7 +345,7 @@ export const VenueRegistrationScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.addImageText,
-                      (isUploading || isSubmitting || tempImages.length >= 5) &&
+                      (isUploading || isSubmitting || (tempImages.length + uploadedImageUrls.length) >= 5) &&
                         styles.addImageTextDisabled,
                     ]}
                   >
@@ -301,32 +355,29 @@ export const VenueRegistrationScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            {/* Temp Images (local URIs) */}
             {tempImages.map((image, index) => (
-              <TouchableOpacity
-                key={index}
+              <View
+                key={`temp-${index}`}
                 style={styles.imageContainer}
-                onLongPress={() => handleRemoveImage(index)}
               >
-                <Image source={{ uri: image.uri }} style={styles.venueImage} />
+                <Image source={{ uri: image.uri }} style={styles.venueImage} resizeMode="cover" />
                 <TouchableOpacity
                   style={styles.removeImageButton}
                   onPress={() => handleRemoveImage(index)}
                 >
                   <MaterialCommunityIcons
                     name="close-circle"
-                    size={20}
+                    size={22}
                     color="#FF4444"
                     style={styles.removeIconBg}
                   />
                 </TouchableOpacity>
-              </TouchableOpacity>
+              </View>
             ))}
 
-            {/* Uploaded Images (from server) */}
             {uploadedImageUrls.map((imageUrl, index) => (
               <TouchableOpacity key={`uploaded-${index}`} style={styles.imageContainer}>
-                <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} />
+                <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} resizeMode="cover" />
                 <View style={styles.uploadedBadge}>
                   <MaterialCommunityIcons name="check" size={12} color="#388E3C" />
                 </View>
@@ -455,6 +506,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: COLORS.GRAY_MEDIUM,
     fontSize: 11,
+  },
+  coverImagePicker: {
+    height: 180,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+  },
+  coverImagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  coverImagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  coverImageText: {
+    marginTop: 8,
+    color: COLORS.GRAY_MEDIUM,
+    fontSize: 14,
   },
   imageScroll: {
     flexDirection: 'row',

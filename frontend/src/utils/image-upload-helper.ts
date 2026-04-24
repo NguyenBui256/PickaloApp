@@ -6,6 +6,7 @@
  */
 
 import { Alert } from 'react-native';
+import Constants from 'expo-constants';
 import { APP_CONFIG } from '@constants/app-config';
 import { uploadAvatar } from '@services/auth-service';
 import { uploadVenueImages, uploadCourtImages } from '@services/image-service';
@@ -184,22 +185,51 @@ export const selectAndUploadCourtImages = async (
 };
 
 /**
- * Get image URL with fallback
+ * Get image URL with fallback and development host correction
  */
 export const getImageUrl = (
   imageUrl: string | null | undefined,
   fallback: string = 'https://via.placeholder.com/150'
 ): string => {
-  if (!imageUrl) {
+  if (!imageUrl || typeof imageUrl !== 'string' || imageUrl.trim() === '') {
     return fallback;
   }
 
-  // If it's already a full URL, return it
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
+  const cleanUrl = imageUrl.trim();
+
+  // If it's already a full URL, handle localhost issues in development
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    if (__DEV__ && cleanUrl.includes('localhost:9000')) {
+      try {
+        const debuggerHost = Constants.expoConfig?.hostUri;
+        const machineIp = debuggerHost?.split(':')[0];
+        
+        if (machineIp) {
+          console.log(`[getImageUrl] Replacing localhost with machine IP: ${machineIp}`);
+          return cleanUrl.replace('localhost', machineIp);
+        }
+
+        const apiBase = APP_CONFIG.API_BASE_URL;
+        if (apiBase.includes('10.0.2.2')) {
+          return cleanUrl.replace('localhost', '10.0.2.2');
+        }
+        
+        const hostMatch = apiBase.match(/https?:\/\/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+        if (hostMatch && hostMatch[1]) {
+          return cleanUrl.replace('localhost', hostMatch[1]);
+        }
+      } catch (e) {
+        console.error('[getImageUrl] Error detecting host:', e);
+      }
+    }
+    return cleanUrl;
   }
 
-  // Otherwise, it might be a relative path - this shouldn't happen with our MinIO setup
-  // but adding this as a safety check
-  return imageUrl;
+  // Handle relative paths
+  if (cleanUrl.startsWith('/')) {
+    const baseUrl = APP_CONFIG.API_BASE_URL.split('/api/v1')[0];
+    return `${baseUrl}${cleanUrl}`;
+  }
+
+  return cleanUrl;
 };

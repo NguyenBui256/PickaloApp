@@ -48,6 +48,7 @@ class VenueCreate(VenueBase):
     coordinates: Coordinates
     venue_type: VenueType
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
     base_price_per_hour: Annotated[
@@ -68,6 +69,7 @@ class VenueUpdate(BaseModel):
     coordinates: Coordinates | None = None
     description: str | None = None
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
     base_price_per_hour: Annotated[
@@ -95,6 +97,7 @@ class VenueResponse(VenueBase):
     location: Coordinates
     venue_type: VenueType
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: OperatingHours | None = None
     amenities: list[str] | None = None
     base_price_per_hour: Decimal | None = None
@@ -137,6 +140,7 @@ class VenueListItem(BaseModel):
     base_price_per_hour: Decimal | None = None
     is_verified: bool
     images: list[str] | None = None
+    cover_image: str | None = None
     amenities: list[str] | None = None
     logo: str | None = None
     bookingLink: str | None = None
@@ -204,6 +208,7 @@ class CourtBulkCreate(BaseModel):
 class PricingSlotCreate(BaseModel):
     """Schema for creating a pricing time slot."""
 
+    title: str | None = Field(None, max_length=100)
     day_type: DayType = DayType.WEEKDAY
     days_of_week: list[int] | None = None  # 0=Mon, ..., 6=Sun
     start_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")]

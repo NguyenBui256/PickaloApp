@@ -15,7 +15,7 @@ import COLORS from '@theme/colors';
 import { CustomInput } from '../../../components/CustomInput';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { expoSelectMultipleImages, validateImageAsset } from '../../../utils/image-picker-expo';
+import { expoSelectMultipleImages, validateImageAsset, expoLaunchImageLibrary } from '../../../utils/image-picker-expo';
 import { fetchVenueById, updateVenue } from '../../../services/venue-service';
 import { uploadVenueImages } from '../../../services/image-service';
 import { getImageUrl } from '../../../utils/image-upload-helper';
@@ -47,6 +47,8 @@ export const VenueEditScreen: React.FC = () => {
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
   const [venueImages, setVenueImages] = useState<string[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [newCoverImage, setNewCoverImage] = useState<TempImage | null>(null);
   const [tempImages, setTempImages] = useState<TempImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +74,12 @@ export const VenueEditScreen: React.FC = () => {
       });
 
       setSelectedLocation(venue.location);
-      setVenueImages(venue.images || []);
+      setVenueImages((venue.images || []).filter((img: any) => 
+        typeof img === 'string' && 
+        img.trim() !== '' && 
+        (img.startsWith('http') || img.match(/\.(jpg|jpeg|png|webp|gif)/i))
+      ));
+      setCoverImage(venue.cover_image || null);
     } catch (error: any) {
       console.error('Error loading venue:', error);
       Alert.alert('Lỗi', 'Không thể tải thông tin sân. Vui lòng thử lại.');
@@ -105,11 +112,29 @@ export const VenueEditScreen: React.FC = () => {
         venue_type: formData.type,
         base_price_per_hour: parseInt(formData.price, 10),
         description: formData.description || undefined,
-        images: venueImages.length > 0 ? venueImages : undefined,
+        images: venueImages,
+        cover_image: coverImage || null,
       };
+
+      if (venueImages.length + tempImages.length > 5) {
+        Alert.alert('Quá giới hạn', 'Sân chỉ được tối đa 5 hình ảnh.');
+        return;
+      }
 
       // Update venue
       await updateVenue(venueId, updateData);
+
+      // Upload new cover image if selected
+      if (newCoverImage) {
+        const coverFormData = new FormData();
+        coverFormData.append('files', {
+          uri: newCoverImage.uri,
+          type: newCoverImage.type,
+          name: newCoverImage.fileName,
+        } as any);
+        const coverResponse = await uploadVenueImages(venueId, coverFormData);
+        await updateVenue(venueId, { cover_image: coverResponse.urls[0] });
+      }
 
       // Upload new images if any were selected
       if (tempImages.length > 0) {
@@ -204,6 +229,25 @@ export const VenueEditScreen: React.FC = () => {
     }
   };
 
+  const handlePickCoverImage = async () => {
+    try {
+      const result = await expoLaunchImageLibrary({ selectionLimit: 1 });
+      if (result && !result.didCancel && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (validateImageAsset(asset)) {
+          setNewCoverImage({
+            uri: asset.uri,
+            type: (asset.type || 'image/jpeg') as any,
+            fileName: asset.fileName || `cover_${Date.now()}.jpg`,
+          });
+          setCoverImage(null); // Clear existing cover if new one picked
+        }
+      }
+    } catch (error) {
+      console.error('Pick cover image error:', error);
+    }
+  };
+
   const handleRemoveImage = (index: number, isTemp: boolean) => {
     if (isTemp) {
       const updatedTempImages = tempImages.filter((_, i) => i !== index);
@@ -222,6 +266,7 @@ export const VenueEditScreen: React.FC = () => {
       ]);
     }
   };
+
 
   if (isLoading) {
     return (
@@ -291,6 +336,26 @@ export const VenueEditScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Cover Image Section */}
+        <View style={styles.formSection}>
+          <Text style={styles.label}>Ảnh bìa sân (*)</Text>
+          <Text style={styles.helperText}>
+            Ảnh đại diện chính hiển thị trên danh sách và trang chi tiết.
+          </Text>
+          <TouchableOpacity style={styles.coverImagePicker} onPress={handlePickCoverImage}>
+            {newCoverImage ? (
+              <Image source={{ uri: newCoverImage.uri }} style={styles.coverImagePreview} resizeMode="cover" />
+            ) : coverImage ? (
+              <Image source={{ uri: getImageUrl(coverImage) }} style={styles.coverImagePreview} resizeMode="cover" />
+            ) : (
+              <View style={styles.coverImagePlaceholder}>
+                <MaterialCommunityIcons name="image-plus" size={40} color={COLORS.GRAY_MEDIUM} />
+                <Text style={styles.coverImageText}>Chọn ảnh bìa</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
         {/* Images Section */}
         <View style={styles.formSection}>
           <Text style={styles.label}>Hình ảnh sân</Text>
@@ -331,49 +396,47 @@ export const VenueEditScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            {/* Existing Images */}
-            {venueImages.map((imageUrl, index) => (
-              <TouchableOpacity
-                key={`existing-${index}`}
-                style={styles.imageContainer}
-                onLongPress={() => handleRemoveImage(index, false)}
-              >
-                <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => handleRemoveImage(index, false)}
-                >
-                  <MaterialCommunityIcons
-                    name="close-circle"
-                    size={20}
-                    color="#FF4444"
-                    style={styles.removeIconBg}
-                  />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
+             {/* Existing Images */}
+             {venueImages.map((imageUrl, index) => (
+               <View
+                 key={`existing-${index}`}
+                 style={styles.imageContainer}
+               >
+                 <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.venueImage} resizeMode="cover" />
+                 <TouchableOpacity
+                   style={styles.removeImageButton}
+                   onPress={() => handleRemoveImage(index, false)}
+                 >
+                   <MaterialCommunityIcons
+                     name="close-circle"
+                     size={22}
+                     color="#FF4444"
+                     style={styles.removeIconBg}
+                   />
+                 </TouchableOpacity>
+               </View>
+             ))}
 
-            {/* Temp Images (local URIs) */}
-            {tempImages.map((image, index) => (
-              <TouchableOpacity
-                key={`temp-${index}`}
-                style={styles.imageContainer}
-                onLongPress={() => handleRemoveImage(index, true)}
-              >
-                <Image source={{ uri: image.uri }} style={styles.venueImage} />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => handleRemoveImage(index, true)}
-                >
-                  <MaterialCommunityIcons
-                    name="close-circle"
-                    size={20}
-                    color="#FF4444"
-                    style={styles.removeIconBg}
-                  />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
+             {/* Temp Images (local URIs) */}
+             {tempImages.map((image, index) => (
+               <View
+                 key={`temp-${index}`}
+                 style={styles.imageContainer}
+               >
+                 <Image source={{ uri: image.uri }} style={styles.venueImage} resizeMode="cover" />
+                 <TouchableOpacity
+                   style={styles.removeImageButton}
+                   onPress={() => handleRemoveImage(index, true)}
+                 >
+                   <MaterialCommunityIcons
+                     name="close-circle"
+                     size={22}
+                     color="#FF4444"
+                     style={styles.removeIconBg}
+                   />
+                 </TouchableOpacity>
+               </View>
+             ))}
 
             {/* Placeholder for visual feedback when no images */}
             {venueImages.length === 0 && tempImages.length === 0 && !isUploading && (
@@ -492,6 +555,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: COLORS.GRAY_MEDIUM,
     fontSize: 11,
+  },
+  coverImagePicker: {
+    height: 180,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+  },
+  coverImagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  coverImagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  coverImageText: {
+    marginTop: 8,
+    color: COLORS.GRAY_MEDIUM,
+    fontSize: 14,
   },
   imageScroll: {
     flexDirection: 'row',

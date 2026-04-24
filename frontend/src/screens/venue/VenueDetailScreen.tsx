@@ -18,6 +18,7 @@ import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { useAuthStore } from '../../store/auth-store';
 import { updateVenueStatus } from '../../services/admin-service';
+import { getImageUrl } from '../../utils/image-upload-helper';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
@@ -201,7 +202,10 @@ export const VenueDetailScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[]}>
         {/* Cover Image & Overlays */}
         <View style={styles.imageSection}>
-          <Image source={{ uri: venue.images?.[0] || venue.image }} style={styles.coverImage} />
+          <Image 
+            source={{ uri: getImageUrl(venue.cover_image || venue.images?.[0] || venue.image) }} 
+            style={styles.coverImage} 
+          />
 
           <SafeAreaView style={styles.overlayArea}>
             <View style={styles.header}>
@@ -258,7 +262,7 @@ export const VenueDetailScreen: React.FC = () => {
         {/* Info Card Section */}
         <View style={styles.infoCard}>
           <View style={styles.venueInfoHeader}>
-            <Image source={{ uri: venue.logo }} style={styles.venueLogo} />
+            <Image source={{ uri: getImageUrl(venue.logo) }} style={styles.venueLogo} />
             <View style={styles.venueTitle}>
               <Text style={styles.name}>{venue.name}</Text>
               <View style={styles.categoryBadge}>

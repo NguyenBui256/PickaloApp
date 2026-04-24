@@ -279,6 +279,7 @@ async def create_venue(
         base_price_per_hour=venue_data.base_price_per_hour,
         description=venue_data.description,
         images=venue_data.images,
+        cover_image=venue_data.cover_image,
         operating_hours=venue_data.operating_hours,
         amenities=venue_data.amenities,
     )
@@ -560,7 +561,9 @@ async def get_pricing_slots(
         PricingSlotResponse(
             id=str(slot.id),
             venue_id=str(slot.venue_id),
+            title=slot.title,
             day_type=slot.day_type,
+            days_of_week=slot.days_of_week,
             start_time=slot.start_time.strftime("%H:%M"),
             end_time=slot.end_time.strftime("%H:%M"),
             price=float(slot.price),
@@ -820,22 +823,3 @@ async def delete_court(
     if not success:
         raise HTTPException(status_code=404, detail="Court not found")
     await session.commit()
-
-
-@router.post("/{venue_id}/courts/bulk", response_model=list[CourtResponse], status_code=status.HTTP_201_CREATED)
-async def bulk_create_courts(
-    venue_id: str,
-    court_data: CourtBulkCreate,
-    current_user: Annotated[User, Depends(get_current_merchant)],
-    venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
-    session: DBSession,
-) -> list[CourtResponse]:
-    """Bulk add new courts to venue (merchant only)."""
-    courts = await venue_service.bulk_create_courts(
-        venue_id=uuid.UUID(venue_id),
-        merchant_id=current_user.id,
-        names=court_data.names,
-        is_active=court_data.is_active,
-    )
-    await session.commit()
-    return [CourtResponse.model_validate(c) for c in courts]

@@ -302,6 +302,7 @@ class VenueManagementService:
         base_price_per_hour: Decimal,
         description: str | None = None,
         images: list[str] | None = None,
+        cover_image: str | None = None,
         operating_hours: dict | None = None,
         amenities: list[str] | None = None,
     ) -> Venue:
@@ -341,6 +342,7 @@ class VenueManagementService:
             venue_type=venue_type,
             description=description,
             images=images,
+            cover_image=cover_image,
             operating_hours=operating_hours,
             amenities=amenities,
             base_price_per_hour=base_price_per_hour,
@@ -591,6 +593,7 @@ class VenueManagementService:
         price: Decimal,
         is_default: bool = False,
         days_of_week: list[int] | None = None,
+        title: str | None = None,
     ) -> PricingTimeSlot | None:
         """
         Add pricing time slot.
@@ -614,6 +617,7 @@ class VenueManagementService:
 
         slot = PricingTimeSlot(
             venue_id=venue_id,
+            title=title,
             day_type=day_type,
             days_of_week=days_of_week,
             start_time=time.fromisoformat(start_time),
@@ -645,6 +649,15 @@ class VenueManagementService:
             raise ValueError("Not authorized to manage pricing for this venue")
 
         created_slots = []
+        
+        # Sort and validate for overlaps
+        non_default_slots = [s for s in slots_data if not s.get("is_default", False)]
+        if len(non_default_slots) > 1:
+            sorted_slots = sorted(non_default_slots, key=lambda x: x["start_time"])
+            for i in range(len(sorted_slots) - 1):
+                if sorted_slots[i]["end_time"] > sorted_slots[i+1]["start_time"]:
+                    raise ValueError(f"Khung giờ bị chồng lấn: {sorted_slots[i]['start_time']}-{sorted_slots[i]['end_time']} và {sorted_slots[i+1]['start_time']}-{sorted_slots[i+1]['end_time']}")
+
         for s_data in slots_data:
             slot = PricingTimeSlot(
                 venue_id=venue_id,

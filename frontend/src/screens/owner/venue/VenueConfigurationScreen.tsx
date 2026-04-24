@@ -25,17 +25,18 @@ import {
   deleteCourt,
   fetchPricingSlots,
   deletePricingSlot,
+  updateCourt,
   bulkCreateCourts,
   bulkCreatePricingSlots,
   fetchPricingProfiles,
   applyPricingProfile,
   updatePricingProfile,
 } from '../../../services/venue-service';
-import type { 
-  CourtResponse, 
-  PricingSlotResponse, 
+import type {
+  CourtResponse,
+  PricingSlotResponse,
   DayType,
-  PricingProfileResponse 
+  PricingProfileResponse
 } from '../../../types/api-types';
 
 type VenueConfigurationRouteProp = RouteProp<
@@ -82,7 +83,7 @@ export const VenueConfigurationScreen: React.FC = () => {
     day_type: 'WEEKDAY',
     days_of_week: [0, 1, 2, 3, 4],
     slots: [
-      { start_time: '05:00', end_time: '10:00', price: '', is_default: false },
+      { start_time: '00:00', end_time: '23:59', price: '', is_default: true },
     ],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,7 +145,7 @@ export const VenueConfigurationScreen: React.FC = () => {
         const names = Array.from({ length: count }, (_, i) => `${namePrefix} ${i + 1}`);
         await bulkCreateCourts(venueId, { names });
       }
-      
+
       Alert.alert('Thành công', `Đã thêm ${count} sân mới.`);
       setShowCourtModal(false);
       setCourtFormData({ name: 'Sân', count: '1' });
@@ -160,8 +161,8 @@ export const VenueConfigurationScreen: React.FC = () => {
   const isProfileInUse = (profile: PricingProfileResponse) => {
     if (pricingSlots.length !== profile.slots.length) return false;
     // Check if every slot in profile matches a slot in the venue
-    return profile.slots.every(pSlot => 
-      pricingSlots.some(vSlot => 
+    return profile.slots.every(pSlot =>
+      pricingSlots.some(vSlot =>
         vSlot.day_type === pSlot.day_type &&
         (vSlot.days_of_week || []).sort().join(',') === (pSlot.days_of_week || []).sort().join(',') &&
         vSlot.start_time === pSlot.start_time &&
@@ -205,6 +206,16 @@ export const VenueConfigurationScreen: React.FC = () => {
     }
   };
 
+  const handleToggleCourtStatus = async (courtId: string, currentStatus: boolean) => {
+    try {
+      await updateCourt(courtId, { is_active: !currentStatus });
+      await loadData();
+    } catch (error: any) {
+      console.error('Error toggling court status:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái sân.');
+    }
+  };
+
   const handleDeleteCourt = async (courtId: string, courtName: string) => {
     Alert.alert(
       'Xóa sân',
@@ -229,6 +240,41 @@ export const VenueConfigurationScreen: React.FC = () => {
     );
   };
 
+  const validateTimeOverlaps = () => {
+    const slots = pricingFormData.slots.filter(s => !s.is_default);
+    if (slots.length <= 1) return true;
+
+    // Convert time HH:MM to minutes for easy comparison
+    const toMinutes = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    for (let i = 0; i < slots.length; i++) {
+      const s1 = slots[i];
+      const start1 = toMinutes(s1.start_time);
+      const end1 = s1.end_time === '24:00' ? 1440 : toMinutes(s1.end_time);
+
+      if (start1 >= end1) {
+        Alert.alert('Lỗi', `Khung giờ #${i + 2} có thời gian bắt đầu lớn hơn hoặc bằng thời gian kết thúc.`);
+        return false;
+      }
+
+      for (let j = i + 1; j < slots.length; j++) {
+        const s2 = slots[j];
+        const start2 = toMinutes(s2.start_time);
+        const end2 = s2.end_time === '24:00' ? 1440 : toMinutes(s2.end_time);
+
+        // Check if overlap
+        if (start1 < end2 && start2 < end1) {
+          Alert.alert('Lỗi', `Khung giờ #${i + 2} và #${j + 2} đang bị chồng lấn thời gian.`);
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   const handleAddPricingSlot = async () => {
     if (!venueId) return;
 
@@ -238,18 +284,22 @@ export const VenueConfigurationScreen: React.FC = () => {
       return;
     }
 
-    const hasInvalidSlot = pricingFormData.slots.some(s => 
+    const hasInvalidSlot = pricingFormData.slots.some(s =>
       !s.price || (!s.is_default && (!s.start_time || !s.end_time))
     );
-    
+
     if (hasInvalidSlot) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin cho tất cả các khung giờ');
       return;
     }
 
+    if (!validateTimeOverlaps()) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
+
       // If we are editing an existing group, delete the old slots first
       if (editingGroupSlotIds.length > 0) {
         await Promise.all(
@@ -269,7 +319,7 @@ export const VenueConfigurationScreen: React.FC = () => {
           day_type: pricingFormData.day_type
         })),
       });
-      
+
       Alert.alert('Thành công', editingGroupSlotIds.length > 0 ? 'Đã cập nhật nhóm giá' : 'Đã thêm nhóm giá mới');
       setShowPricingModal(false);
       resetPricingForm();
@@ -328,15 +378,21 @@ export const VenueConfigurationScreen: React.FC = () => {
   };
 
 
+  const handleAddPricingGroup = () => {
+    resetPricingForm();
+    setShowPricingModal(true);
+  };
+
   const handleEditPricingGroup = (slots: PricingSlotResponse[]) => {
     setEditingGroupSlotIds(slots.map(s => s.id));
+    const sortedSlots = [...slots].sort((a, b) => (a.is_default === b.is_default ? 0 : a.is_default ? -1 : 1));
     setPricingFormData({
-      title: slots[0].title || '',
-      day_type: slots[0].day_type,
-      days_of_week: slots[0].days_of_week || [],
-      slots: slots.map(s => ({
-        start_time: s.is_default ? '' : s.start_time,
-        end_time: s.is_default ? '' : s.end_time,
+      title: sortedSlots[0].title || '',
+      day_type: sortedSlots[0].day_type,
+      days_of_week: sortedSlots[0].days_of_week || [],
+      slots: sortedSlots.map(s => ({
+        start_time: s.is_default ? '00:00' : s.start_time,
+        end_time: s.is_default ? '23:59' : s.end_time,
         price: s.price.toString(),
         is_default: s.is_default
       }))
@@ -351,7 +407,7 @@ export const VenueConfigurationScreen: React.FC = () => {
       day_type: 'WEEKDAY',
       days_of_week: [0, 1, 2, 3, 4],
       slots: [
-        { start_time: '05:00', end_time: '10:00', price: '', is_default: false },
+        { start_time: '00:00', end_time: '23:59', price: '', is_default: true },
       ],
     });
   };
@@ -445,11 +501,12 @@ export const VenueConfigurationScreen: React.FC = () => {
             courts={courts}
             onAddCourt={() => setShowCourtModal(true)}
             onDeleteCourt={handleDeleteCourt}
+            onToggleStatus={handleToggleCourtStatus}
           />
         ) : (
           <PricingTab
             pricingSlots={pricingSlots}
-            onAddPricing={() => setShowPricingModal(true)}
+            onAddPricing={handleAddPricingGroup}
             onDeletePricing={handleDeletePricingSlot}
             onEditPricingGroup={handleEditPricingGroup}
             getDayTypeLabel={getDayTypeLabel}
@@ -576,29 +633,25 @@ export const VenueConfigurationScreen: React.FC = () => {
                   </View>
 
                   {pricingFormData.slots.map((slot, index) => (
-                    <View key={index} style={styles.slotRowCard}>
+                    <View key={index} style={[styles.slotRowCard, index === 0 && !slot.price ? { borderColor: COLORS.ERROR, borderWidth: 1 } : {}]}>
                       <View style={styles.slotRowHeader}>
-                        <Text style={styles.slotRowIndex}>Khung #{index + 1}</Text>
-                        {pricingFormData.slots.length > 1 && (
+                        <Text style={styles.slotRowIndex}>
+                          {index === 0 ? 'Giá mặc định (Cho các giờ còn lại)' : `Khung #${index + 1}`}
+                        </Text>
+                        {index > 0 && (
                           <TouchableOpacity onPress={() => removePricingSlotRow(index)}>
                             <MaterialCommunityIcons name="delete-outline" size={20} color={COLORS.ERROR} />
                           </TouchableOpacity>
                         )}
                       </View>
 
-                      <TouchableOpacity
-                        style={styles.checkboxContainerSmall}
-                        onPress={() => updatePricingSlotRow(index, 'is_default', !slot.is_default)}
-                      >
-                        <MaterialCommunityIcons
-                          name={slot.is_default ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                          size={20}
-                          color={COLORS.PRIMARY}
-                        />
-                        <Text style={styles.checkboxLabelSmall}>Mặc định (giờ còn lại)</Text>
-                      </TouchableOpacity>
+                      {index === 0 && !slot.price && (
+                        <Text style={{ color: COLORS.ERROR, fontSize: 12, marginBottom: 8 }}>
+                          * Vui lòng điền giá mặc định.
+                        </Text>
+                      )}
 
-                      {!slot.is_default && (
+                      {index > 0 && (
                         <View style={styles.row}>
                           <View style={{ flex: 1, marginRight: 6 }}>
                             <Text style={styles.miniLabel}>Từ giờ</Text>
@@ -733,7 +786,7 @@ export const VenueConfigurationScreen: React.FC = () => {
               <Text style={styles.helperText}>
                 Chọn một profile giá đã lưu để áp dụng nhanh cho toàn bộ sân của venue này.
               </Text>
-              
+
               {pricingProfiles.length === 0 ? (
                 <View style={styles.emptyStateMini}>
                   <Text style={styles.emptyTextMini}>Chưa có profile nào được tạo.</Text>
@@ -742,7 +795,7 @@ export const VenueConfigurationScreen: React.FC = () => {
                 pricingProfiles.map((profile) => {
                   const inUse = isProfileInUse(profile);
                   const isEditing = editingProfileId === profile.id;
-                  
+
                   return (
                     <View key={profile.id} style={styles.profileItem}>
                       <View style={[styles.profileInfo, { paddingRight: 8 }]}>
@@ -770,10 +823,10 @@ export const VenueConfigurationScreen: React.FC = () => {
                           {profile.slots.length} khung giờ
                         </Text>
                       </View>
-                      
+
                       <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                         {isEditing ? (
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.outlineButton, { borderColor: COLORS.SUCCESS }]}
                             onPress={() => handleSaveProfileName(profile.id)}
                           >
@@ -784,7 +837,7 @@ export const VenueConfigurationScreen: React.FC = () => {
                             <Text style={[styles.defaultBadgeText, { color: COLORS.SUCCESS }]}>Đang sử dụng</Text>
                           </View>
                         ) : (
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.outlineButton}
                             onPress={() => handleApplyProfile(profile.id)}
                           >
@@ -809,7 +862,8 @@ const CourtsTab: React.FC<{
   courts: CourtResponse[];
   onAddCourt: () => void;
   onDeleteCourt: (courtId: string, courtName: string) => void;
-}> = ({ courts, onAddCourt, onDeleteCourt }) => {
+  onToggleStatus: (courtId: string, currentStatus: boolean) => void;
+}> = ({ courts, onAddCourt, onDeleteCourt, onToggleStatus }) => {
   return (
     <View style={styles.tabContent}>
       <View style={styles.sectionHeader}>
@@ -830,15 +884,38 @@ const CourtsTab: React.FC<{
         courts.map((court) => (
           <View key={court.id} style={styles.courtItem}>
             <View style={styles.courtInfo}>
-              <MaterialCommunityIcons name="tennis-ball" size={24} color={COLORS.PRIMARY} />
-              <Text style={styles.courtName}>{court.name}</Text>
+              <MaterialCommunityIcons
+                name="tennis-ball"
+                size={24}
+                color={court.is_active ? COLORS.PRIMARY : COLORS.GRAY_MEDIUM}
+              />
+              <View>
+                <Text style={[styles.courtName, !court.is_active && { color: COLORS.GRAY_MEDIUM }]}>
+                  {court.name}
+                </Text>
+                <Text style={{ fontSize: 12, color: court.is_active ? COLORS.SUCCESS : COLORS.ERROR }}>
+                  {court.is_active ? 'Đang hoạt động' : 'Đang bảo trì/Đóng'}
+                </Text>
+              </View>
             </View>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => onDeleteCourt(court.id, court.name)}
-            >
-              <MaterialCommunityIcons name="delete-outline" size={24} color="#FF4444" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={{ padding: 8, marginRight: 8 }}
+                onPress={() => onToggleStatus(court.id, court.is_active)}
+              >
+                <MaterialCommunityIcons
+                  name={court.is_active ? "toggle-switch" : "toggle-switch-off"}
+                  size={32}
+                  color={court.is_active ? COLORS.PRIMARY : COLORS.GRAY_MEDIUM}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => onDeleteCourt(court.id, court.name)}
+              >
+                <MaterialCommunityIcons name="delete-outline" size={24} color="#FF4444" />
+              </TouchableOpacity>
+            </View>
           </View>
         ))
       )}
@@ -856,7 +933,7 @@ const PricingTab: React.FC<{
   formatPrice: (price: number) => string;
   formatDaysOfWeek: (days: number[] | null | undefined) => string;
 }> = ({ pricingSlots, onAddPricing, onDeletePricing, onEditPricingGroup, getDayTypeLabel, formatPrice, formatDaysOfWeek }) => {
-  
+
   // Group slots by days_of_week
   const groupedSlots = pricingSlots.reduce((groups, slot) => {
     const daysKey = slot.days_of_week ? [...slot.days_of_week].sort().join(',') : slot.day_type;
@@ -893,8 +970,8 @@ const PricingTab: React.FC<{
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <MaterialCommunityIcons name="calendar-clock" size={20} color={COLORS.PRIMARY} />
                 <Text style={styles.pricingGroupName}>
-                  {slots[0].title ? slots[0].title : (slots[0].days_of_week && slots[0].days_of_week.length > 0 
-                    ? formatDaysOfWeek(slots[0].days_of_week) 
+                  {slots[0].title ? slots[0].title : (slots[0].days_of_week && slots[0].days_of_week.length > 0
+                    ? formatDaysOfWeek(slots[0].days_of_week)
                     : getDayTypeLabel(slots[0].day_type))}
                 </Text>
               </View>
@@ -902,7 +979,7 @@ const PricingTab: React.FC<{
                 <MaterialCommunityIcons name="pencil-outline" size={20} color={COLORS.PRIMARY} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.pricingSlotsList}>
               {slots.sort((a, b) => {
                 if (a.is_default) return 1;
@@ -917,7 +994,7 @@ const PricingTab: React.FC<{
                   </View>
                   <View style={styles.slotPriceInfo}>
                     <Text style={styles.slotPriceText}>{formatPrice(slot.price)}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={() => onDeletePricing(slot.id)}
                       style={styles.slotDeleteBtn}
                     >

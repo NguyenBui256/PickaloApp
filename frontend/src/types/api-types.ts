@@ -83,6 +83,7 @@ export interface VenueCreateRequest {
   coordinates: Coordinates;
   venue_type: VenueType;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
   base_price_per_hour?: number | null;
@@ -96,6 +97,7 @@ export interface VenueUpdateRequest {
   coordinates?: Coordinates | null;
   description?: string | null;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
   base_price_per_hour?: number | null;
@@ -118,6 +120,7 @@ export interface VenueResponse {
   rating?: number | null;
   bookingLink?: string | null;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
   base_price_per_hour?: number | null;
@@ -141,6 +144,7 @@ export interface VenueListItem {
   is_verified: bool;
   isFavorite?: boolean; // FE-only field
   images?: string[] | null;
+  cover_image?: string | null;
   amenities?: string[] | null;
   logo?: string | null;
   bookingLink?: string | null;
@@ -199,6 +203,7 @@ export interface VenueServiceResponse {
 }
 
 export interface PricingSlotCreateRequest {
+  title?: string | null;
   day_type: DayType;
   days_of_week?: number[] | null; // 0=Mon, ..., 6=Sun
   start_time: string; // HH:MM

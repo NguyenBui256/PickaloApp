@@ -181,7 +181,7 @@ export const bulkCreateCourts = async (
 /** Update court. BE: PUT /venues/courts/{court_id} */
 export const updateCourt = async (
   courtId: string,
-  data: { name?: string }
+  data: { name?: string; is_active?: boolean }
 ): Promise<CourtResponse> => {
   return apiClient.put(`/venues/courts/${courtId}`, data);
 };

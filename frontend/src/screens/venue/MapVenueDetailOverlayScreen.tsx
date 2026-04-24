@@ -25,6 +25,7 @@ import Animated, {
 import { fetchVenueById } from '../../services/venue-service';
 import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
+import { getImageUrl } from '../../utils/image-upload-helper';
 import type { ReviewResponse } from '../../types/api-types';
 import COLORS from '@theme/colors';
 
@@ -279,7 +280,10 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
 
                 {/* Venue Cover Image */}
                 <View style={[styles.coverSection, { borderTopLeftRadius: 0, borderTopRightRadius: 0 }]}>
-            <Image source={{ uri: venue.image }} style={styles.coverImage} />
+            <Image 
+              source={{ uri: getImageUrl(venue.cover_image || venue.images?.[0] || venue.image) }} 
+              style={styles.coverImage} 
+            />
 
             <View style={styles.coverActions}>
               <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
@@ -309,7 +313,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
           {/* Venue Info Card */}
           <View style={styles.infoCard}>
             <View style={styles.infoHeader}>
-              <Image source={{ uri: venue.logo }} style={styles.logo} />
+              <Image source={{ uri: getImageUrl(venue.logo) }} style={styles.logo} />
               <View style={styles.titleArea}>
                 <Text style={styles.venueName}>{venue.name}</Text>
                 <View style={[styles.catBadge, { borderColor: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>

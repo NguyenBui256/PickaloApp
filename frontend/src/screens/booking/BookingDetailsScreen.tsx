@@ -12,7 +12,6 @@ import type { AvailabilityResponse } from '../../types/api-types';
 const COURT_COLUMN_WIDTH = 100;
 const TIME_CELL_WIDTH = 60;
 const CELL_HEIGHT = 40;
-const PRICE_PER_SLOT = 95000;
 
 export const BookingDetailsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -40,14 +39,37 @@ export const BookingDetailsScreen: React.FC = () => {
     const minutes = totalMinutes % 60;
     const timeStr = hours > 0 ? `${hours}h${minutes > 0 ? minutes : '00'}` : `${minutes}ph`;
 
+    let totalAmount = 0;
+    const selectedSlotsData: any[] = [];
+
+    if (availability) {
+      selectedSlots.forEach(slotId => {
+        const [courtId, startTime] = slotId.split('|');
+        const court = availability.courts.find(c => c.court_id === courtId);
+        if (court) {
+          const slot = court.slots.find(s => s.start_time === startTime);
+          if (slot && slot.price) {
+            totalAmount += slot.price;
+            selectedSlotsData.push({
+              courtName: court.court_name,
+              time: `${slot.start_time} - ${slot.end_time}`,
+              price: slot.price,
+            });
+          }
+        }
+      });
+    }
+
     return {
       timeStr,
-      totalPrice: formatCurrency(totalSlots * PRICE_PER_SLOT),
+      totalPrice: formatCurrency(totalAmount),
+      totalAmount,
+      selectedSlotsData,
     };
-  }, [selectedSlots]);
+  }, [selectedSlots, availability]);
 
   const toggleSlot = useCallback((court: string, slot: string) => {
-    const slotId = `${court}-${slot}`;
+    const slotId = `${court}|${slot}`;
     setSelectedSlots((prev) =>
       prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
@@ -125,7 +147,7 @@ export const BookingDetailsScreen: React.FC = () => {
 
                   {/* Row Cells */}
                   {court.slots.map((slot) => {
-                    const slotId = `${court.court_id}-${slot.start_time}`;
+                    const slotId = `${court.court_id}|${slot.start_time}`;
                     return (
                       <BookingCell
                         key={slotId}
@@ -148,7 +170,11 @@ export const BookingDetailsScreen: React.FC = () => {
         isVisible={selectedSlots.length > 0}
         totalHours={bookingSummary.timeStr}
         totalPrice={bookingSummary.totalPrice}
-        onNext={() => navigation.navigate('Payment', { venueId, selectedSlots })}
+        onNext={() => navigation.navigate('Payment', { 
+          venueId, 
+          selectedSlotsData: bookingSummary.selectedSlotsData,
+          totalAmount: bookingSummary.totalAmount
+        })}
       />
     </View>
   );
