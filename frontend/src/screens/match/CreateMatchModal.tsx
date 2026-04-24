@@ -8,6 +8,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
@@ -79,79 +84,96 @@ export const CreateMatchModal: React.FC<CreateMatchModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Mở Ghép Kèo</Text>
-            <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color={COLORS.GRAY_MEDIUM} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.subtitle}>
-            Sân: {booking.venue_name} ({booking.start_time}-{booking.end_time})
-          </Text>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Số người cần tìm thêm *</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              value={slotsNeeded}
-              onChangeText={setSlotsNeeded}
-              placeholder="Ví dụ: 2"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Giá chia mỗi người (VNĐ) *</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              value={pricePerSlot}
-              onChangeText={setPricePerSlot}
-              placeholder="Ví dụ: 50000"
-            />
-            <Text style={styles.hint}>
-              Căn cứ theo giá gốc: {Number(booking.total_price).toLocaleString('vi-VN')} đ
-            </Text>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Yêu cầu trình độ</Text>
-            <View style={styles.skillRow}>
-              <SkillBadge level="ALL" label="Tất cả" />
-              <SkillBadge level="BEGINNER" label="Gà/Mới chơi" />
-              <SkillBadge level="INTERMEDIATE" label="Trung bình" />
-              <SkillBadge level="ADVANCED" label="Khá/Giỏi" />
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Ghi chú (Không bắt buộc)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              multiline
-              numberOfLines={3}
-              value={note}
-              onChangeText={setNote}
-              placeholder="VD: Mang theo áo trắng, đá cánh trái..."
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.overlay}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardView}
           >
-            {loading ? (
-              <ActivityIndicator color={COLORS.WHITE} />
-            ) : (
-              <Text style={styles.submitBtnText}>Đăng Kèo Lên Bản Đồ</Text>
-            )}
-          </TouchableOpacity>
+            <View style={styles.container}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Mở Ghép Kèo</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <MaterialCommunityIcons name="close" size={24} color={COLORS.GRAY_MEDIUM} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.subtitle}>
+                  {`Sân: ${booking.venue_name || 'N/A'} (${booking.start_time || ''}-${booking.end_time || ''})`}
+                </Text>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Số người cần tìm thêm *</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="number-pad"
+                    value={slotsNeeded}
+                    onChangeText={setSlotsNeeded}
+                    placeholder="Ví dụ: 2"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    blurOnSubmit={true}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Giá chia mỗi người (VNĐ) *</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="number-pad"
+                    value={pricePerSlot}
+                    onChangeText={setPricePerSlot}
+                    placeholder="Ví dụ: 50000"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                    blurOnSubmit={true}
+                  />
+                  <Text style={styles.hint}>
+                    {`Căn cứ theo giá gốc: ${Number(booking.total_price || 0).toLocaleString('vi-VN')} đ`}
+                  </Text>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Yêu cầu trình độ</Text>
+                  <View style={styles.skillRow}>
+                    <SkillBadge level="ALL" label="Tất cả" />
+                    <SkillBadge level="BEGINNER" label="Gà/Mới chơi" />
+                    <SkillBadge level="INTERMEDIATE" label="Trung bình" />
+                    <SkillBadge level="ADVANCED" label="Khá/Giỏi" />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Ghi chú (Không bắt buộc)</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    multiline
+                    numberOfLines={3}
+                    value={note}
+                    onChangeText={setNote}
+                    placeholder="VD: Mang theo áo trắng, đá cánh trái..."
+                    blurOnSubmit={true}
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+                  onPress={handleSubmit}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={COLORS.WHITE} />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Đăng Kèo Lên Bản Đồ</Text>
+                  )}
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -161,6 +183,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+  },
+  keyboardView: {
+    width: '100%',
   },
   container: {
     backgroundColor: COLORS.WHITE,

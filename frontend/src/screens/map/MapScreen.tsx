@@ -29,6 +29,15 @@ const INITIAL_REGION = {
   longitudeDelta: 0.1,
 };
 
+const MAP_CATEGORIES = [
+  { id: 'all', name: 'Tất cả', icon: 'apps' },
+  { id: 'Pickleball', name: 'Pickleball', icon: 'tennis-ball' },
+  { id: 'Badminton', name: 'Cầu lông', icon: 'badminton' },
+  { id: 'Football 5', name: 'Bóng đá 5', icon: 'soccer-field' },
+  { id: 'Football 7', name: 'Bóng đá 7', icon: 'soccer' },
+  { id: 'Tennis', name: 'Tennis', icon: 'tennis' },
+];
+
 export const MapScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -341,11 +350,6 @@ export const MapScreen = () => {
         ))}
       </ScrollView>
 
-      <MatchDetailModal 
-        visible={!!selectedMatch}
-        match={selectedMatch}
-        onClose={() => setSelectedMatch(null)}
-      />
 
       {/* Floating UI: Map Controls */}
       <View style={styles.controlsLeft}>

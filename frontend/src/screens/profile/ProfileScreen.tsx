@@ -126,6 +126,8 @@ export const ProfileScreen: React.FC = () => {
               <MenuItem icon="account-group-outline" label="Nhóm của tôi" />
               <View style={styles.divider} />
               <MenuItem icon="format-list-bulleted" label="Danh sách lịch học" />
+              <View style={styles.divider} />
+              <MenuItem
                 icon="account-edit-outline" 
                 label="Chỉnh sửa hồ sơ" 
                 onPress={() => navigation.navigate('EditProfile')}

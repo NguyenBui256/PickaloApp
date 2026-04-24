@@ -5,9 +5,9 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
@@ -89,7 +89,7 @@ const BookingCard = ({
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Chi tiết:</Text>
           <Text style={styles.infoValue}>
-            {item.court_name ? `${item.court_name} | ` : ''}{formatBookingTime(item)} | {formatBookingDate(item)}
+            {`${item.court_name ? `${item.court_name} | ` : ''}${formatBookingTime(item)} | ${formatBookingDate(item)}`}
           </Text>
         </View>
         <View style={styles.infoLine}>
@@ -124,7 +124,7 @@ const BookingCard = ({
               }
             >
               <Text style={[styles.detailBtnText, styles.reviewBtnText]}>
-                {item.review_id ? 'Xem đánh giá' : 'Đánh giá'}
+                {`${item.review_id ? 'Xem đánh giá' : 'Đánh giá'}`}
               </Text>
             </TouchableOpacity>
           )}

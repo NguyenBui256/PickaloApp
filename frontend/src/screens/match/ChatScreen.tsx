@@ -26,7 +26,7 @@ import type { ChatMessageResponse, UserResponse } from '../../types/api-types';
 export const ChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { roomId, requestId, initialStatus, venueName, matchTime } = route.params;
+  const { roomId, requestId, initialStatus, venueName, matchTime, partnerName } = route.params;
 
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [inputText, setInputText] = useState('');
@@ -140,7 +140,7 @@ export const ChatScreen: React.FC = () => {
           <MaterialCommunityIcons name="chevron-left" size={32} color={COLORS.TEXT_PRIMARY} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>Trò chuyện ghép kèo</Text>
+          <Text style={styles.headerTitle}>{partnerName || 'Trò chuyện ghép kèo'}</Text>
           <Text style={styles.headerSubTitle}>Giao lưu vui vẻ, văn minh</Text>
         </View>
         

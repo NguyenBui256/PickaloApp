@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { chatService } from '../../services/chat-service';
 
@@ -19,8 +20,16 @@ export const ChatListScreen: React.FC = () => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<'ALL' | 'TODAY' | 'PENDING' | 'RESPONDED'>('ALL');
 
-  const fetchRooms = async () => {
+  const FILTER_OPTIONS = [
+    { id: 'ALL', label: 'Tất cả' },
+    { id: 'TODAY', label: 'Hôm nay' },
+    { id: 'PENDING', label: 'Chưa phản hồi' },
+    { id: 'RESPONDED', label: 'Đã phản hồi' },
+  ];
+
+  const fetchRooms = useCallback(async () => {
     try {
       const data = await chatService.getMyRooms();
       setRooms(data);
@@ -30,16 +39,29 @@ export const ChatListScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchRooms();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchRooms();
+    }, [fetchRooms])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchRooms();
   };
+
+  const filteredRooms = rooms.filter(room => {
+    if (filter === 'ALL') return true;
+    if (filter === 'TODAY') {
+      const today = new Date().toISOString().split('T')[0];
+      return room.match_date === today;
+    }
+    if (filter === 'PENDING') return room.status === 'PENDING';
+    if (filter === 'RESPONDED') return room.status === 'ACCEPTED' || room.status === 'REJECTED';
+    return true;
+  });
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -64,7 +86,8 @@ export const ChatListScreen: React.FC = () => {
           requestId: item.is_host ? item.match_request_id : undefined,
           initialStatus: item.status,
           venueName: item.venue_name || 'Kèo chưa xác định',
-          matchTime: item.start_time ? `${startTime} - ${matchDate}` : 'Giờ chưa cập nhật'
+          matchTime: item.start_time ? `${startTime} - ${matchDate}` : 'Giờ chưa cập nhật',
+          partnerName: item.other_party_name
         })}
       >
         <View style={styles.avatar}>
@@ -119,13 +142,29 @@ export const ChatListScreen: React.FC = () => {
         <View style={{ width: 32 }} />
       </View>
 
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          {FILTER_OPTIONS.map(opt => (
+            <TouchableOpacity 
+              key={opt.id}
+              style={[styles.filterChip, filter === opt.id && styles.filterChipActive]}
+              onPress={() => setFilter(opt.id as any)}
+            >
+              <Text style={[styles.filterText, filter === opt.id && styles.filterTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
         </View>
       ) : (
         <FlatList
-          data={rooms}
+          data={filteredRooms}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
@@ -133,8 +172,12 @@ export const ChatListScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons name="message-off-outline" size={64} color={COLORS.GRAY_LIGHT} />
-              <Text style={styles.emptyText}>Chưa có cuộc hội thoại nào.</Text>
-              <Text style={styles.emptySubText}>Hãy đăng kèo hoặc xin tham gia kèo trên bản đồ nhé!</Text>
+              <Text style={styles.emptyText}>
+                {filter === 'ALL' ? 'Chưa có cuộc hội thoại nào.' : 'Không tìm thấy kết quả phù hợp.'}
+              </Text>
+              <Text style={styles.emptySubText}>
+                {filter === 'ALL' ? 'Hãy đăng kèo hoặc xin tham gia kèo trên bản đồ nhé!' : 'Thử đổi bộ lọc khác xem sao.'}
+              </Text>
             </View>
           }
         />
@@ -166,6 +209,37 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.TEXT_PRIMARY,
+  },
+  filterContainer: {
+    backgroundColor: COLORS.WHITE,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  filterScroll: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  filterChipActive: {
+    backgroundColor: COLORS.PRIMARY + '10',
+    borderColor: COLORS.PRIMARY,
+  },
+  filterText: {
+    fontSize: 13,
+    color: COLORS.TEXT_SECONDARY,
+    fontWeight: '500',
+  },
+  filterTextActive: {
+    color: COLORS.PRIMARY,
+    fontWeight: 'bold',
   },
   list: {
     padding: 16,

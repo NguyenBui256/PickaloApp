@@ -67,7 +67,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       navigation.navigate('Chat', { 
         roomId: res.chat_room_id,
         matchId: activeMatch.id,
-        requestId: res.id,
         partnerName: activeMatch.host_name || 'Chủ kèo'
       });
     } catch (err: any) {
@@ -117,15 +116,15 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       <View style={styles.matchListInfo}>
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.TEXT_SECONDARY} />
-          <Text style={styles.infoRowText}>{item.start_time} - {item.end_time}</Text>
+          <Text style={styles.infoRowText}>{`${item.start_time} - ${item.end_time}`}</Text>
         </View>
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="currency-usd" size={16} color={COLORS.TEXT_SECONDARY} />
-          <Text style={styles.infoRowText}>{item.price_per_slot?.toLocaleString()}đ</Text>
+          <Text style={styles.infoRowText}>{`${item.price_per_slot?.toLocaleString()}đ`}</Text>
         </View>
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="account-group-outline" size={16} color={COLORS.TEXT_SECONDARY} />
-          <Text style={styles.infoRowText}>Còn {item.available_slots} chỗ</Text>
+          <Text style={styles.infoRowText}>{`Còn ${item.available_slots} chỗ`}</Text>
         </View>
       </View>
       <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.GRAY_LIGHT} style={styles.listChevron} />
@@ -154,9 +153,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
              {!activeMatch && matches ? (
                <View>
-                 <Text style={styles.venueName}>{matches[0].venue_name || 'Danh sách kèo'}</Text>
-                 <Text style={styles.addressText}>{matches[0].venue_address}</Text>
-                 <Text style={styles.listTitle}>Chọn một kèo tham gia ({matches.length})</Text>
+                 <Text style={styles.venueName}>{`${matches[0].venue_name || 'Danh sách kèo'}`}</Text>
+                 <Text style={styles.addressText}>{`${matches[0].venue_address || ''}`}</Text>
+                 <Text style={styles.listTitle}>{`Chọn một kèo tham gia (${matches.length})`}</Text>
                  <View style={styles.matchList}>
                     {matches.map(renderMatchItem)}
                  </View>
@@ -183,8 +182,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     <MaterialCommunityIcons name="calendar-clock" size={20} color={COLORS.TEXT_SECONDARY} />
                     <View style={styles.infoTextContainer}>
                       <Text style={styles.infoLabel}>Thời gian</Text>
-                      <Text style={styles.infoValue}>{activeMatch.start_time} - {activeMatch.end_time}</Text>
-                      <Text style={styles.infoSubText}>{activeMatch.booking_date}</Text>
+                      <Text style={styles.infoValue}>{`${activeMatch.start_time} - ${activeMatch.end_time}`}</Text>
+                      <Text style={styles.infoSubText}>{`${activeMatch.booking_date}`}</Text>
                     </View>
                   </View>
 
@@ -209,7 +208,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     <MaterialCommunityIcons name="currency-usd" size={20} color={COLORS.TEXT_SECONDARY} />
                     <View style={styles.infoTextContainer}>
                       <Text style={styles.infoLabel}>Phí dự kiến</Text>
-                      <Text style={styles.infoValue}>{activeMatch.price_per_slot?.toLocaleString()}đ</Text>
+                      <Text style={styles.infoValue}>{`${activeMatch.price_per_slot?.toLocaleString()}đ`}</Text>
                       <Text style={styles.infoSubText}>mỗi người</Text>
                     </View>
                   </View>
@@ -227,7 +226,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 {/* JOIN FORM */}
                 <Text style={styles.sectionTitle}>Đăng ký tham gia</Text>
                 <View style={styles.slotsInfo}>
-                    <Text style={styles.slotsLeft}>Còn trống {activeMatch.available_slots} chỗ</Text>
+                    <Text style={styles.slotsLeft}>{`Còn trống ${activeMatch.available_slots} chỗ`}</Text>
                 </View>
 
                 <View style={styles.inputGroup}>

@@ -166,7 +166,7 @@ class BookingResponse(BaseModel):
     # Payment
     payment_method: str | None
     payment_id: str | None
-    paid_at: str | None
+    paid_at: datetime | None
     payment_proof: str | None
 
     # Additional info
