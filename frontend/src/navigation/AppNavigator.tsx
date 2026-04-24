@@ -37,6 +37,7 @@ import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
 import { OwnerNavigator } from './OwnerNavigator';
 import { AdminNavigator } from './AdminNavigator';
+import { VenueLocationPickerScreen } from '@screens/owner/venue/VenueLocationPickerScreen';
 
 /**
  * Screen types for type-safe navigation.
@@ -61,6 +62,7 @@ export type RootStackParamList = {
   OwnerBookingDetail: { booking: any };
   OwnerRevenueReport: undefined;
   ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
+  VenueLocationPicker: { onLocationSelected: (location: { lat: number; lng: number, address: string }) => void, initialLocation?: { lat: number; lng: number, address: string } };
 };
 
 export type MainTabParamList = {
@@ -298,6 +300,14 @@ export function AppNavigator(): React.JSX.Element {
               name="ReviewSubmission"
               component={ReviewSubmissionScreen}
               options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="VenueLocationPicker"
+              component={VenueLocationPickerScreen}
+              options={{ 
+                headerShown: false,
+                presentation: 'fullScreenModal'
+              }}
             />
           </>
         ) : (

@@ -19,8 +19,33 @@ export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<any>();
   const { venueId } = route.params || {};
 
+  // Current Date/Time Logic
+  const today = useMemo(() => new Date(), []);
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
+
+  // Generate 14 days from today
+  const dates = useMemo(() => {
+    const list = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      list.push(d);
+    }
+    return list;
+  }, [today]);
+
+  const formatDate = (date: Date) => {
+    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const d = date.getDate();
+    const m = date.getMonth() + 1;
+    return {
+      dayName: days[date.getDay()],
+      dateStr: `${d < 10 ? '0' + d : d}/${m < 10 ? '0' + m : m}`,
+      fullStr: `${days[date.getDay()]}, ${d}/${m}/${date.getFullYear()}`
+    };
+  };
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -67,8 +92,30 @@ export const BookingDetailsScreen: React.FC = () => {
           </View>
 
           <View style={styles.dateSelector}>
-            <MaterialCommunityIcons name="calendar-month" size={24} color={COLORS.WHITE} />
-            <Text style={styles.dateText}>Thứ 4, 08/04/2026</Text>
+            <MaterialCommunityIcons name="calendar-month" size={20} color={COLORS.WHITE} />
+            <Text style={styles.currentDateText}>{formatDate(selectedDate).fullStr}</Text>
+          </View>
+
+          <View style={styles.dateListContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {dates.map((date, index) => {
+                const info = formatDate(date);
+                const isSelected = date.toDateString() === selectedDate.toDateString();
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.dateItem, isSelected && styles.activeDateItem]}
+                    onPress={() => {
+                      setSelectedDate(date);
+                      setSelectedSlots([]); // Clear slots when date changes
+                    }}
+                  >
+                    <Text style={[styles.dateDayName, isSelected && styles.activeDateText]}>{info.dayName}</Text>
+                    <Text style={[styles.dateNumber, isSelected && styles.activeDateText]}>{info.dateStr.split('/')[0]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
 
           {/* Legend */}
@@ -88,7 +135,11 @@ export const BookingDetailsScreen: React.FC = () => {
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendBox, { backgroundColor: '#9e9e9e' }]} />
-              <Text style={styles.legendLabel}>Khóa</Text>
+              <Text style={styles.legendLabel}>Quá giờ</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendBox, { backgroundColor: '#FF9800' }]} />
+              <Text style={styles.legendLabel}>Bảo trì</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendBox, { backgroundColor: '#e040fb' }]} />
@@ -183,14 +234,43 @@ const styles = StyleSheet.create({
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 10,
   },
-  dateText: {
-    fontSize: 18,
+  currentDateText: {
+    fontSize: 16,
     color: COLORS.WHITE,
+    fontWeight: 'bold',
+  },
+  dateListContainer: {
+    marginBottom: 15,
+  },
+  dateItem: {
+    width: 50,
+    height: 60,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  activeDateItem: {
+    backgroundColor: COLORS.WHITE,
+  },
+  dateDayName: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.8)',
     fontWeight: '600',
+  },
+  dateNumber: {
+    fontSize: 16,
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  activeDateText: {
+    color: COLORS.PRIMARY,
   },
   legendRow: {
     flexDirection: 'row',

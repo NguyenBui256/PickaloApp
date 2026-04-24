@@ -8,11 +8,11 @@
  */
 
 import { apiClient } from './api-client';
-import { 
-  ADMIN_STATS, 
-  ADMIN_USERS, 
-  ADMIN_VENUES, 
-  ADMIN_REPORTED_POSTS 
+import {
+  ADMIN_STATS,
+  ADMIN_USERS,
+  ADMIN_VENUES,
+  ADMIN_REPORTED_POSTS
 } from '@constants/mock-data';
 import type {
   AdminStatsResponse,
@@ -114,7 +114,7 @@ export const updateVenueStatus = async (venueId: string, status: 'ACTIVE' | 'DEL
  */
 export const getReportedPosts = async (): Promise<AdminReportedPostItem[]> => {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(ADMIN_REPORTED_POSTS), 500);
+    setTimeout(() => resolve(ADMIN_REPORTED_POSTS as any), 500);
   });
 };
 

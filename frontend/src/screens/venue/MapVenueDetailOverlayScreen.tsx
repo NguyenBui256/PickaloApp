@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, Platform } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { 
@@ -32,7 +33,7 @@ const { height } = Dimensions.get('window');
 const MAP_HEIGHT = 180;
 
 type RootStackParamList = {
-  MapVenueDetailOverlay: { venueId: string };
+  MapVenueDetailOverlay: { venueId: string; hideMap?: boolean };
   BookingDetails: { venueId: string };
 };
 
@@ -43,7 +44,7 @@ const TABS = ['Thông tin', 'Dịch vụ', 'Hình ảnh', 'Điều khoản & quy
 export const MapVenueDetailOverlayScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProps>();
-  const { venueId } = route.params;
+  const { venueId, hideMap } = route.params;
 
   const [venue, setVenue] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('Thông tin');
@@ -107,6 +108,12 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
+
+  const openMap = () => {
+    const query = encodeURIComponent(`${venue?.name}, ${venue?.address}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    Linking.openURL(url).catch(err => console.error("Error opening maps", err));
+  };
 
   const handleBookPress = () => {
     setBookingModalVisible(true);

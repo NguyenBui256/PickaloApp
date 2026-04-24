@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, Platform } from 'react-native';
 import COLORS from '@theme/colors';
 
 const { width } = Dimensions.get('window');
@@ -49,6 +50,19 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   const displayImage = images?.[0] || image || '';
   const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '06:00 - 22:00');
   const displayLogo = logo || 'https://via.placeholder.com/100';
+
+  const openMap = () => {
+    const query = encodeURIComponent(`${name}, ${address}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        console.error("Don't know how to open URI: " + url);
+      }
+    }).catch(err => console.error("Error opening maps", err));
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
@@ -98,9 +112,19 @@ export const VenueCard: React.FC<VenueCardProps> = ({
           </View>
         </View>
 
-        <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
-          <Text style={styles.bookText}>ĐẶT LỊCH</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity 
+            style={styles.mapButton} 
+            onPress={openMap} 
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.PRIMARY} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
+            <Text style={styles.bookText}>ĐẶT LỊCH</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -205,12 +229,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.GRAY_MEDIUM,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 10,
+  },
+  mapButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bookButton: {
     backgroundColor: COLORS.YELLOW,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginLeft: 10,
   },
   bookText: {
     color: COLORS.TEXT_PRIMARY,

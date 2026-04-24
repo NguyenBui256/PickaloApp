@@ -7,6 +7,7 @@ import {
   Text,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -24,14 +25,7 @@ const INITIAL_REGION = {
   longitudeDelta: 0.1,
 };
 
-const MAP_CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: 'apps' as const },
-  { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' as const },
-  { id: 'badminton', name: 'Sân Cầu lông', icon: 'badminton' as const },
-  { id: 'football', name: 'Sân Bóng đá', icon: 'soccer-field' as const },
-];
-
-export const MapScreen: React.FC = () => {
+export const MapScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { destination, showRoute, targetVenueId } = route.params || {};
@@ -127,15 +121,16 @@ export const MapScreen: React.FC = () => {
     return COLORS.ERROR;
   };
 
+  const onMarkerPress = (venueId: string) => {
+    navigation.navigate('MapVenueDetailOverlay', { venueId });
+  };
+
   return (
     <View style={styles.container}>
-      {/* Map Background */}
       <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={INITIAL_REGION}
-        showsUserLocation
-        showsMyLocationButton={false}
       >
         {venues
           .map((venue) => {
@@ -166,15 +161,15 @@ export const MapScreen: React.FC = () => {
         )}
       </MapView>
 
-      {/* Floating UI: Search Bar */}
+      {/* Search Overlay UI */}
       <View style={styles.searchOverlay}>
         <View style={styles.searchBar}>
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.PRIMARY} />
           </View>
           <TextInput
-            placeholder="Tìm kiếm sân quanh đây."
             style={styles.searchInput}
+            placeholder="Tìm kiếm sân thể thao..."
             placeholderTextColor={COLORS.GRAY_MEDIUM}
           />
           <TouchableOpacity style={styles.searchIcon}>
@@ -182,37 +177,7 @@ export const MapScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Category Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsContainer}
-        >
-          {MAP_CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => setActiveCategory(cat.id)}
-              style={[
-                styles.chip,
-                activeCategory === cat.id && styles.activeChip,
-              ]}
-            >
-              <MaterialCommunityIcons name={cat.icon as any}
-                size={18}
-                color={activeCategory === cat.id ? COLORS.WHITE : COLORS.GRAY_MEDIUM}
-              />
-              <Text
-                style={[
-                  styles.chipText,
-                  activeCategory === cat.id && styles.activeChipText,
-                ]}
-              >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* Categories removed */}
       </View>
 
       {/* Floating UI: Map Controls */}
@@ -324,35 +289,6 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     paddingHorizontal: 10,
-  },
-  chipsScroll: {
-    marginTop: 15,
-  },
-  chipsContainer: {
-    paddingRight: 20,
-    gap: 10,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    height: 36,
-    borderRadius: 18,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 6,
-  },
-  activeChip: {
-    backgroundColor: COLORS.PRIMARY,
-  },
-  chipText: {
-    fontSize: 13,
-    color: COLORS.GRAY_MEDIUM,
-    fontWeight: '600',
   },
   activeChipText: {
     color: COLORS.WHITE,
