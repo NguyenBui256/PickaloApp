@@ -18,31 +18,76 @@ import { VenueCard } from '../../components/VenueCard';
 import { useAuthStore } from '../../store/auth-store';
 import { Alert } from 'react-native';
 
+import { locationService, Coordinates } from '../../services/location-service';
+
 export const SearchScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadVenues = async () => {
+  const loadVenues = async (currentLoc?: Coordinates | null) => {
     try {
       const res = await fetchVenues();
-      if (res?.items) setVenues(res.items);
+      if (res?.items) {
+        setVenues(res.items);
+        const loc = currentLoc || userLocation;
+        if (loc) {
+          calculateDistances(res.items, loc);
+        }
+      }
     } catch (error) {
       console.error('Error fetching venues:', error);
     }
   };
 
+  const calculateDistances = (items: any[], loc: Coordinates) => {
+    const updatedItems = items.map(v => {
+      if (v.location) {
+        const dist = locationService.calculateAirDistance(loc, {
+          latitude: v.location.lat,
+          longitude: v.location.lng
+        });
+        return { ...v, distance: `${dist.toFixed(1)} km` };
+      }
+      return v;
+    });
+    setVenues(updatedItems);
+  };
+
   useEffect(() => {
-    loadVenues();
+    loadVenues(); // Immediate fetch
+
+    const init = async () => {
+      try {
+        const loc = await locationService.getCurrentLocation();
+        setUserLocation(loc);
+      } catch (err) {
+        console.log('Location error:', err);
+      }
+    };
+    init();
   }, [user]);
+
+  useEffect(() => {
+    if (userLocation && venues.length > 0 && !venues.some(v => v.distance)) {
+      calculateDistances(venues, userLocation);
+    }
+  }, [userLocation]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await loadVenues();
+    try {
+      const loc = await locationService.getCurrentLocation();
+      setUserLocation(loc);
+      await loadVenues(loc);
+    } catch (err) {
+      await loadVenues();
+    }
     setRefreshing(false);
-  }, []);
+  }, [userLocation]);
 
   const handleToggleFavorite = async (id: string) => {
     if (!user) {

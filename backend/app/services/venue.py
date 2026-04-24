@@ -11,9 +11,9 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, func, and_, exists, literal
+from sqlalchemy import select, func, and_, exists, literal, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from geoalchemy2 import functions as geofunc
+from geoalchemy2 import functions as geofunc, Geometry, Geography
 
 from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
@@ -74,7 +74,9 @@ class VenueManagementService:
         limit: int = 20,
         user_id: uuid.UUID | None = None,
         only_favorites: bool = False,
-    ) -> tuple[list[Venue], int]:
+        user_lat: float | None = None,
+        user_lng: float | None = None,
+    ) -> tuple[list[Any], int]:
         """
         List venues with optional filters.
 
@@ -126,7 +128,26 @@ class VenueManagementService:
                 ).correlate(Venue)
 
         # Build base query
-        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
+        # Fetch coordinates directly using PostGIS functions for reliability
+        from geoalchemy2 import Geometry
+        from sqlalchemy import cast
+        
+        user_point = None
+        if user_lat is not None and user_lng is not None:
+            user_point = cast(geofunc.ST_SetSRID(geofunc.ST_MakePoint(user_lng, user_lat), 4326), Geography)
+
+        distance_col = literal(0.0).label("distance")
+        if user_point is not None:
+            distance_col = geofunc.ST_Distance(Venue.location, user_point).label("distance")
+
+        query = select(
+            Venue, 
+            is_fav_subquery.label("is_favorite"),
+            func.ST_Y(cast(Venue.location, Geometry)).label("lat"),
+            func.ST_X(cast(Venue.location, Geometry)).label("lng"),
+            distance_col
+        ).where(and_(*conditions))
+        
         count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
 
         if only_favorites and user_id:
@@ -138,13 +159,17 @@ class VenueManagementService:
         total = count_result.scalar()
 
         # Get paginated results
+        ordering = [Venue.created_at.desc()]
+        if user_point is not None:
+            ordering = [geofunc.ST_Distance(Venue.location, user_point).asc()]
+
         result = await self.session.execute(
             query
-            .order_by(Venue.created_at.desc())
+            .order_by(*ordering)
             .offset(skip)
             .limit(limit)
         )
-        # Results are tuples of (Venue, is_favorite_bool)
+        # Results are tuples of (Venue, is_favorite_bool, lat, lng, distance)
         venues_with_fav = list(result.all())
 
         return venues_with_fav, total
@@ -226,7 +251,7 @@ class VenueManagementService:
 
         return items, total
 
-    async def get_venue_by_id(self, venue_id: uuid.UUID) -> Venue | None:
+    async def get_venue_by_id(self, venue_id: uuid.UUID) -> tuple[Venue | None, float | None, float | None]:
         """
         Get venue by ID with full details.
 
@@ -234,15 +259,23 @@ class VenueManagementService:
             venue_id: Venue UUID
 
         Returns:
-            Venue instance or None if not found
+            Tuple of (Venue instance or None, latitude, longitude)
         """
+        from geoalchemy2 import Geometry
         result = await self.session.execute(
-            select(Venue).where(
+            select(
+                Venue,
+                func.ST_Y(func.cast(Venue.location, Geometry)).label("lat"),
+                func.ST_X(func.cast(Venue.location, Geometry)).label("lng"),
+            ).where(
                 Venue.id == venue_id,
                 Venue.deleted_at.is_(None),
             )
         )
-        return result.scalar_one_or_none()
+        row = result.first()
+        if row:
+            return row[0], row[1], row[2]
+        return None, None, None
 
     async def search_venues_by_radius(
         self,
@@ -256,7 +289,7 @@ class VenueManagementService:
         limit: int = 20,
         user_id: uuid.UUID | None = None,
         only_favorites: bool = False,
-    ) -> tuple[list[Venue], int]:
+    ) -> tuple[list[Any], int]:
         """
         Search venues within radius using PostGIS.
 
@@ -271,12 +304,17 @@ class VenueManagementService:
             max_price: Optional maximum price filter
             skip: Pagination offset
             limit: Results per page
+            user_lat: Optional user latitude for relative distance
+            user_lng: Optional user longitude for relative distance
 
         Returns:
             Tuple of (venues list, total count)
         """
         # Create point from coordinates
-        point = geofunc.ST_SetSRID(geofunc.ST_MakePoint(lng, lat), 4326)
+        point = cast(geofunc.ST_SetSRID(geofunc.ST_MakePoint(lng, lat), 4326), Geography)
+        
+        # Use provided user location if available, otherwise use search center
+        user_point = point
 
         # Build conditions
         conditions = [
@@ -308,7 +346,14 @@ class VenueManagementService:
                 ).correlate(Venue)
 
         # Build queries
-        query = select(Venue, is_fav_subquery.label("is_favorite")).where(and_(*conditions))
+        query = select(
+            Venue, 
+            is_fav_subquery.label("is_favorite"),
+            func.ST_Y(cast(Venue.location, Geometry)).label("lat"),
+            func.ST_X(cast(Venue.location, Geometry)).label("lng"),
+            geofunc.ST_Distance(Venue.location, user_point).label("distance")
+        ).where(and_(*conditions))
+        
         count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
 
         if only_favorites and user_id:
@@ -326,7 +371,7 @@ class VenueManagementService:
             .offset(skip)
             .limit(limit)
         )
-        # Results are tuples of (Venue, is_favorite_bool)
+        # Results are tuples of (Venue, is_favorite_bool, lat, lng, distance)
         venues_with_fav = list(result.all())
 
         return venues_with_fav, total

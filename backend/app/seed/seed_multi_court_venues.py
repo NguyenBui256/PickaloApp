@@ -18,28 +18,36 @@ from app.models.court import Court
 # Sample Pickleball Venue Templates
 PICKLEBALL_TEMPLATES = [
     {
-        "name": "ALOBO Pickleball Cầu Giấy",
-        "district": "Cau Giay",
-        "lat": 21.0300,
-        "lng": 105.7800,
+        "name": "Dai Kim Pickleball Complex",
+        "district": "Hoang Mai",
+        "lat": 20.9765721,
+        "lng": 105.816989,
+        "base_price": Decimal("220000"),
+        "description": "Tổ hợp sân Pickleball hiện đại tại Đại Kim, không gian rộng rãi, thoáng đãng.",
+    },
+    {
+        "name": "Sân bóng Pickleball Taydo Hoàng Mai",
+        "district": "Hoang Mai",
+        "lat": 20.9602687,
+        "lng": 105.8654085,
         "base_price": Decimal("200000"),
-        "description": "Trung tâm Pickleball hiện đại nhất Cầu Giấy với 4 sân tiêu chuẩn, đèn chiếu sáng ban đêm.",
+        "description": "Sân chơi chất lượng cao tại Yên Sở, phục vụ cộng đồng yêu thể thao khu vực Hoàng Mai.",
     },
     {
-        "name": "Pickleball Hub Tây Hồ",
-        "district": "Tay Ho",
-        "lat": 21.0700,
-        "lng": 105.8100,
-        "base_price": Decimal("250000"),
-        "description": "View hồ Tây thoáng mát, không khí trong lành, sân mặt cứng tiêu chuẩn chuyên nghiệp.",
+        "name": "Sân Pickleball-Tennis CT3BX2 Bắc Linh Đàm",
+        "district": "Hoang Mai",
+        "lat": 20.9665319,
+        "lng": 105.8232955,
+        "base_price": Decimal("210000"),
+        "description": "Sân kết hợp Pickleball và Tennis tại khu đô thị Bắc Linh Đàm, tiện nghi đầy đủ.",
     },
     {
-        "name": "Pro Pickleball Thanh Xuân",
+        "name": "Eco Pickleball Club",
         "district": "Thanh Xuan",
-        "lat": 20.9900,
-        "lng": 105.8100,
-        "base_price": Decimal("180000"),
-        "description": "Sân chơi lý tưởng cho người mới bắt đầu và vận động viên chuyên nghiệp.",
+        "lat": 20.9845678,
+        "lng": 105.8062376,
+        "base_price": Decimal("230000"),
+        "description": "Câu lạc bộ Pickleball phong cách xanh, gần gũi thiên nhiên, mặt sân tiêu chuẩn quốc tế.",
     }
 ]
 
@@ -69,8 +77,8 @@ async def ensure_courts_for_existing_venues(session: AsyncSession):
     await session.flush()
 
 async def create_new_pickleball_venues(session: AsyncSession):
-    """Create 3 new Pickleball venues with 4 courts each."""
-    print("Creating 3 new Pickleball venues...")
+    """Create new Pickleball venues with 4 courts each."""
+    print(f"Creating {len(PICKLEBALL_TEMPLATES)} new Pickleball venues...")
     
     # Get a merchant user to assign these venues to
     merchant_result = await session.execute(

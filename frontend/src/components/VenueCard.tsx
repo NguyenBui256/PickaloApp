@@ -47,7 +47,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
 }) => {
   // Derive display values từ BE fields
   const displayImage = images?.[0] || image || '';
-  const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '');
+  const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '06:00 - 22:00');
   const displayLogo = logo || 'https://via.placeholder.com/100';
 
   return (
@@ -89,7 +89,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
           <Image source={{ uri: displayLogo }} style={styles.logo} />
           <View style={styles.details}>
             <Text style={styles.name} numberOfLines={1}>{name || 'Tên sân'}</Text>
-            <Text style={styles.distance}>{distance}</Text>
+            {distance ? <Text style={styles.distance}>{distance}</Text> : null}
             <Text style={styles.address} numberOfLines={1}>{address || 'Chưa có địa chỉ'}</Text>
             <View style={styles.hoursRow}>
               <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />

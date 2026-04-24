@@ -112,6 +112,7 @@ export interface VenueResponse {
   description?: string | null;
   fullAddress?: string | null;
   location: Coordinates;
+  distance?: string;
   venue_type: VenueType;
   category?: string | null;
   logo?: string | null;
@@ -137,6 +138,7 @@ export interface VenueListItem {
   fullAddress?: string | null;
   venue_type: VenueType;
   location: Coordinates;
+  distance?: string;
   base_price_per_hour: number;
   is_verified: boolean;
   is_favorite: boolean;
