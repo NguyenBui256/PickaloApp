@@ -3,7 +3,7 @@
  * Uses React Navigation with native stack and bottom tabs.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -37,6 +37,7 @@ import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
 import { OwnerNavigator } from './OwnerNavigator';
 import { AdminNavigator } from './AdminNavigator';
+import { registerForPushNotificationsAsync } from '../utils/notification-helper';
 import { AdminAuditLogScreen } from '@screens/admin/admin-audit-log-screen';
 
 /**
@@ -212,6 +213,12 @@ function createPlaceholderScreen(name: string): React.JSX.Element {
  */
 export function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, user } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      registerForPushNotificationsAsync();
+    }
+  }, [isAuthenticated]);
 
   return (
     <NavigationContainer>
