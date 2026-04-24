@@ -50,36 +50,36 @@ export const AdminDashboardScreen = () => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statsGrid}>
-          <StatCard 
-            title="Tổng người dùng" 
-            value={stats?.total_users || 0} 
-            icon="account-group" 
-            color="#2196F3" 
+          <StatCard
+            title="Tổng người dùng"
+            value={stats?.total_users || 0}
+            icon="account-group"
+            color="#2196F3"
             onPress={() => navigation.navigate('Users')}
           />
-          <StatCard 
-            title="Chủ sân (Merchants)" 
-            value={stats?.total_merchants || 0} 
-            icon="storefront" 
-            color="#FF9800" 
+          <StatCard
+            title="Chủ sân (Merchants)"
+            value={stats?.total_merchants || 0}
+            icon="storefront"
+            color="#FF9800"
             onPress={() => navigation.navigate('Users')}
           />
-          <StatCard 
-            title="Số lượng sân" 
-            value={stats?.total_venues || 0} 
-            icon="stadium-variant" 
-            color="#4CAF50" 
+          <StatCard
+            title="Số lượng sân"
+            value={stats?.total_venues || 0}
+            icon="stadium-variant"
+            color="#4CAF50"
             onPress={() => navigation.navigate('Venues')}
           />
-          <StatCard 
-            title="Tổng đơn đặt" 
-            value={stats?.total_bookings || 0} 
-            icon="calendar-check" 
-            color="#9C27B0" 
+          <StatCard
+            title="Tổng đơn đặt"
+            value={stats?.total_bookings || 0}
+            icon="calendar-check"
+            color="#9C27B0"
           />
         </View>
 
-        <View style={styles.revenueCard}>
+        {/* <View style={styles.revenueCard}>
           <View style={styles.revenueHeader}>
             <MaterialCommunityIcons name="finance" size={24} color={COLORS.PRIMARY} />
             <Text style={styles.revenueLabel}>Tổng doanh thu hệ thống</Text>
@@ -91,7 +91,7 @@ export const AdminDashboardScreen = () => {
             <MaterialCommunityIcons name="trending-up" size={16} color="#4CAF50" />
             <Text style={styles.trendText}>+12.5% so với tháng trước</Text>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hành động nhanh</Text>

@@ -168,6 +168,30 @@ class Booking(BaseModel):
         return self.status in (BookingStatus.PENDING, BookingStatus.CONFIRMED)
 
     @property
+    def user_name(self) -> str:
+        """Get customer's full name."""
+        return self.user.full_name if self.user else "N/A"
+
+    @property
+    def venue_name(self) -> str:
+        """Get venue name."""
+        return self.venue.name if self.venue else "N/A"
+
+    @property
+    def start_time(self) -> Any:
+        """Get earliest start time from slots."""
+        if not self.slots:
+            return None
+        return min(slot.start_time for slot in self.slots)
+
+    @property
+    def end_time(self) -> Any:
+        """Get latest end time from slots."""
+        if not self.slots:
+            return None
+        return max(slot.end_time for slot in self.slots)
+
+    @property
     def can_be_approved(self) -> bool:
         """Check if merchant can approve this booking."""
         return self.status == BookingStatus.PENDING and self.is_paid

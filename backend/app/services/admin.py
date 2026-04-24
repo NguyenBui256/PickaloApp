@@ -6,9 +6,11 @@ and content moderation with audit logging.
 """
 
 import uuid
+from datetime import datetime
 from typing import Annotated
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from fastapi import Depends
 
 from app.models.user import User, UserRole
@@ -330,7 +332,7 @@ class AdminService:
         Returns:
             Tuple of (venues list, total count)
         """
-        query = select(Venue).where(Venue.deleted_at.is_(None))
+        query = select(Venue).options(selectinload(Venue.merchant)).where(Venue.deleted_at.is_(None))
 
         if is_verified is not None:
             query = query.where(Venue.is_verified.is_(is_verified))
@@ -454,7 +456,11 @@ class AdminService:
         Returns:
             Tuple of (bookings list, total count)
         """
-        query = select(Booking).where(Booking.deleted_at.is_(None))
+        query = select(Booking).options(
+            selectinload(Booking.user),
+            selectinload(Booking.venue),
+            selectinload(Booking.slots)
+        ).where(Booking.deleted_at.is_(None))
 
         if status:
             query = query.where(Booking.status == status)
@@ -623,7 +629,6 @@ class AdminService:
             raise ValueError("Post not found")
 
         # Soft delete
-        from datetime import datetime
         post.deleted_at = datetime.utcnow()
 
         # Log admin action
@@ -657,7 +662,6 @@ class AdminService:
             raise ValueError("Comment not found")
 
         # Soft delete
-        from datetime import datetime
         comment.deleted_at = datetime.utcnow()
 
         # Log admin action

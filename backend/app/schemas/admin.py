@@ -5,7 +5,7 @@ Pydantic models for admin operations, dashboard metrics, and audit logs.
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator

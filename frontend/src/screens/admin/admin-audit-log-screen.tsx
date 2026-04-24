@@ -13,9 +13,6 @@ export function AdminAuditLogScreen(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionTypeFilter, setActionTypeFilter] = useState<string | undefined>(undefined);
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
   const fetchLogs = async () => {
     try {
@@ -58,7 +55,7 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
             <Text style={[styles.typeBadgeText, { color: info.color }]}>{info.label}</Text>
           </View>
         </View>
-        
+
         <View style={styles.contentSection}>
           <Text style={styles.actionText}>
             <Text style={styles.boldText}>{item.action_type}</Text>
@@ -66,7 +63,7 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
               <Text style={styles.targetText}> • {item.target_type}</Text>
             )}
           </Text>
-          
+
           {item.reason && (
             <View style={styles.reasonBox}>
               <Text style={styles.reasonText} numberOfLines={2}>{item.reason}</Text>
@@ -100,8 +97,8 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={() => {
                 setRefreshing(true);
                 fetchLogs();
@@ -123,8 +120,8 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 }
 
 const FilterChip = ({ label, active, onPress }: any) => (
-  <TouchableOpacity 
-    style={[styles.filterChip, active && styles.filterChipActive]} 
+  <TouchableOpacity
+    style={[styles.filterChip, active && styles.filterChipActive]}
     onPress={onPress}
     activeOpacity={0.7}
   >
