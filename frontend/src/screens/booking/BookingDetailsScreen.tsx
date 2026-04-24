@@ -25,6 +25,28 @@ export const BookingDetailsScreen: React.FC = () => {
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
 
+  // Generate 14 days from today
+  const dates = useMemo(() => {
+    const list = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      list.push(d);
+    }
+    return list;
+  }, [today]);
+
+  const formatDate = (date: Date) => {
+    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const d = date.getDate();
+    const m = date.getMonth() + 1;
+    return {
+      dayName: days[date.getDay()],
+      dateStr: `${d < 10 ? '0' + d : d}/${m < 10 ? '0' + m : m}`,
+      fullStr: `${days[date.getDay()]}, ${d}/${m}/${date.getFullYear()}`
+    };
+  };
+
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     fetchVenueAvailability(venueId, today).then(setAvailability).catch(console.error);

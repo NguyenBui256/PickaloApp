@@ -114,7 +114,7 @@ export const updateVenueStatus = async (venueId: string, status: 'ACTIVE' | 'DEL
  */
 export const getReportedPosts = async (): Promise<AdminReportedPostItem[]> => {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(ADMIN_REPORTED_POSTS), 500);
+    setTimeout(() => resolve(ADMIN_REPORTED_POSTS as any), 500);
   });
 };
 

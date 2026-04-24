@@ -7,6 +7,7 @@ import {
   Text,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -23,78 +24,71 @@ const INITIAL_REGION = {
   longitudeDelta: 0.05,
 };
 
-const MAP_CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: 'apps' as const },
-  { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' as const },
-  { id: 'badminton', name: 'Sân Cầu lông', icon: 'badminton' as const },
-  { id: 'football', name: 'Sân Bóng đá', icon: 'soccer-field' as const },
-];
-
-export const MapScreen: React.FC = () => {
+export const MapScreen = () => {
   const navigation = useNavigation<any>();
-  const [activeCategory, setActiveCategory] = useState('all');
   const [venues, setVenues] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchVenues().then(res => {
-      if (res?.items) setVenues(res.items);
-    });
+    loadVenues();
   }, []);
 
-  const getMarkerColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'pickleball':
-        return '#3498DB'; // Blue
-      case 'cầu lông':
-      case 'badminton':
-        return COLORS.PRIMARY; // Green
-      case 'bóng đá':
-      case 'football':
-        return '#27AE60'; // Darker Green
-      case 'tennis':
-        return '#F39C12'; // Orange
-      default:
-        return COLORS.ERROR; // Red
+  const loadVenues = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
+      const res = await fetchVenues(params);
+      if (res?.items) {
+        setVenues(res.items);
+      }
+    } catch (error) {
+      console.error('Error loading map venues:', error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const onMarkerPress = (venueId: string) => {
+    navigation.navigate('MapVenueDetailOverlay', { venueId });
   };
 
   return (
     <View style={styles.container}>
-      {/* Map Background */}
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={INITIAL_REGION}
-        showsUserLocation
-        showsMyLocationButton={false}
       >
-        {venues.filter(v => activeCategory === 'all' || (v.category || '').toLowerCase().includes(activeCategory.toLowerCase())).map((venue) => (
+        {venues.map((venue) => (
           <Marker
             key={venue.id}
-            coordinate={{ latitude: venue.location.lat, longitude: venue.location.lng }}
+            coordinate={{
+              latitude: venue.lat || 0,
+              longitude: venue.lng || 0,
+            }}
             title={venue.name}
-            description={venue.address}
-            pinColor={getMarkerColor(venue.category)}
-            onPress={() => navigation.navigate('MapVenueDetailOverlay', { venueId: venue.id })}
+            onPress={() => onMarkerPress(venue.id)}
           />
         ))}
       </MapView>
 
-      {/* Floating UI: Search Bar */}
+      {/* Search Overlay UI */}
       <View style={styles.searchOverlay}>
         <View style={styles.searchBar}>
           <View style={styles.logoContainer}>
             <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.PRIMARY} />
           </View>
           <TextInput
-            placeholder="Tìm kiếm sân quanh đây."
             style={styles.searchInput}
+            placeholder="Tìm kiếm sân thể thao..."
             placeholderTextColor={COLORS.GRAY_MEDIUM}
           />
           <TouchableOpacity style={styles.searchIcon}>
             <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
           </TouchableOpacity>
         </View>
+
+        {/* Categories removed */}
       </View>
 
       {/* Floating UI: Map Controls */}
@@ -112,6 +106,12 @@ export const MapScreen: React.FC = () => {
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={COLORS.WHITE} />
         </TouchableOpacity>
       </View>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+        </View>
+      )}
     </View>
   );
 };
@@ -156,35 +156,6 @@ const styles = StyleSheet.create({
   searchIcon: {
     paddingHorizontal: 10,
   },
-  chipsScroll: {
-    marginTop: 15,
-  },
-  chipsContainer: {
-    paddingRight: 20,
-    gap: 10,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    height: 36,
-    borderRadius: 18,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 6,
-  },
-  activeChip: {
-    backgroundColor: COLORS.PRIMARY,
-  },
-  chipText: {
-    fontSize: 13,
-    color: COLORS.GRAY_MEDIUM,
-    fontWeight: '600',
-  },
   activeChipText: {
     color: COLORS.WHITE,
   },
@@ -223,5 +194,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
   },
 });

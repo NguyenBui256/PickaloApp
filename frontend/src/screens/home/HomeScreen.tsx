@@ -15,10 +15,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import COLORS from '@theme/colors';
-import { CategoryItem } from '../../components/CategoryItem';
 import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
-import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
+import { QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
 import { useAuthStore } from '../../store/auth-store';
 
@@ -29,17 +28,32 @@ export const HomeScreen: React.FC = () => {
   const [favoriteVenues, setFavoriteVenues] = useState<string[]>([]);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
-  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Tất cả');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchVenues().then(res => {
+    loadVenues();
+  }, [activeQuickFilter]);
+
+  const loadVenues = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
+
+      if (activeQuickFilter === 'Bãi đỗ xe') params.has_parking = true;
+      if (activeQuickFilter === 'Có đèn') params.has_lights = true;
+
+      const res = await fetchVenues(params);
       if (res?.items) {
         setVenues(res.items);
         setFavoriteVenues(res.items.filter((v: any) => v.isFavorite).map((v: any) => v.id));
       }
-    });
-  }, []);
+    } catch (error) {
+      console.error('Error loading home venues:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFavorite = (id: string) => {
     setFavoriteVenues(prev =>
@@ -70,7 +84,7 @@ export const HomeScreen: React.FC = () => {
         <LinearGradient colors={COLORS.GRADIENT_GREEN} style={styles.header}>
           <SafeAreaView>
             <View style={styles.headerTop}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.userInfo}
                 onPress={() => navigation.navigate('Profile')}
               >
@@ -127,8 +141,8 @@ export const HomeScreen: React.FC = () => {
             contentContainerStyle={styles.quickFilters}
           >
             {QUICK_FILTERS.map((filter, index) => (
-              <TouchableOpacity 
-                key={index} 
+              <TouchableOpacity
+                key={index}
                 style={[
                   styles.filterPill,
                   activeQuickFilter === filter && { backgroundColor: COLORS.PRIMARY }
@@ -146,6 +160,9 @@ export const HomeScreen: React.FC = () => {
 
         {/* Main Content Area */}
         <View style={styles.content}>
+          {/* Categories Section */}
+          {/* Categories Section removed */}
+
           {/* Venue List */}
           <View style={styles.venueList}>
             {venues.map((venue) => (
@@ -301,9 +318,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-  },
-  categoriesContainer: {
-    paddingBottom: 20,
   },
   filterBanner: {
     backgroundColor: COLORS.PRIMARY,

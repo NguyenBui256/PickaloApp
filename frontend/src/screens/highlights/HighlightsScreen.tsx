@@ -14,13 +14,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Alert
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { RECRUITMENT_POSTS, MY_BOOKINGS_FOR_POST } from '../../constants/mock-data';
 
-const { width, height } = Dimensions.get('window');
 
 export const HighlightsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -93,7 +93,7 @@ export const HighlightsScreen: React.FC = () => {
   };
 
   const handleReportPost = (postId: string) => {
-    alert('Cảm ơn bạn! Chúng tôi đã ghi nhận báo cáo và sẽ xem xét bài viết này.');
+    Alert.alert('Cảm ơn bạn! Chúng tôi đã ghi nhận báo cáo và sẽ xem xét bài viết này.');
   };
 
   const handleVenuePress = (venueId: string) => {
@@ -120,7 +120,7 @@ export const HighlightsScreen: React.FC = () => {
       <Text style={styles.postContent}>{post.content}</Text>
 
       {/* Associated Venue Info */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.venueInfoCard}
         onPress={() => handleVenuePress(post.venue_id)}
         activeOpacity={0.8}
@@ -175,13 +175,13 @@ export const HighlightsScreen: React.FC = () => {
         </View>
 
         {/* Create Post Bar */}
-        <TouchableOpacity 
-          style={styles.createPostBar} 
+        <TouchableOpacity
+          style={styles.createPostBar}
           onPress={() => setModalVisible(true)}
         >
-          <Image 
-            source={{ uri: 'https://i.pravatar.cc/150?u=long' }} 
-            style={styles.avatarSmall} 
+          <Image
+            source={{ uri: 'https://i.pravatar.cc/150?u=long' }}
+            style={styles.avatarSmall}
           />
           <View style={styles.fakeInput}>
             <Text style={styles.fakeInputText}>Bạn đang cần tuyển thành viên?</Text>
@@ -201,8 +201,8 @@ export const HighlightsScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
+        <Pressable
+          style={styles.modalOverlay}
           onPress={() => setModalVisible(false)}
         >
           <KeyboardAvoidingView
@@ -215,7 +215,7 @@ export const HighlightsScreen: React.FC = () => {
                   <Text style={styles.cancelText}>Hủy</Text>
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Tạo bài đăng mới</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={handleCreatePost}
                   disabled={!newPostContent.trim()}
                 >
@@ -235,7 +235,7 @@ export const HighlightsScreen: React.FC = () => {
 
                 <Text style={styles.sectionLabel}>Gắn sân bạn đã đặt:</Text>
                 {MY_BOOKINGS_FOR_POST.map((booking) => (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     key={booking.id}
                     style={[
                       styles.bookingOption,
@@ -243,10 +243,10 @@ export const HighlightsScreen: React.FC = () => {
                     ]}
                     onPress={() => setSelectedBooking(booking)}
                   >
-                    <MaterialCommunityIcons 
-                      name={selectedBooking?.id === booking.id ? "checkbox-marked-circle" : "circle-outline"} 
-                      size={20} 
-                      color={selectedBooking?.id === booking.id ? COLORS.PRIMARY : COLORS.GRAY_MEDIUM} 
+                    <MaterialCommunityIcons
+                      name={selectedBooking?.id === booking.id ? "checkbox-marked-circle" : "circle-outline"}
+                      size={20}
+                      color={selectedBooking?.id === booking.id ? COLORS.PRIMARY : COLORS.GRAY_MEDIUM}
                     />
                     <View style={{ marginLeft: 10 }}>
                       <Text style={styles.bookingVenueName}>{booking.venue_name}</Text>

@@ -24,12 +24,23 @@ export const VenueRegistrationScreen: React.FC = () => {
     type: 'Pickleball',
     price: '',
     description: '',
+    lat: 0,
+    lng: 0,
   });
   const [hasLicense, setHasLicense] = useState(false);
 
+  const handleLocationSelected = (location: { lat: number; lng: number, address: string }) => {
+    setFormData({
+      ...formData,
+      lat: location.lat,
+      lng: location.lng,
+      address: location.address || formData.address,
+    });
+  };
+
   const handleRegister = () => {
-    if (!formData.name || !formData.address || !formData.price) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc (*)');
+    if (!formData.name || !formData.address || !formData.price || !formData.lat) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc và chọn vị trí trên bản đồ (*)');
       return;
     }
     Alert.alert('Thành công', 'Hồ sơ đăng ký sân của bạn đã được gửi và đang chờ duyệt.');
@@ -70,11 +81,25 @@ export const VenueRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.label}>Vị trí trên bản đồ</Text>
-          <View style={styles.mapPlaceholder}>
-            <MaterialCommunityIcons name="map-marker-radius" size={40} color={COLORS.PRIMARY} />
-            <Text style={styles.mapText}>Bấm để chọn vị trí trên bản đồ</Text>
-          </View>
+          <Text style={styles.label}>Vị trí trên bản đồ (*)</Text>
+          <TouchableOpacity 
+            style={[styles.mapPlaceholder, formData.lat !== 0 && styles.mapSelected]}
+            onPress={() => navigation.navigate('VenueLocationPicker', {
+              onLocationSelected: handleLocationSelected,
+              initialLocation: formData.lat !== 0 ? { lat: formData.lat, lng: formData.lng, address: formData.address } : null
+            })}
+          >
+            <MaterialCommunityIcons 
+              name={formData.lat !== 0 ? "map-check" : "map-marker-radius"} 
+              size={40} 
+              color={formData.lat !== 0 ? COLORS.PRIMARY : COLORS.GRAY_MEDIUM} 
+            />
+            <Text style={[styles.mapText, formData.lat !== 0 && styles.mapTextSelected]}>
+              {formData.lat !== 0 
+                ? `Đã chọn: ${formData.lat.toFixed(4)}, ${formData.lng.toFixed(4)}` 
+                : "Bấm để chọn vị trí trên bản đồ"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.formSection}>
@@ -89,14 +114,14 @@ export const VenueRegistrationScreen: React.FC = () => {
             <View style={styles.mockImage} />
           </ScrollView>
 
-          <TouchableOpacity 
-            style={styles.licenseUpload} 
+          <TouchableOpacity
+            style={styles.licenseUpload}
             onPress={() => setHasLicense(!hasLicense)}
           >
-            <MaterialCommunityIcons 
-              name={hasLicense ? 'file-check' : 'file-upload-outline'} 
-              size={24} 
-              color={hasLicense ? '#388E3C' : COLORS.GRAY_MEDIUM} 
+            <MaterialCommunityIcons
+              name={hasLicense ? 'file-check' : 'file-upload-outline'}
+              size={24}
+              color={hasLicense ? '#388E3C' : COLORS.GRAY_MEDIUM}
             />
             <Text style={[styles.licenseText, hasLicense && { color: '#388E3C' }]}>
               {hasLicense ? 'Đã tải lên giấy phép kinh doanh' : 'Tải lên giấy phép kinh doanh (nếu có)'}
@@ -162,6 +187,15 @@ const styles = StyleSheet.create({
   mapText: {
     fontSize: 14,
     color: COLORS.GRAY_MEDIUM,
+  },
+  mapSelected: {
+    backgroundColor: '#E8F5E9',
+    borderColor: COLORS.PRIMARY,
+    borderStyle: 'solid',
+  },
+  mapTextSelected: {
+    color: COLORS.PRIMARY,
+    fontWeight: 'bold',
   },
   imageScroll: {
     flexDirection: 'row',

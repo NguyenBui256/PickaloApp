@@ -45,10 +45,12 @@ export const LoginScreen: React.FC = () => {
     const login = useAuthStore.getState().login;
     setIsLoading(true);
 
-    // Chuẩn hóa số điện thoại để khớp với backend format (+84...)
-    let normalizedPhone = phoneNumber;
+    // Chuẩn hóa số điện thoại thông minh hơn
+    let normalizedPhone = phoneNumber.replace(/\s+/g, ''); // Xóa khoảng trắng
     if (normalizedPhone.startsWith('0')) {
       normalizedPhone = '+84' + normalizedPhone.slice(1);
+    } else if (normalizedPhone.startsWith('84') && !normalizedPhone.startsWith('+84')) {
+      normalizedPhone = '+' + normalizedPhone;
     } else if (normalizedPhone.length > 0 && !normalizedPhone.startsWith('+')) {
       normalizedPhone = '+84' + normalizedPhone;
     }
@@ -67,10 +69,8 @@ export const LoginScreen: React.FC = () => {
       await AsyncStorage.setItem('@alobo_refresh_token', response.refresh_token);
 
       // Update auth store with real user data and tokens
+      // AppNavigator will automatically switch to Main stack based on isAuthenticated
       login(response.user as any, response.access_token, response.refresh_token);
-
-      // Navigate to main app
-      navigation.navigate('Main');
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Đăng nhập thất bại', 'Số điện thoại hoặc mật khẩu không chính xác.');
