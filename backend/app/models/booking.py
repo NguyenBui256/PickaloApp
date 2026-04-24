@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.models.venue import Venue
     from app.models.venue_services import VenueService
     from app.models.court import Court
+    from app.models.match import Match
 
 
 class BookingStatus(str, Enum):
@@ -41,19 +42,15 @@ class Booking(BaseModel):
     Attributes:
         user_id: Customer who made the booking
         venue_id: Venue being booked
-        booking_date: Date of the booking
-        start_time: Start time slot
-        end_time: End time slot
-        duration_minutes: Total booking duration
-        base_price: Price before multipliers
-        price_factor: Dynamic pricing multiplier applied
-        service_fee: Platform service fee
-        total_price: Final price pay
+        booking_date: Reference date for the booking
+        total_price: Final price (aggregated from slots and services)
         status: Current booking state
         payment_method: Payment gateway used
         payment_id: Transaction ID from payment provider
         paid_at: Payment completion timestamp
         notes: Special requests or notes
+        cancelled_at: Timestamp of cancellation
+        cancelled_by: Who cancelled (USER, MERCHANT, ADMIN)
     """
 
     # Relationships
@@ -103,6 +100,10 @@ class Booking(BaseModel):
         DateTime(timezone=True),
         nullable=True,
     )
+    payment_proof: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
 
     # Additional info
     notes: Mapped[str | None] = mapped_column(
@@ -143,6 +144,12 @@ class Booking(BaseModel):
         back_populates="booking",
         lazy="selectin",
         cascade="all, delete-orphan",
+    )
+    match: Mapped["Match"] = relationship(
+        "Match",
+        back_populates="booking",
+        lazy="selectin",
+        uselist=False,
     )
 
     @property

@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.security import verify_token
 from app.models.user import User, UserRole
 from app.models.venue import Venue
+from app.services.storage import StorageService
 
 # HTTP Bearer token scheme for authentication
 security = HTTPBearer(auto_error=False)
@@ -25,22 +27,48 @@ security = HTTPBearer(auto_error=False)
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
+async def get_current_user_from_token(token: str, session: AsyncSession) -> User:
+    """Helper for WebSocket authentication."""
+    user_id = verify_token(token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    result = await session.execute(
+        select(User).where(User.id == UUID(user_id), User.deleted_at.is_(None))
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
+        
+    return user
+async def get_storage_service() -> StorageService:
+    """Get storage service instance."""
+    return StorageService()
+
+
+# Type alias for storage service dependency
+StorageServiceDep = Annotated[StorageService, Depends(get_storage_service)]
+
+
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     session: DBSession,
 ) -> User:
     """
     Dependency to get current authenticated User from JWT token.
-
-    Args:
-        credentials: HTTP Bearer credentials from Authorization header
-        session: Database session
-
-    Returns:
-        Authenticated User instance
-
-    Raises:
-        HTTPException: If token is missing, invalid, or user not found
     """
     if credentials is None:
         raise HTTPException(
@@ -49,15 +77,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = credentials.credentials
-    user_id = verify_token(token)
-
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return await get_current_user_from_token(credentials.credentials, session)
 
     # Get user from database
     result = await session.execute(
@@ -94,7 +114,7 @@ async def get_current_active_user(
     Raises:
         HTTPException: If user is not verified
     """
-    if not current_user.is_verified:
+    if not current_user.is_verified and settings.environment == "production":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Phone number not verified. Please verify your account.",

@@ -48,6 +48,13 @@ export type BookingStatus =
 export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
 
 // ==========================================
+// MATCH & CHAT ENUMS
+// ==========================================
+export type MatchStatus = 'OPEN' | 'FULL' | 'CANCELLED' | 'CLOSED';
+export type MatchSkillLevel = 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+// ==========================================
 // COMMON SCHEMAS
 // ==========================================
 
@@ -83,9 +90,10 @@ export interface VenueCreateRequest {
   coordinates: Coordinates;
   venue_type: VenueType;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
-  base_price_per_hour: number;
+  base_price_per_hour?: number | null;
 }
 
 /** Backend: VenueUpdate — PUT /venues/merchant/{id} */
@@ -96,6 +104,7 @@ export interface VenueUpdateRequest {
   coordinates?: Coordinates | null;
   description?: string | null;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
   base_price_per_hour?: number | null;
@@ -112,15 +121,17 @@ export interface VenueResponse {
   description?: string | null;
   fullAddress?: string | null;
   location: Coordinates;
+  distance?: string;
   venue_type: VenueType;
   category?: string | null;
   logo?: string | null;
   rating?: number | null;
   bookingLink?: string | null;
   images?: string[] | null;
+  cover_image?: string | null;
   operating_hours?: OperatingHours | null;
   amenities?: string[] | null;
-  base_price_per_hour: number;
+  base_price_per_hour?: number | null;
   is_active: boolean;
   is_verified: boolean;
   is_favorite: boolean;
@@ -137,10 +148,11 @@ export interface VenueListItem {
   fullAddress?: string | null;
   venue_type: VenueType;
   location: Coordinates;
-  base_price_per_hour: number;
-  is_verified: boolean;
-  is_favorite: boolean;
+  base_price_per_hour?: number | null;
+  is_verified: bool;
+  isFavorite?: boolean; // FE-only field
   images?: string[] | null;
+  cover_image?: string | null;
   amenities?: string[] | null;
   logo?: string | null;
   bookingLink?: string | null;
@@ -198,22 +210,38 @@ export interface VenueServiceResponse {
   created_at: string;
 }
 
-/** Backend: PricingSlotCreate — POST /venues/{id}/pricing */
 export interface PricingSlotCreateRequest {
+  title?: string | null;
   day_type: DayType;
+  days_of_week?: number[] | null; // 0=Mon, ..., 6=Sun
   start_time: string; // HH:MM
   end_time: string;   // HH:MM
-  price_factor?: number; // 0.1 - 3.0, default 1.0
+  price: number;
+  is_default?: boolean;
 }
 
-/** Backend: PricingSlotResponse — GET/POST /venues/{id}/pricing */
+export interface PricingBulkCreateRequest {
+  title?: string | null;
+  days_of_week: number[];
+  slots: {
+    start_time: string;
+    end_time: string;
+    price: number;
+    is_default: boolean;
+  }[];
+  day_type?: DayType;
+}
+
 export interface PricingSlotResponse {
-  id: number;
+  id: string;  // UUID as string
   venue_id: string;
+  title?: string | null;
   day_type: DayType;
+  days_of_week?: number[] | null;
   start_time: string;
   end_time: string;
-  price_factor: number;
+  price: number;
+  is_default: boolean;
 }
 
 /** Backend: TimeSlot (venue availability) — trong AvailabilityResponse */
@@ -221,6 +249,7 @@ export interface VenueTimeSlot {
   start_time: string; // HH:MM
   end_time: string;   // HH:MM
   available: boolean;
+  price: number;
 }
 
 /** Backend: CourtAvailability — lịch trống của một sân con */
@@ -237,6 +266,37 @@ export interface AvailabilityResponse {
   courts: CourtAvailability[];
   open_time: string;
   close_time: string;
+}
+
+export interface CourtResponse {
+  id: string;
+  venue_id: string;
+  name: string;
+  is_active: boolean;
+  images?: string[] | null;
+}
+
+// ==========================================
+// PRICING PROFILES
+// ==========================================
+
+export interface PricingProfileSlotResponse {
+  id: string;
+  day_type: DayType;
+  days_of_week?: number[] | null;
+  start_time: string;
+  end_time: string;
+  price: number;
+  is_default: boolean;
+}
+
+export interface PricingProfileResponse {
+  id: string;
+  merchant_id: string;
+  name: string;
+  description: string | null;
+  slots: PricingProfileSlotResponse[];
+  created_at: string;
 }
 
 // ==========================================
@@ -263,6 +323,9 @@ export interface BookingCreateRequest {
   slots: BookingSlotInfo[];
   services?: BookingServiceRequest[] | null;
   notes?: string | null; // max 1000 chars
+  payment_proof?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
 }
 
 /** Backend: BookingPricePreview — POST /bookings/price-calculation */
@@ -273,12 +336,12 @@ export interface BookingPricePreviewRequest {
   services?: BookingServiceRequest[] | null;
 }
 
-/** Backend: PriceBreakdown — phần chi tiết giá */
 export interface PriceBreakdown {
-  base_price: number;
   duration_hours: number;
-  price_factor: number;
   hourly_price: number;
+  subtotal: number;
+  service_fee: number;
+  total: number;
 }
 
 export interface BookingSlotResponse {
@@ -326,8 +389,11 @@ export interface BookingResponse {
   created_at: string;
   venue_name?: string | null;
   venue_address?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   services: BookingServiceItem[];
   slots: BookingSlotResponse[];
+  payment_proof?: string | null;
   review_id?: string | null;
 }
 
@@ -338,13 +404,17 @@ export interface BookingListItem {
   venue_name: string | null;
   venue_address: string | null;
   booking_date: string;
-  start_time: string;
-  end_time: string;
   total_price: number;
   status: BookingStatus;
   is_paid: boolean;
   is_cancelable: boolean;
   created_at: string;
+  payment_proof?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  court_name?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   review_id?: string | null;
 }
 
@@ -407,6 +477,19 @@ export interface MerchantVenueStats {
 /** Backend: MerchantStatsResponse — GET /merchant/bookings/stats */
 export interface MerchantStatsResponse {
   venues: MerchantVenueStats[];
+  currency: string;
+}
+
+export interface RevenueTrendItem {
+  date: string;
+  revenue: number;
+  booking_count: number;
+}
+
+export interface RevenueTrendResponse {
+  items: RevenueTrendItem[];
+  total_revenue: number;
+  total_bookings: number;
   currency: string;
 }
 

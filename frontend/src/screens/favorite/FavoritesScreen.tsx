@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,17 +18,26 @@ import { VenueCard } from '../../components/VenueCard';
 import { VenueListItem } from '../../types/api-types';
 import { useAuthStore } from '../../store/auth-store';
 
+import { locationService, Coordinates } from '../../services/location-service';
+
 export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<VenueListItem[]>([]);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadFavorites = async () => {
+  const loadFavorites = async (currentLoc?: Coordinates | null) => {
     try {
       const res = await fetchFavoriteVenues();
-      setVenues(res.items);
+      if (res?.items) {
+        setVenues(res.items);
+        const loc = currentLoc || userLocation;
+        if (loc) {
+          calculateDistances(res.items, loc);
+        }
+      }
     } catch (error) {
       console.error('Error fetching favorites:', error);
     } finally {
@@ -37,11 +46,41 @@ export const FavoritesScreen: React.FC = () => {
     }
   };
 
+  const calculateDistances = (items: VenueListItem[], loc: Coordinates) => {
+    const updatedItems = items.map(v => {
+      if (v.location) {
+        const dist = locationService.calculateAirDistance(loc, {
+          latitude: v.location.lat,
+          longitude: v.location.lng
+        });
+        return { ...v, distance: `${dist.toFixed(1)} km` };
+      }
+      return v;
+    });
+    setVenues(updatedItems);
+  };
+
   useFocusEffect(
     useCallback(() => {
-      loadFavorites();
+      loadFavorites(); // Fast load
+
+      const init = async () => {
+        try {
+          const loc = await locationService.getCurrentLocation();
+          setUserLocation(loc);
+        } catch (err) {
+          console.log('Location error:', err);
+        }
+      };
+      init();
     }, [])
   );
+
+  useEffect(() => {
+    if (userLocation && venues.length > 0 && !venues.some(v => v.distance)) {
+      calculateDistances(venues, userLocation);
+    }
+  }, [userLocation]);
 
   const handleToggleFavorite = async (id: string) => {
     try {
@@ -55,9 +94,15 @@ export const FavoritesScreen: React.FC = () => {
     }
   };
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadFavorites();
+    try {
+      const loc = await locationService.getCurrentLocation();
+      setUserLocation(loc);
+      await loadFavorites(loc);
+    } catch (err) {
+      await loadFavorites();
+    }
   };
 
   if (!user) {

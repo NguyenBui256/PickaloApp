@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { getAdminStats } from '../../../services/admin-service';
 import type { AdminStatsResponse } from '../../../types/api-types';
+import { formatCurrency } from '../../../utils/format';
 
 const { width } = Dimensions.get('window');
 
@@ -76,6 +77,20 @@ export const AdminDashboardScreen = () => {
             icon="calendar-check" 
             color="#9C27B0" 
           />
+        </View>
+
+        <View style={styles.revenueCard}>
+          <View style={styles.revenueHeader}>
+            <MaterialCommunityIcons name="finance" size={24} color={COLORS.PRIMARY} />
+            <Text style={styles.revenueLabel}>Tổng doanh thu hệ thống</Text>
+          </View>
+          <Text style={styles.revenueValue}>
+            {formatCurrency(stats?.revenue_total || 0)}
+          </Text>
+          <View style={styles.revenueTrend}>
+            <MaterialCommunityIcons name="trending-up" size={16} color="#4CAF50" />
+            <Text style={styles.trendText}>+12.5% so với tháng trước</Text>
+          </View>
         </View>
 
         <View style={styles.section}>

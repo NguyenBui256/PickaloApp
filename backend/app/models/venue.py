@@ -105,9 +105,13 @@ class Venue(BaseModel):
         Text,
         nullable=True,
     )
+    cover_image: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
 
     # JSON fields for flexible data
-    images: Mapped[dict | None] = mapped_column(
+    images: Mapped[list | None] = mapped_column(
         JSON,
         nullable=True,
     )
@@ -115,15 +119,24 @@ class Venue(BaseModel):
         JSON,
         nullable=True,
     )
-    amenities: Mapped[dict | None] = mapped_column(
+    amenities: Mapped[list | None] = mapped_column(
         JSON,
         nullable=True,
     )
 
+    logo: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    booking_link: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
     # Pricing
-    base_price_per_hour: Mapped[Decimal] = mapped_column(
+    base_price_per_hour: Mapped[Decimal | None] = mapped_column(
         Numeric(10, 2),
-        nullable=False,
+        nullable=True,
     )
 
     # Status and verification
@@ -194,9 +207,17 @@ class Venue(BaseModel):
         if self.location is not None:
             from geoalchemy2.shape import to_shape
             try:
+                # Standard GeoAlchemy2 way
                 return to_shape(self.location).y
             except Exception:
-                return None
+                # Fallback: try to parse from string if it's not a WKBElement
+                try:
+                    loc_str = str(self.location)
+                    if 'POINT' in loc_str:
+                        # Extract from 'POINT(lng lat)'
+                        return float(loc_str.split('(')[1].split(')')[0].split(' ')[1])
+                except Exception:
+                    return None
         return None
 
     @property
@@ -205,9 +226,17 @@ class Venue(BaseModel):
         if self.location is not None:
             from geoalchemy2.shape import to_shape
             try:
+                # Standard GeoAlchemy2 way
                 return to_shape(self.location).x
             except Exception:
-                return None
+                # Fallback: try to parse from string if it's not a WKBElement
+                try:
+                    loc_str = str(self.location)
+                    if 'POINT' in loc_str:
+                        # Extract from 'POINT(lng lat)'
+                        return float(loc_str.split('(')[1].split(')')[0].split(' ')[0])
+                except Exception:
+                    return None
         return None
 
     def to_dict(self) -> dict[str, Any]:
@@ -249,6 +278,15 @@ class PricingTimeSlot(BaseModel):
         String(20),
         nullable=False,
     )
+    # New: days of week (0=Mon, ..., 6=Sun)
+    days_of_week: Mapped[list[int] | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    title: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
     start_time: Mapped[str] = mapped_column(
         Time,
         nullable=False,
@@ -258,10 +296,16 @@ class PricingTimeSlot(BaseModel):
         nullable=False,
     )
 
-    # Price multiplier (1.0 = base price, 1.5 = 50% premium)
-    price_factor: Mapped[Decimal] = mapped_column(
-        Numeric(3, 2),
-        default=Decimal("1.0"),
+    # Price amount (e.g., 500000 VND)
+    price: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
+
+    # Whether this is the default price for the day type
+    is_default: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
 
@@ -276,7 +320,7 @@ class PricingTimeSlot(BaseModel):
         """String representation for debugging."""
         return (
             f"PricingTimeSlot(id={self.id!r}, day_type={self.day_type.value}, "
-            f"factor={self.price_factor})"
+            f"price={self.price}, is_default={self.is_default})"
         )
 
 

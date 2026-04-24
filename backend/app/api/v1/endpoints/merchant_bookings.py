@@ -22,6 +22,7 @@ from app.schemas.booking import (
     BookingApproveReject,
     BookingCancel,
     MerchantStatsResponse,
+    RevenueTrendResponse,
 )
 from app.services.booking import BookingService, get_booking_service
 
@@ -40,12 +41,28 @@ async def get_merchant_booking_stats(
     return MerchantStatsResponse(**stats)
 
 
+@router.get("/revenue-trend", response_model=RevenueTrendResponse)
+async def get_merchant_revenue_trend(
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+    days: int = Query(7, ge=1, le=30),
+) -> RevenueTrendResponse:
+    """
+    Get daily revenue trend for the merchant.
+    """
+    trend = await booking_service.get_merchant_revenue_trend(
+        merchant_id=current_user.id,
+        days=days,
+    )
+    return RevenueTrendResponse(**trend)
+
+
 @router.get("", response_model=BookingListResponse)
 async def list_merchant_bookings(
     current_user: Annotated[User, Depends(get_current_merchant)],
     session: DBSession,
     booking_service: Annotated[BookingService, Depends(get_booking_service)],
-    status: str | None = None,
+    status_query: Annotated[str | None, Query(alias="status")] = None,
     venue_id: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
@@ -59,13 +76,13 @@ async def list_merchant_bookings(
     """
     # Parse status if provided
     status_filter = None
-    if status:
+    if status_query:
         try:
-            status_filter = BookingStatus(status)
+            status_filter = BookingStatus(status_query)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status: {status}",
+                status_code=400,
+                detail=f"Invalid status: {status_query}",
             )
 
     # Parse venue_id if provided
@@ -247,7 +264,7 @@ async def get_venue_bookings(
     current_user: Annotated[User, Depends(get_current_merchant)],
     booking_service: Annotated[BookingService, Depends(get_booking_service)],
     booking_date: date | None = None,
-    status: str | None = None,
+    status_query: Annotated[str | None, Query(alias="status")] = None,
 ) -> list[BookingListItem]:
     """
     Get bookings for a specific venue.
@@ -256,13 +273,13 @@ async def get_venue_bookings(
     """
     # Parse status if provided
     status_filter = None
-    if status:
+    if status_query:
         try:
-            status_filter = BookingStatus(status)
+            status_filter = BookingStatus(status_query)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status: {status}",
+                status_code=400,
+                detail=f"Invalid status: {status_query}",
             )
 
     bookings = await booking_service.get_venue_bookings(
@@ -314,6 +331,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         payment_method=booking.payment_method,
         payment_id=booking.payment_id,
         paid_at=booking.paid_at.isoformat() if booking.paid_at else None,
+        payment_proof=booking.payment_proof,
         notes=booking.notes,
         cancelled_at=booking.cancelled_at.isoformat() if booking.cancelled_at else None,
         cancelled_by=booking.cancelled_by,
@@ -321,6 +339,8 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         updated_at=booking.updated_at.isoformat(),
         venue_name=booking.venue.name if hasattr(booking, 'venue') and booking.venue else None,
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
+        customer_name=booking.user.full_name if hasattr(booking, 'user') and booking.user else None,
+        customer_phone=booking.user.phone if hasattr(booking, 'user') and booking.user else None,
         slots=slots,
         services=services,
     )
@@ -347,4 +367,8 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         created_at=booking.created_at.isoformat(),
         customer_name=customer_name,
         customer_phone=customer_phone,
+        payment_proof=booking.payment_proof,
+        start_time=booking.slots[0].start_time.strftime("%H:%M") if booking.slots and booking.slots[0].start_time else None,
+        end_time=booking.slots[0].end_time.strftime("%H:%M") if booking.slots and booking.slots[0].end_time else None,
+        court_name=booking.slots[0].court.name if booking.slots and hasattr(booking.slots[0], 'court') and booking.slots[0].court else None,
     )

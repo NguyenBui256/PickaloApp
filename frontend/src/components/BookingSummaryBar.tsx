@@ -51,7 +51,7 @@ export const BookingSummaryBar: React.FC<BookingSummaryBarProps> = ({
         <View style={styles.infoRow}>
           <View style={styles.leftInfo}>
             <Text style={styles.summaryLabel}>Tổng giờ: <Text style={styles.boldText}>{totalHours}</Text></Text>
-            <Text style={styles.summaryLabel}>Tổng tiền: <Text style={styles.priceText}>{totalPrice} đ</Text></Text>
+            <Text style={styles.summaryLabel}>Tổng tiền: <Text style={styles.priceText}>{totalPrice}</Text></Text>
           </View>
 
           <TouchableOpacity style={styles.nextBtn} onPress={onNext}>

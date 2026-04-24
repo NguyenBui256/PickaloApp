@@ -73,14 +73,7 @@ export const ProfileScreen: React.FC = () => {
               <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
 
-            {/* Membership Status Card */}
-            <TouchableOpacity style={styles.membershipCard}>
-              <View style={styles.membershipLeft}>
-                <MaterialCommunityIcons name="diamond-stone" size={20} color="#E3B129" />
-                <Text style={styles.membershipText}>Hạng thành viên</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.GRAY_MEDIUM} />
-            </TouchableOpacity>
+            {/* Membership Status Card removed per request */}
           </SafeAreaView>
         </LinearGradient>
 
@@ -104,30 +97,43 @@ export const ProfileScreen: React.FC = () => {
               <Text style={styles.quickLabel}>Thông báo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickCard}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(241, 196, 15, 0.1)' }]}>
-                <MaterialCommunityIcons name="trophy-outline" size={24} color="#F1C40F" />
+            <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Settings')}>
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(52, 152, 219, 0.1)' }]}>
+                <MaterialCommunityIcons name="cog-outline" size={24} color="#3498DB" />
               </View>
-              <Text style={styles.quickLabel}>Khoá học</Text>
+              <Text style={styles.quickLabel}>Cài đặt</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickCard}>
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(231, 76, 60, 0.1)' }]}>
-                <MaterialCommunityIcons name="gift-outline" size={24} color="#E74C3C" />
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(155, 89, 182, 0.1)' }]}>
+                <MaterialCommunityIcons name="help-circle-outline" size={24} color="#9B59B6" />
               </View>
-              <Text style={styles.quickLabel}>Ưu đãi</Text>
+              <Text style={styles.quickLabel}>Hỗ trợ</Text>
             </TouchableOpacity>
           </View>
 
           {/* Menu Groups */}
           <View style={styles.menuGroup}>
-            <Text style={styles.groupTitle}>Hoạt động</Text>
+            <Text style={styles.groupTitle}>Tài khoản & Bảo mật</Text>
             <View style={styles.menuCard}>
+              <MenuItem 
+                icon="message-text-outline" 
+                label="Tin nhắn ghép kèo" 
+                color="#F97316"
+                onPress={() => navigation.navigate('ChatList')}
+              />
+              <View style={styles.divider} />
               <MenuItem icon="account-group-outline" label="Nhóm của tôi" />
               <View style={styles.divider} />
               <MenuItem icon="format-list-bulleted" label="Danh sách lịch học" />
               <View style={styles.divider} />
-              <MenuItem icon="card-account-details-outline" label="Gói hội viên" />
+              <MenuItem
+                icon="account-edit-outline" 
+                label="Chỉnh sửa hồ sơ" 
+                onPress={() => navigation.navigate('EditProfile')}
+              />
+              <View style={styles.divider} />
+              <MenuItem icon="shield-lock-outline" label="Đổi mật khẩu" />
             </View>
           </View>
 

@@ -10,6 +10,9 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 import { getAdminStats } from '@services/admin-service';
 import type { AdminStatsResponse } from '@types/api-types';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
 interface AdminDashboardScreenProps {
   navigation: AdminNavigationProp;

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Share,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,12 +19,18 @@ import { fetchVenueReviews, deleteReview } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { useAuthStore } from '../../store/auth-store';
 import { updateVenueStatus } from '../../services/admin-service';
-import { toggleFavorite } from '../../services/favorite-service';
+import { getImageUrl } from '../../utils/image-upload-helper';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
+  Home: undefined;
+  Map: { 
+    targetVenueId?: string; 
+    destination?: { latitude: number; longitude: number }; 
+    showRoute?: boolean 
+  };
   VenueDetails: { venueId: string };
-  BookingDetails: { venueId: string };
+  BookingDetails: { venueId: string; type: 'normal' | 'event' };
 };
 
 type VenueDetailsRouteProp = RouteProp<RootStackParamList, 'VenueDetails'>;
@@ -165,6 +172,30 @@ export const VenueDetailScreen: React.FC = () => {
             </View>
           </View>
         );
+      case 'Hình ảnh':
+        return (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Thư viện hình ảnh</Text>
+            <View style={styles.imagesGrid}>
+              {venue.images && Array.isArray(venue.images) && venue.images.length > 0 ? (
+                venue.images.map((img: string, index: number) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image 
+                      source={{ uri: getImageUrl(img) }} 
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <MaterialCommunityIcons name="image-off-outline" size={48} color={COLORS.GRAY_LIGHT} />
+                  <Text style={styles.emptyText}>Sân này chưa cập nhật hình ảnh.</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        );
       case 'Đánh giá':
         return (
           <View style={styles.tabContent}>
@@ -270,7 +301,10 @@ export const VenueDetailScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[]}>
         {/* Cover Image & Overlays */}
         <View style={styles.imageSection}>
-          <Image source={{ uri: venue.images?.[0] || venue.image }} style={styles.coverImage} />
+          <Image 
+            source={{ uri: getImageUrl(venue.cover_image || venue.images?.[0] || venue.image) }} 
+            style={styles.coverImage} 
+          />
 
           <SafeAreaView style={styles.overlayArea}>
             <View style={styles.header}>
@@ -306,6 +340,29 @@ export const VenueDetailScreen: React.FC = () => {
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
+                      style={styles.directionsBtn}
+                      onPress={() => {
+                        if (venue.location) {
+                          navigation.navigate('Main', {
+                            screen: 'Map',
+                            params: {
+                              targetVenueId: venue.id,
+                              destination: {
+                                latitude: venue.location.lat,
+                                longitude: venue.location.lng,
+                              },
+                              showRoute: true
+                            }
+                          });
+                        } else {
+                          Alert.alert('Lỗi', 'Không có tọa độ sân này');
+                        }
+                      }}
+                    >
+                      <MaterialCommunityIcons name="directions" size={18} color={COLORS.WHITE} />
+                      <Text style={styles.directionsText}>Chỉ đường</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       style={styles.bookNowBtn}
                       onPress={handleBookPress}
                     >
@@ -327,7 +384,7 @@ export const VenueDetailScreen: React.FC = () => {
         {/* Info Card Section */}
         <View style={styles.infoCard}>
           <View style={styles.venueInfoHeader}>
-            <Image source={{ uri: venue.logo }} style={styles.venueLogo} />
+            <Image source={{ uri: getImageUrl(venue.logo) }} style={styles.venueLogo} />
             <View style={styles.venueTitle}>
               <Text style={styles.name}>{venue.name}</Text>
               <View style={styles.categoryBadge}>
@@ -460,6 +517,26 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  directionsBtn: {
+    backgroundColor: '#3498DB',
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: 4,
+  },
+  directionsText: {
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+    fontSize: 13,
   },
   ratingBadge: {
     position: 'absolute',
@@ -694,5 +771,30 @@ const styles = StyleSheet.create({
   emptyReviews: {
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  imagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+  },
+  imageWrapper: {
+    width: (Dimensions.get('window').width - 50) / 2,
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyContainer: {
+    width: '100%',
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

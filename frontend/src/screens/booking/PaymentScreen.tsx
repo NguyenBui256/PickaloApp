@@ -17,12 +17,18 @@ import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
 import { InfoCard } from '../../components/InfoCard';
 import { useAuthStore } from '../../store/auth-store';
+import { formatCurrency } from '../../utils/format';
 
 
 export const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { venueId, selectedSlots = [] } = route.params || {};
+  const { 
+    venueId, 
+    bookingDate, 
+    selectedSlotsData = [], 
+    totalAmount = 0 
+  } = route.params || {};
   const user = useAuthStore(state => state.user);
 
   const [venue, setVenue] = useState<any>(null);
@@ -35,11 +41,8 @@ export const PaymentScreen: React.FC = () => {
   }, [venueId]);
 
   const isFormValid = user?.full_name && user?.phone;
-  const totalPrice = selectedSlots.length * 95000;
+  const totalPrice = totalAmount;
 
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  };
 
   return (
     <View style={styles.container}>
@@ -69,21 +72,20 @@ export const PaymentScreen: React.FC = () => {
 
           {/* Section 2: Booking Info */}
           <InfoCard title="Thông tin lịch đặt" iconName="ticket-confirmation">
-            {selectedSlots.map((slot: string, index: number) => {
-              const [court, time] = slot.split('-');
+            {selectedSlotsData.map((slot: any, index: number) => {
               return (
                 <View key={index} style={styles.slotRow}>
                   <View style={styles.slotDetail}>
-                    <Text style={styles.courtText}>{court}</Text>
-                    <Text style={styles.timeText}>Khung giờ: {time}</Text>
+                    <Text style={styles.courtText}>{slot.courtName}</Text>
+                    <Text style={styles.timeText}>Khung giờ: {slot.time}</Text>
                   </View>
-                  <Text style={styles.slotPrice}>95.000 đ</Text>
+                  <Text style={styles.slotPrice}>{formatCurrency(slot.price)}</Text>
                 </View>
               );
             })}
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tổng tiền</Text>
-              <Text style={styles.totalPriceText}>{formatCurrency(totalPrice)} đ</Text>
+               <Text style={styles.totalPriceText}>{formatCurrency(totalPrice)}</Text>
             </View>
           </InfoCard>
 
@@ -169,7 +171,16 @@ export const PaymentScreen: React.FC = () => {
           style={[styles.payBtn, !isFormValid && styles.disabledBtn]}
           disabled={!isFormValid}
           onPress={() => navigation.navigate('FinalPayment', {
+            venueId: venueId,
+            bookingDate: bookingDate,
+            slots: selectedSlotsData.map((s: any) => ({
+              court_id: s.courtId,
+              start_time: s.time.split(' - ')[0],
+              end_time: s.time.split(' - ')[1],
+            })),
+            services: [], // Add services if implemented
             totalPrice: formatCurrency(totalPrice),
+            totalAmount: totalPrice,
             bookingId: 'ALOBO' + Math.floor(Math.random() * 100000),
             customerName: user?.full_name || '',
             customerPhone: user?.phone || '',

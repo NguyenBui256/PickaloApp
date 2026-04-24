@@ -48,15 +48,18 @@ class VenueCreate(VenueBase):
     coordinates: Coordinates
     venue_type: VenueType
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
+    logo: str | None = None
+    booking_link: str | None = None
     base_price_per_hour: Annotated[
-        Decimal,
+        Decimal | None,
         Field(
             gt=0,
-            description="Base price per hour (VND)",
+            description="Base price per hour (VND) - Optional",
         ),
-    ]
+    ] = None
 
 
 class VenueUpdate(BaseModel):
@@ -68,8 +71,11 @@ class VenueUpdate(BaseModel):
     coordinates: Coordinates | None = None
     description: str | None = None
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
+    logo: str | None = None
+    booking_link: str | None = None
     base_price_per_hour: Annotated[
         Decimal | None,
         Field(
@@ -95,9 +101,10 @@ class VenueResponse(VenueBase):
     location: Coordinates
     venue_type: VenueType
     images: list[str] | None = None
+    cover_image: str | None = None
     operating_hours: OperatingHours | None = None
     amenities: list[str] | None = None
-    base_price_per_hour: Decimal
+    base_price_per_hour: Decimal | None = None
     is_active: bool
     is_verified: bool
     fullAddress: str | None = None
@@ -135,9 +142,10 @@ class VenueListItem(BaseModel):
     fullAddress: str | None = None
     venue_type: VenueType
     location: Coordinates
-    base_price_per_hour: Decimal
+    base_price_per_hour: Decimal | None = None
     is_verified: bool
     images: list[str] | None = None
+    cover_image: str | None = None
     amenities: list[str] | None = None
     logo: str | None = None
     bookingLink: str | None = None
@@ -145,6 +153,7 @@ class VenueListItem(BaseModel):
     rating: float | None = 0.0
     review_count: int | None = 0
     is_favorite: bool = False
+    operating_hours: OperatingHours | None = None
 
 
 class VenueServiceCreate(BaseModel):
@@ -196,35 +205,50 @@ class CourtUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class CourtBulkCreate(BaseModel):
+    """Schema for bulk creating courts."""
+
+    names: list[Annotated[str, Field(min_length=1, max_length=100)]]
+    is_active: bool = True
+
+
 class PricingSlotCreate(BaseModel):
     """Schema for creating a pricing time slot."""
 
-    day_type: DayType
+    title: str | None = Field(None, max_length=100)
+    day_type: DayType = DayType.WEEKDAY
+    days_of_week: list[int] | None = None  # 0=Mon, ..., 6=Sun
     start_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")]
     end_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")]
-    price_factor: Annotated[
-        Decimal,
-        Field(
-            ge=Decimal("0.1"),
-            le=Decimal("3.0"),
-            default=Decimal("1.0"),
-        ),
-    ] = Decimal("1.0")
+    price: Annotated[Decimal, Field(ge=Decimal("0"))]
+    is_default: bool = False
 
     @field_validator("end_time")
     @classmethod
     def end_time_after_start(cls, v: str, info) -> str:
         """Validate end time is after start time."""
         start_time = info.data.get("start_time")
-        if start_time and v <= start_time:
+        if not start_time:
+            return v
+        if v <= start_time:
             raise ValueError("end_time must be after start_time")
         return v
+
+
+class PricingBulkCreate(BaseModel):
+    """Schema for bulk creating pricing slots for a group of days."""
+    title: str | None = Field(None, max_length=100)
+    days_of_week: list[int]
+    slots: list[PricingSlotCreate]
+    day_type: DayType = DayType.WEEKDAY
 
 
 class PricingSlotUpdate(BaseModel):
     """Schema for updating a pricing time slot."""
 
+    title: str | None = Field(None, max_length=100)
     day_type: DayType | None = None
+    days_of_week: list[int] | None = None
     start_time: Annotated[
         str | None,
         Field(pattern=r"^\d{2}:\d{2}$"),
@@ -233,24 +257,25 @@ class PricingSlotUpdate(BaseModel):
         str | None,
         Field(pattern=r"^\d{2}:\d{2}$"),
     ] = None
-    price_factor: Annotated[
+    price: Annotated[
         Decimal | None,
-        Field(
-            ge=Decimal("0.1"),
-            le=Decimal("3.0"),
-        ),
+        Field(ge=Decimal("0")),
     ] = None
+    is_default: bool | None = None
 
 
 class PricingSlotResponse(BaseModel):
     """Schema for pricing slot response."""
 
-    id: int
+    id: str  # UUID as string
     venue_id: str
+    title: str | None = None
     day_type: DayType
+    days_of_week: list[int] | None = None
     start_time: str
     end_time: str
-    price_factor: Decimal
+    price: float
+    is_default: bool
 
 
 class VenueSearchParams(BaseModel):

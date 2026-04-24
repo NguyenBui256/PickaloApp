@@ -8,19 +8,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true
-    },
-    "android": {
-      "versionCode": 1
-    },
-    "plugins": [
-      "@react-native-community/datetimepicker"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "b2f8e2a2-8a00-4533-b074-e05543669013"
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload venue and court images.",
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos for your venue and court images."
       }
     },
-    "owner": "gnolp"
+    "android": {
+      "versionCode": 1,
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "This app needs access to your photo library to upload venue and court images.",
+          "cameraPermission": "This app needs access to your camera to take photos for your venue and court images."
+        }
+      ]
+    ]
   }
 }
