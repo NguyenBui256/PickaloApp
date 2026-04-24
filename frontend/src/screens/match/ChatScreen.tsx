@@ -26,7 +26,7 @@ import type { ChatMessageResponse, UserResponse } from '../../types/api-types';
 export const ChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { roomId, requestId, initialStatus } = route.params;
+  const { roomId, requestId, initialStatus, venueName, matchTime } = route.params;
 
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [inputText, setInputText] = useState('');
@@ -155,6 +155,20 @@ export const ChatScreen: React.FC = () => {
           </View>
         )}
       </View>
+      
+      {/* Match Context Banner */}
+      {(venueName || matchTime) && (
+        <View style={styles.contextBanner}>
+          <View style={styles.contextItem}>
+            <MaterialCommunityIcons name="stadium-variant" size={16} color={COLORS.PRIMARY} />
+            <Text style={styles.contextText} numberOfLines={1}>{venueName || 'Đang tải sân...'}</Text>
+          </View>
+          <View style={styles.contextItem}>
+            <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.PRIMARY} />
+            <Text style={styles.contextText}>{matchTime || 'Đang tải giờ...'}</Text>
+          </View>
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.center}>
@@ -212,6 +226,26 @@ const styles = StyleSheet.create({
   headerInfo: { flex: 1, marginLeft: 8 },
   headerTitle: { fontSize: 16, fontWeight: 'bold', color: COLORS.TEXT_PRIMARY },
   headerSubTitle: { fontSize: 12, color: COLORS.GRAY_MEDIUM },
+  contextBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  contextItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: '55%',
+  },
+  contextText: {
+    fontSize: 13,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '500',
+  },
   headerActions: { flexDirection: 'row', gap: 12 },
   rejectBtn: { padding: 4 },
   acceptBtn: { padding: 4 },

@@ -45,52 +45,72 @@ async def list_my_rooms(
     current_user: User = Depends(deps.get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List all chat rooms for the current user (as host or respondent)."""
-    # Import inside to avoid circular imports if any
+    """List all chat rooms for the current user with detailed match context and names."""
     from app.models.match import Match, MatchRequest
-    from app.models.booking import Booking
+    from app.models.booking import Booking, BookingSlot
+    from app.models.venue import Venue 
     from app.models.user import User as UserTable
+    from sqlalchemy.orm import aliased
+    from sqlalchemy import or_, func
 
-    # Logic: Room belongs to user if:
-    # 1. User is the requester (MatchRequest.requester_id == current_user.id)
-    # 2. User is the host (Match.booking.user_id == current_user.id)
+    HostUser = aliased(UserTable, name="host_user")
+    ReqUser = aliased(UserTable, name="req_user")
+
+    # Select specific columns with correct attribute names from the models
     query = (
-        select(ChatRoom, MatchRequest, UserTable)
+        select(
+            ChatRoom.id,
+            ChatRoom.match_request_id,
+            ChatRoom.is_locked,
+            ChatRoom.updated_at,
+            ChatRoom.created_at,
+            MatchRequest.status,
+            ReqUser.full_name.label("requester_fullname"),
+            HostUser.full_name.label("host_fullname"),
+            Venue.name.label("venue_name"),
+            Booking.booking_date,
+            Booking.user_id.label("host_id"),
+            MatchRequest.requester_id,
+            func.min(BookingSlot.start_time).label("start_time") # Get the earliest slot time
+        )
         .join(MatchRequest, MatchRequest.id == ChatRoom.match_request_id)
         .join(Match, Match.id == MatchRequest.match_id)
         .join(Booking, Booking.id == Match.booking_id)
-        .options(
-            selectinload(ChatRoom.match_request)
-            .selectinload(MatchRequest.match)
-            .selectinload(Match.booking)
-        )
-        .join(UserTable, UserTable.id == MatchRequest.requester_id) # The requester info
+        .join(BookingSlot, BookingSlot.booking_id == Booking.id) # Join with slots for time
+        .join(Venue, Venue.id == Booking.venue_id)
+        .join(ReqUser, ReqUser.id == MatchRequest.requester_id)
+        .join(HostUser, HostUser.id == Booking.user_id)
         .where(
-            (MatchRequest.requester_id == current_user.id) | 
-            (Booking.user_id == current_user.id)
+            or_(
+                MatchRequest.requester_id == current_user.id,
+                Booking.user_id == current_user.id
+            )
         )
+        .group_by(
+            ChatRoom.id, MatchRequest.id, ReqUser.id, HostUser.id, Venue.id, Booking.id
+        )
+        .order_by(ChatRoom.updated_at.desc())
     )
     
     result = await db.execute(query)
-    rooms_data = result.all()
+    rows = result.all()
     
     items = []
-    for room, req, requester in rooms_data:
-        # We need to know who the "other" person is to show in the list
-        is_host = room.match_request.match.booking.user_id == current_user.id
-        
-        # If I am host, "other" is requester. If I am requester, "other" is host.
-        # But wait, we need host's user info too. For now let's simplify.
+    for row in rows:
+        is_host = row.host_id == current_user.id
         
         items.append({
-            "id": room.id,
-            "match_request_id": room.match_request_id,
-            "is_locked": room.is_locked,
-            "created_at": room.created_at,
-            "updated_at": room.updated_at,
-            "other_party_name": "Host" if not is_host else requester.full_name,
-            "status": req.status,
-            "is_host": is_host
+            "id": str(row.id),
+            "match_request_id": str(row.match_request_id),
+            "is_locked": row.is_locked,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "other_party_name": row.requester_fullname if is_host else row.host_fullname,
+            "status": row.status,
+            "is_host": is_host,
+            "venue_name": row.venue_name or "Sân chưa xác định",
+            "match_date": str(row.booking_date) if row.booking_date else "",
+            "start_time": str(row.start_time) if row.start_time else "",
         })
         
     return items

@@ -35,7 +35,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
   const [startTime, setStartTime] = useState(initialFilters.startTime || null);
   const [endTime, setEndTime] = useState(initialFilters.endTime || null);
   const [radiusKm, setRadiusKm] = useState<number | null>(initialFilters.radiusKm || null);
-  
+
   // States for custom dropdowns
   const [selectingTime, setSelectingTime] = useState<'start' | 'end' | null>(null);
 
@@ -114,7 +114,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
           <ScrollView style={styles.content} nestedScrollEnabled>
             {/* DATE SELECTOR */}
             <Text style={styles.sectionTitle}>Ngày diễn ra</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.pickerField}
               onPress={() => setShowDatePicker(true)}
             >
@@ -158,7 +158,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
             <View style={styles.timeRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.sectionTitle}>Giờ bắt đầu</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.pickerField}
                   onPress={() => setSelectingTime(selectingTime === 'start' ? null : 'start')}
                 >
@@ -169,7 +169,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
               <View style={{ width: 15 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.sectionTitle}>Giờ kết thúc</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.pickerField}
                   onPress={() => setSelectingTime(selectingTime === 'end' ? null : 'end')}
                 >
@@ -249,7 +249,7 @@ export const MatchFilterModal: React.FC<MatchFilterModalProps> = ({
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.resetBtn}
               onPress={() => {
                 setSkillLevel('ALL');

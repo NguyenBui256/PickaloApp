@@ -52,13 +52,19 @@ export const ChatListScreen: React.FC = () => {
   const renderItem = ({ item }: { item: any }) => {
     const status = getStatusInfo(item.status);
     
+    // Format time/date safely
+    const matchDate = item.match_date ? new Date(item.match_date).toLocaleDateString('vi-VN') : '---';
+    const startTime = item.start_time ? item.start_time.substring(0, 5) : '--:--';
+
     return (
       <TouchableOpacity 
         style={styles.roomItem}
         onPress={() => navigation.navigate('Chat', { 
           roomId: item.id, 
           requestId: item.is_host ? item.match_request_id : undefined,
-          initialStatus: item.status 
+          initialStatus: item.status,
+          venueName: item.venue_name || 'Kèo chưa xác định',
+          matchTime: item.start_time ? `${startTime} - ${matchDate}` : 'Giờ chưa cập nhật'
         })}
       >
         <View style={styles.avatar}>
@@ -79,6 +85,17 @@ export const ChatListScreen: React.FC = () => {
             </Text>
           </View>
           
+          <View style={styles.matchInfo}>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="stadium-variant" size={14} color={COLORS.GRAY_MEDIUM} />
+              <Text style={styles.matchText} numberOfLines={1}>{item.venue_name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
+              <Text style={styles.matchText}>{startTime} | {matchDate}</Text>
+            </View>
+          </View>
+
           <View style={styles.roomFooter}>
             <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
               <MaterialCommunityIcons name={status.icon as any} size={14} color={status.color} />
@@ -182,7 +199,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   otherName: {
     fontSize: 15,
@@ -193,6 +210,23 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     color: COLORS.GRAY_MEDIUM,
+  },
+  matchInfo: {
+    marginVertical: 4,
+    backgroundColor: '#F3F4F6',
+    padding: 6,
+    borderRadius: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  matchText: {
+    fontSize: 12,
+    color: COLORS.GRAY_DARK,
+    fontWeight: '500',
   },
   roomFooter: {
     flexDirection: 'row',
