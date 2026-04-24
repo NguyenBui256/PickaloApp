@@ -62,6 +62,8 @@ async def list_venues(
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     only_favorites: bool = False,
+    lat: float | None = Query(None, ge=-90, le=90),
+    lng: float | None = Query(None, ge=-180, le=180),
     current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
@@ -80,11 +82,13 @@ async def list_venues(
         limit=limit,
         user_id=current_user.id if current_user else None,
         only_favorites=only_favorites,
+        user_lat=lat,
+        user_lng=lng,
     )
 
     # Convert to list items
     items = []
-    for venue, is_fav in venues:
+    for venue, is_fav, v_lat, v_lng, dist in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -93,16 +97,18 @@ async def list_venues(
             fullAddress=venue.address,
             venue_type=venue.venue_type,
             category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
-            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+            location=Coordinates(lat=v_lat if v_lat is not None else 0.0, lng=v_lng if v_lng is not None else 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             is_favorite=is_fav,
+            distance=dist,
             images=venue.images,
             amenities=venue.amenities,
             logo=None,
             bookingLink=None,
             rating=venue.rating,
-            review_count=venue.review_count
+            review_count=venue.review_count,
+            operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         ))
 
     pages = (total + limit - 1) // limit
@@ -149,11 +155,13 @@ async def search_venues_nearby(
         limit=limit,
         user_id=current_user.id if current_user else None,
         only_favorites=only_favorites,
+        user_lat=lat,
+        user_lng=lng,
     )
 
     # Convert to list items
     items = []
-    for venue, is_fav in venues:
+    for venue, is_fav, v_lat, v_lng, dist in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -162,16 +170,18 @@ async def search_venues_nearby(
             fullAddress=venue.address,
             venue_type=venue.venue_type,
             category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
-            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+            location=Coordinates(lat=v_lat if v_lat is not None else 0.0, lng=v_lng if v_lng is not None else 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             is_favorite=is_fav,
+            distance=dist,
             images=venue.images,
             amenities=venue.amenities,
             logo=None,
             bookingLink=None,
             rating=venue.rating,
-            review_count=venue.review_count
+            review_count=venue.review_count,
+            operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         ))
 
     pages = (total + limit - 1) // limit
@@ -197,7 +207,7 @@ async def get_venue(
 
     Public endpoint for viewing venue information.
     """
-    venue = await venue_service.get_venue_by_id(uuid.UUID(venue_id))
+    venue, lat, lng = await venue_service.get_venue_by_id(uuid.UUID(venue_id))
 
     if not venue:
         raise HTTPException(
@@ -220,7 +230,7 @@ async def get_venue(
         address=venue.address,
         district=venue.district,
         fullAddress=venue.address,
-        location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+        location=Coordinates(lat=lat if lat is not None else 0.0, lng=lng if lng is not None else 0.0),
         venue_type=venue.venue_type,
         category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
@@ -229,7 +239,7 @@ async def get_venue(
         review_count=venue.review_count,
         bookingLink=None,
         images=venue.images,
-        operating_hours={"open": "06:00", "close": "22:00"},
+        operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
         base_price_per_hour=venue.base_price_per_hour,
         is_active=venue.is_active,

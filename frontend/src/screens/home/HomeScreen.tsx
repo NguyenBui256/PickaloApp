@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -23,38 +24,99 @@ import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
 import { toggleFavorite } from '../../services/favorite-service';
 import { useAuthStore } from '../../store/auth-store';
+import { locationService, Coordinates } from '../../services/location-service';
 import { Alert } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
 
-  const loadVenues = async () => {
+  const loadVenues = async (currentLoc?: Coordinates | null) => {
     try {
       const res = await fetchVenues();
       if (res?.items) {
         setVenues(res.items);
+        // If we already have location, calculate distances immediately
+        const loc = currentLoc || userLocation;
+        if (loc) {
+          calculateDistances(res.items, loc);
+        }
       }
     } catch (error) {
       console.error('Error fetching venues:', error);
     }
   };
 
+  const calculateDistances = (items: any[], loc: Coordinates) => {
+    const updatedItems = items.map(venue => {
+      if (venue.location) {
+        const dist = locationService.calculateAirDistance(loc, {
+          latitude: venue.location.lat,
+          longitude: venue.location.lng,
+        });
+        return { ...venue, distance: `${dist.toFixed(1)} km` };
+      }
+      return venue;
+    });
+
+    // If quick filter is "Gần nhất", sort
+    if (activeQuickFilter === 'Gần nhất') {
+      updatedItems.sort((a, b) => {
+        const dA = parseFloat(a.distance || '999');
+        const dB = parseFloat(b.distance || '999');
+        return dA - dB;
+      });
+    }
+
+    setVenues(updatedItems);
+  };
+
   useEffect(() => {
+    // 1. Load venues immediately (Fast)
     loadVenues();
-  }, [user]);
+
+    // 2. Then get location (Slower hardware call)
+    const initLocation = async () => {
+      const hasPermission = await locationService.requestPermission();
+      if (hasPermission) {
+        try {
+          const loc = await locationService.getCurrentLocation();
+          setUserLocation(loc);
+        } catch (err) {
+          console.log('Location error:', err);
+        }
+      }
+    };
+
+    initLocation();
+  }, []);
+
+  // Update distances whenever location or venues or filters change
+  useEffect(() => {
+    if (userLocation && venues.length > 0 && !venues[0].distance) {
+      calculateDistances(venues, userLocation);
+    }
+  }, [userLocation, activeQuickFilter]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await loadVenues();
+    // Refresh location too
+    try {
+      const loc = await locationService.getCurrentLocation();
+      setUserLocation(loc);
+      await loadVenues(loc);
+    } catch (err) {
+      await loadVenues();
+    }
     setRefreshing(false);
-  }, []);
+  }, [userLocation]);
 
   const handleToggleFavorite = async (id: string) => {
     if (!user) {

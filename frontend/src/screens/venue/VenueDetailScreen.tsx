@@ -22,8 +22,14 @@ import { toggleFavorite } from '../../services/favorite-service';
 import type { ReviewResponse } from '../../types/api-types';
 
 type RootStackParamList = {
+  Home: undefined;
+  Map: { 
+    targetVenueId?: string; 
+    destination?: { latitude: number; longitude: number }; 
+    showRoute?: boolean 
+  };
   VenueDetails: { venueId: string };
-  BookingDetails: { venueId: string };
+  BookingDetails: { venueId: string; type: 'normal' | 'event' };
 };
 
 type VenueDetailsRouteProp = RouteProp<RootStackParamList, 'VenueDetails'>;
@@ -306,6 +312,29 @@ export const VenueDetailScreen: React.FC = () => {
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
+                      style={styles.directionsBtn}
+                      onPress={() => {
+                        if (venue.location) {
+                          navigation.navigate('Main', {
+                            screen: 'Map',
+                            params: {
+                              targetVenueId: venue.id,
+                              destination: {
+                                latitude: venue.location.lat,
+                                longitude: venue.location.lng,
+                              },
+                              showRoute: true
+                            }
+                          });
+                        } else {
+                          Alert.alert('Lỗi', 'Không có tọa độ sân này');
+                        }
+                      }}
+                    >
+                      <MaterialCommunityIcons name="directions" size={18} color={COLORS.WHITE} />
+                      <Text style={styles.directionsText}>Chỉ đường</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       style={styles.bookNowBtn}
                       onPress={handleBookPress}
                     >
@@ -460,6 +489,26 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  directionsBtn: {
+    backgroundColor: '#3498DB',
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: 4,
+  },
+  directionsText: {
+    color: COLORS.WHITE,
+    fontWeight: 'bold',
+    fontSize: 13,
   },
   ratingBadge: {
     position: 'absolute',

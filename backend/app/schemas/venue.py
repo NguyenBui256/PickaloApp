@@ -145,6 +145,7 @@ class VenueListItem(BaseModel):
     rating: float | None = 0.0
     review_count: int | None = 0
     is_favorite: bool = False
+    operating_hours: OperatingHours | None = None
 
 
 class VenueServiceCreate(BaseModel):

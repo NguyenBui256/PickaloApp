@@ -41,6 +41,8 @@ async def get_favorite_venues(
     session: DBSession,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    lat: float | None = Query(None, ge=-90, le=90),
+    lng: float | None = Query(None, ge=-180, le=180),
 ):
     """
     Get list of venues favorited by the current user.
@@ -52,12 +54,14 @@ async def get_favorite_venues(
         skip=skip,
         limit=limit,
         user_id=current_user.id,
-        only_favorites=True
+        only_favorites=True,
+        user_lat=lat,
+        user_lng=lng
     )
     
     # Convert to list items manually to handle location coordinates
     items = []
-    for venue, is_fav in venues:
+    for venue, is_fav, v_lat, v_lng, dist in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -66,10 +70,11 @@ async def get_favorite_venues(
             fullAddress=venue.address,
             venue_type=venue.venue_type,
             category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
-            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+            location=Coordinates(lat=v_lat if v_lat is not None else 0.0, lng=v_lng if v_lng is not None else 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
             is_favorite=is_fav,
+            distance=dist,
             images=venue.images,
             amenities=venue.amenities,
             logo=venue.logo if hasattr(venue, 'logo') else None,
