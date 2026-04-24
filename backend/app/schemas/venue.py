@@ -51,6 +51,8 @@ class VenueCreate(VenueBase):
     cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
+    logo: str | None = None
+    booking_link: str | None = None
     base_price_per_hour: Annotated[
         Decimal | None,
         Field(
@@ -72,6 +74,8 @@ class VenueUpdate(BaseModel):
     cover_image: str | None = None
     operating_hours: dict | None = None
     amenities: list[str] | None = None
+    logo: str | None = None
+    booking_link: str | None = None
     base_price_per_hour: Annotated[
         Decimal | None,
         Field(

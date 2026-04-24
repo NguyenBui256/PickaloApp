@@ -67,8 +67,8 @@ export const ScheduleManagementScreen: React.FC = () => {
     <View style={styles.requestCard}>
       <View style={styles.cardHeader}>
         <View style={styles.customerInfo}>
-          <Text style={styles.customerName}>{item.venue_name || 'N/A'}</Text>
-          <Text style={styles.customerPhone}>{item.booking_date}</Text>
+          <Text style={styles.customerName}>{item.customer_name || 'Khách hàng'}</Text>
+          <Text style={styles.customerPhone}>{item.customer_phone || 'Chưa cập nhật SĐT'}</Text>
         </View>
         <View style={styles.statusBadge}>
           <Text style={styles.statusText}>{item.status}</Text>
@@ -92,8 +92,8 @@ export const ScheduleManagementScreen: React.FC = () => {
 
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
-          <MaterialCommunityIcons name="map-marker" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.venue_address || 'N/A'}</Text>
+          <MaterialCommunityIcons name="tennis" size={18} color="#666" />
+          <Text style={styles.detailText}>{item.court_name || 'N/A'}</Text>
         </View>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="cash" size={18} color="#666" />

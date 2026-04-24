@@ -87,7 +87,6 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       {/* Bottom Content */}
       <View style={styles.content}>
         <View style={styles.infoSection}>
-          <Image source={{ uri: getImageUrl(displayLogo) }} style={styles.logo} />
           <View style={styles.details}>
             <Text style={styles.name} numberOfLines={1}>{name}</Text>
             <Text style={styles.distance}>{distance}</Text>
@@ -171,15 +170,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.GRAY_LIGHT,
-  },
   details: {
     flex: 1,
-    marginLeft: 10,
   },
   name: {
     fontSize: 15,

@@ -305,6 +305,8 @@ class VenueManagementService:
         cover_image: str | None = None,
         operating_hours: dict | None = None,
         amenities: list[str] | None = None,
+        logo: str | None = None,
+        booking_link: str | None = None,
     ) -> Venue:
         """
         Create new venue for merchant.
@@ -345,6 +347,8 @@ class VenueManagementService:
             cover_image=cover_image,
             operating_hours=operating_hours,
             amenities=amenities,
+            logo=logo,
+            booking_link=booking_link,
             base_price_per_hour=base_price_per_hour,
             is_active=True,
             is_verified=False,

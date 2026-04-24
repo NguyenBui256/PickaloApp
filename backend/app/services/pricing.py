@@ -28,7 +28,7 @@ class PricingService:
     If no specific time slot is found, it falls back to the venue's default slot for that day type.
     """
 
-    SERVICE_FEE_PERCENTAGE = Decimal("0.05")  # 5%
+    SERVICE_FEE_PERCENTAGE = Decimal("0")  # Removed 5% fee as per user request
 
     def __init__(self, session: AsyncSession):
         """Initialize pricing service with database session."""

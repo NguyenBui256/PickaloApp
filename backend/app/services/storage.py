@@ -142,6 +142,33 @@ class StorageService:
 
         return image_urls
 
+    async def upload_payment_proof(
+        self,
+        user_id: uuid.UUID,
+        file: UploadFile
+    ) -> str:
+        """Upload payment proof image for a booking."""
+        self._validate_image_file(file)
+
+        # Generate unique filename
+        file_extension = self._get_file_extension(file.filename)
+        object_name = f"payments/{user_id}/{uuid.uuid4()}{file_extension}"
+
+        # Upload to MinIO
+        file_data = await file.read()
+        self._validate_file_size(len(file_data))
+
+        self.client.put_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+            data=BytesIO(file_data),
+            length=len(file_data),
+            content_type=file.content_type
+        )
+
+        # Return public URL
+        return f"{settings.minio_public_url}/{self.bucket_name}/{object_name}"
+
     def delete_image(self, image_url: str) -> bool:
         """Delete image from storage."""
         try:

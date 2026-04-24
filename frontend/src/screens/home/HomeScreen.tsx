@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,7 +76,14 @@ export const HomeScreen: React.FC = () => {
                 onPress={() => navigation.navigate('Profile')}
               >
                 <View style={styles.logoContainer}>
-                  <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
+                  {user?.avatar_url ? (
+                    <Image 
+                      source={{ uri: user.avatar_url }} 
+                      style={styles.avatar} 
+                    />
+                  ) : (
+                    <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
+                  )}
                 </View>
                 <View style={styles.textInfo}>
                   <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
@@ -235,6 +243,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
   },
   textInfo: {
     marginLeft: 12,

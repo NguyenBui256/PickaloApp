@@ -40,6 +40,19 @@ export const uploadCourtImages = async (
 };
 
 /**
+ * Upload payment proof image.
+ * BE endpoint: POST /images/payment-proof
+ */
+export const uploadPaymentProof = async (
+    formData: FormData
+): Promise<{ url: string; filename: string; message: string }> => {
+    return apiClient.upload<{ url: string; filename: string; message: string }>(
+        '/images/payment-proof',
+        formData
+    );
+};
+
+/**
  * Delete image from storage.
  * BE endpoint: DELETE /images/{image_url}
  */

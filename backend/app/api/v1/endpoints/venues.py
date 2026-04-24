@@ -96,8 +96,8 @@ async def list_venues(
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
-            logo=None,
-            bookingLink=None,
+            logo=venue.logo,
+            bookingLink=venue.booking_link,
             rating=venue.rating,
             review_count=venue.review_count
         ))
@@ -160,8 +160,8 @@ async def search_venues_nearby(
             is_verified=venue.is_verified,
             images=venue.images,
             amenities=venue.amenities,
-            logo=None,
-            bookingLink=None,
+            logo=venue.logo,
+            bookingLink=venue.booking_link,
             rating=venue.rating,
             review_count=venue.review_count
         ))
@@ -208,10 +208,10 @@ async def get_venue(
         venue_type=venue.venue_type,
         category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
-        logo=None,
+        logo=venue.logo,
         rating=venue.rating,
         review_count=venue.review_count,
-        bookingLink=None,
+        bookingLink=venue.booking_link,
         images=venue.images,
         operating_hours={"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
@@ -282,6 +282,8 @@ async def create_venue(
         cover_image=venue_data.cover_image,
         operating_hours=venue_data.operating_hours,
         amenities=venue_data.amenities,
+        logo=venue_data.logo,
+        booking_link=venue_data.booking_link,
     )
 
     await session.commit()
@@ -304,8 +306,8 @@ async def create_venue(
         base_price_per_hour=float(venue.base_price_per_hour),
         is_active=venue.is_active,
         is_verified=venue.is_verified,
-        logo=None,
-        bookingLink=None,
+        logo=venue.logo,
+        bookingLink=venue.booking_link,
         rating=None,
         created_at=venue.created_at.isoformat(),
         updated_at=venue.updated_at.isoformat(),

@@ -147,6 +147,31 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
         </View>
       );
     }
+    if (activeTab === 'Hình ảnh') {
+      return (
+        <View style={styles.tabContent}>
+          <Text style={styles.sectionTitle}>Thư viện hình ảnh</Text>
+            <View style={styles.imagesGrid}>
+              {venue.images && Array.isArray(venue.images) && venue.images.length > 0 ? (
+                venue.images.map((img: string, index: number) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image 
+                      source={{ uri: getImageUrl(img) }} 
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <MaterialCommunityIcons name="image-off-outline" size={48} color={COLORS.GRAY_LIGHT} />
+                  <Text style={styles.emptyText}>Sân này chưa cập nhật hình ảnh.</Text>
+                </View>
+              )}
+            </View>
+        </View>
+      );
+    }
     if (activeTab === 'Đánh giá') {
       return (
         <View style={styles.tabContent}>
@@ -730,5 +755,30 @@ const styles = StyleSheet.create({
   emptyReviews: {
     alignItems: 'center',
     paddingVertical: 30,
+  },
+  imagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+  },
+  imageWrapper: {
+    width: (Dimensions.get('window').width - 50) / 2,
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyContainer: {
+    width: '100%',
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

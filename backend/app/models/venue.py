@@ -111,7 +111,7 @@ class Venue(BaseModel):
     )
 
     # JSON fields for flexible data
-    images: Mapped[dict | None] = mapped_column(
+    images: Mapped[list | None] = mapped_column(
         JSON,
         nullable=True,
     )
@@ -119,8 +119,17 @@ class Venue(BaseModel):
         JSON,
         nullable=True,
     )
-    amenities: Mapped[dict | None] = mapped_column(
+    amenities: Mapped[list | None] = mapped_column(
         JSON,
+        nullable=True,
+    )
+
+    logo: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    booking_link: Mapped[str | None] = mapped_column(
+        String(500),
         nullable=True,
     )
 

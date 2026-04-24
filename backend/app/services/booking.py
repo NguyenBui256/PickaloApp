@@ -100,6 +100,7 @@ class BookingService:
         total_price: Decimal,
         services: list[dict] | None = None,
         notes: str | None = None,
+        payment_proof: str | None = None,
     ) -> Booking:
         """
         Create a new booking with multiple slots.
@@ -123,6 +124,8 @@ class BookingService:
             total_price=total_price,
             status=BookingStatus.PENDING,
             notes=notes,
+            payment_proof=payment_proof,
+            paid_at=datetime.now() if payment_proof else None,
         )
 
         self.session.add(booking)
@@ -202,6 +205,7 @@ class BookingService:
             .options(
                 selectinload(Booking.venue),
                 selectinload(Booking.booking_services),
+                selectinload(Booking.slots).selectinload(BookingSlot.court),
             )
             .where(and_(*conditions))
             .order_by(Booking.created_at.desc())
@@ -436,6 +440,7 @@ class BookingService:
             .options(
                 selectinload(Booking.user),
                 selectinload(Booking.booking_services),
+                selectinload(Booking.slots).selectinload(BookingSlot.court),
             )
             .where(and_(*conditions))
             .order_by(Booking.booking_date, Booking.created_at)
@@ -501,6 +506,7 @@ class BookingService:
                 selectinload(Booking.venue),
                 selectinload(Booking.user),
                 selectinload(Booking.booking_services),
+                selectinload(Booking.slots).selectinload(BookingSlot.court),
             )
             .where(and_(*conditions))
             .order_by(Booking.booking_date.desc(), Booking.created_at.desc())

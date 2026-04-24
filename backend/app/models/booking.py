@@ -99,6 +99,10 @@ class Booking(BaseModel):
         DateTime(timezone=True),
         nullable=True,
     )
+    payment_proof: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
 
     # Additional info
     notes: Mapped[str | None] = mapped_column(

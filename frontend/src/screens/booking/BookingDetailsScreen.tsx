@@ -18,13 +18,13 @@ export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<any>();
   const { venueId } = route.params || {};
 
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    fetchVenueAvailability(venueId, today).then(setAvailability).catch(console.error);
-  }, [venueId]);
+    fetchVenueAvailability(venueId, selectedDate).then(setAvailability).catch(console.error);
+  }, [venueId, selectedDate]);
 
   // Format price helper
   const formatCurrency = (amount: number) => {
@@ -33,12 +33,7 @@ export const BookingDetailsScreen: React.FC = () => {
 
   // Calculations
   const bookingSummary = useMemo(() => {
-    const totalSlots = selectedSlots.length;
-    const totalMinutes = totalSlots * 30;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    const timeStr = hours > 0 ? `${hours}h${minutes > 0 ? minutes : '00'}` : `${minutes}ph`;
-
+    let totalMinutes = 0;
     let totalAmount = 0;
     const selectedSlotsData: any[] = [];
 
@@ -48,17 +43,35 @@ export const BookingDetailsScreen: React.FC = () => {
         const court = availability.courts.find(c => c.court_id === courtId);
         if (court) {
           const slot = court.slots.find(s => s.start_time === startTime);
-          if (slot && slot.price) {
-            totalAmount += slot.price;
+          if (slot) {
+            // Calculate duration in minutes
+            const [startH, startM] = slot.start_time.split(':').map(Number);
+            const [endH, endM] = slot.end_time.split(':').map(Number);
+            const duration = (endH * 60 + endM) - (startH * 60 + startM);
+            totalMinutes += duration;
+
+            if (slot.price) {
+              totalAmount += slot.price;
+            }
+
             selectedSlotsData.push({
+              courtId: court.court_id,
               courtName: court.court_name,
               time: `${slot.start_time} - ${slot.end_time}`,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
               price: slot.price,
             });
           }
         }
       });
     }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const timeStr = hours > 0 
+      ? `${hours}h${minutes > 0 ? (minutes < 10 ? '0' + minutes : minutes) : '00'}` 
+      : `${minutes}ph`;
 
     return {
       timeStr,
@@ -172,6 +185,7 @@ export const BookingDetailsScreen: React.FC = () => {
         totalPrice={bookingSummary.totalPrice}
         onNext={() => navigation.navigate('Payment', { 
           venueId, 
+          bookingDate: selectedDate,
           selectedSlotsData: bookingSummary.selectedSlotsData,
           totalAmount: bookingSummary.totalAmount
         })}

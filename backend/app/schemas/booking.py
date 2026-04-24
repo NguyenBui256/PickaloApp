@@ -61,6 +61,10 @@ class BookingCreate(BaseModel):
         str | None,
         Field(max_length=1000, description="Special requests or notes"),
     ] = None
+    payment_proof: Annotated[
+        str | None,
+        Field(max_length=500, description="URL to payment proof image"),
+    ] = None
 
 
     @field_validator("booking_date")
@@ -163,6 +167,7 @@ class BookingResponse(BaseModel):
     payment_method: str | None
     payment_id: str | None
     paid_at: str | None
+    payment_proof: str | None
 
     # Additional info
     notes: str | None
@@ -176,6 +181,8 @@ class BookingResponse(BaseModel):
     # Relations
     venue_name: str | None = None
     venue_address: str | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
     slots: list[BookingSlotResponse] = []
     services: list[BookingServiceItem] = []
 
@@ -197,6 +204,10 @@ class BookingListItem(BaseModel):
     created_at: str
     customer_name: str | None = None
     customer_phone: str | None = None
+    payment_proof: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    court_name: str | None = None
 
 
 class BookingCancel(BaseModel):

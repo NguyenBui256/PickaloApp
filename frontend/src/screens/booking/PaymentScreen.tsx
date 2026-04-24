@@ -22,7 +22,12 @@ import { useAuthStore } from '../../store/auth-store';
 export const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { venueId, selectedSlotsData = [], totalAmount = 0 } = route.params || {};
+  const { 
+    venueId, 
+    bookingDate, 
+    selectedSlotsData = [], 
+    totalAmount = 0 
+  } = route.params || {};
   const user = useAuthStore(state => state.user);
 
   const [venue, setVenue] = useState<any>(null);
@@ -168,7 +173,16 @@ export const PaymentScreen: React.FC = () => {
           style={[styles.payBtn, !isFormValid && styles.disabledBtn]}
           disabled={!isFormValid}
           onPress={() => navigation.navigate('FinalPayment', {
+            venueId: venueId,
+            bookingDate: bookingDate,
+            slots: selectedSlotsData.map((s: any) => ({
+              court_id: s.courtId,
+              start_time: s.time.split(' - ')[0],
+              end_time: s.time.split(' - ')[1],
+            })),
+            services: [], // Add services if implemented
             totalPrice: formatCurrency(totalPrice),
+            totalAmount: totalPrice,
             bookingId: 'ALOBO' + Math.floor(Math.random() * 100000),
             customerName: user?.full_name || '',
             customerPhone: user?.phone || '',

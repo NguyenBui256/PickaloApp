@@ -62,7 +62,7 @@ export type RootStackParamList = {
   VenueConfiguration: { venueId: string };
   LocationPicker: { initialLocation?: { lat: number; lng: number } };
   MaintenanceScheduler: { venueId: string };
-  OwnerBookingDetail: { booking: any };
+  OwnerBookingDetail: { bookingId: string; booking?: any };
   OwnerRevenueReport: undefined;
   ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
 };
@@ -85,7 +85,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AuthNavStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const ExploreTabButton = ({ children, onPress }: any) => {
+const MapTabButton = ({ children, onPress }: any) => {
   const shadowStyle = {
     shadowColor: COLORS.BLACK,
     shadowOffset: {
@@ -120,9 +120,9 @@ const ExploreTabButton = ({ children, onPress }: any) => {
           alignItems: 'center',
         }}
       >
-        <MaterialCommunityIcons name="file-document-outline" size={32} color={COLORS.PRIMARY} />
+        <MaterialCommunityIcons name="map-marker-radius" size={32} color={COLORS.PRIMARY} />
       </View>
-      <Text style={{ fontSize: 10, color: COLORS.PRIMARY, marginTop: 4, fontWeight: 'bold' }}>Khám phá</Text>
+      <Text style={{ fontSize: 10, color: COLORS.PRIMARY, marginTop: 4, fontWeight: 'bold' }}>Bản đồ</Text>
     </TouchableOpacity>
   );
 };
@@ -155,16 +155,16 @@ function MainTabs(): React.JSX.Element {
         options={{ tabBarLabel: 'Trang chủ' }}
       />
       <Tab.Screen
-        name="Map"
-        component={MapScreen}
-        options={{ tabBarLabel: 'Bản đồ' }}
-      />
-      <Tab.Screen
         name="Explore"
         component={ExploreScreen}
+        options={{ tabBarLabel: 'Khám phá' }}
+      />
+      <Tab.Screen
+        name="Map"
+        component={MapScreen}
         options={{
-          tabBarLabel: 'Khám phá',
-          tabBarButton: (props) => <ExploreTabButton {...props} />
+          tabBarLabel: 'Bản đồ',
+          tabBarButton: (props) => <MapTabButton {...props} />
         }}
       />
       <Tab.Screen

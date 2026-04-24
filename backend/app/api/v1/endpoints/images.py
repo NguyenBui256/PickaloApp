@@ -147,6 +147,24 @@ async def upload_court_images(
     )
 
 
+@router.post("/payment-proof", response_model=ImageUploadResponse)
+async def upload_payment_proof(
+    current_user: Annotated[User, Depends(get_current_user)],
+    storage: StorageServiceDep,
+    file: UploadFile = File(...),
+) -> ImageUploadResponse:
+    """
+    Upload payment proof image for a booking.
+    """
+    proof_url = await storage.upload_payment_proof(current_user.id, file)
+
+    return ImageUploadResponse(
+        url=proof_url,
+        filename=file.filename or "payment_proof",
+        message="Payment proof uploaded successfully"
+    )
+
+
 @router.delete("/{image_url:path}")
 async def delete_image(
     image_url: str,

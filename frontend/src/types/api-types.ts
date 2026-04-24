@@ -315,6 +315,9 @@ export interface BookingCreateRequest {
   slots: BookingSlotInfo[];
   services?: BookingServiceRequest[] | null;
   notes?: string | null; // max 1000 chars
+  payment_proof?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
 }
 
 /** Backend: BookingPricePreview — POST /bookings/price-calculation */
@@ -378,8 +381,11 @@ export interface BookingResponse {
   created_at: string;
   venue_name?: string | null;
   venue_address?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   services: BookingServiceItem[];
   slots: BookingSlotResponse[];
+  payment_proof?: string | null;
   review_id?: string | null;
 }
 
@@ -390,13 +396,17 @@ export interface BookingListItem {
   venue_name: string | null;
   venue_address: string | null;
   booking_date: string;
-  start_time: string;
-  end_time: string;
   total_price: number;
   status: BookingStatus;
   is_paid: boolean;
   is_cancelable: boolean;
   created_at: string;
+  payment_proof?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  court_name?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   review_id?: string | null;
 }
 
