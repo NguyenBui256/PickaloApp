@@ -473,6 +473,19 @@ export interface MerchantStatsResponse {
   currency: string;
 }
 
+export interface RevenueTrendItem {
+  date: string;
+  revenue: number;
+  booking_count: number;
+}
+
+export interface RevenueTrendResponse {
+  items: RevenueTrendItem[];
+  total_revenue: number;
+  total_bookings: number;
+  currency: string;
+}
+
 // ==========================================
 // AUTH SCHEMAS (app/schemas/auth.py)
 // ==========================================

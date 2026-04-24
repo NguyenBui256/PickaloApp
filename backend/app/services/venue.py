@@ -63,6 +63,19 @@ class VenueManagementService:
         """Initialize venue service with database session."""
         self.session = session
 
+    @staticmethod
+    def _parse_time(time_str: str) -> time:
+        """Helper to parse time strings, handling special case '24:00'."""
+        if time_str == "24:00":
+            return time(23, 59, 59)
+        try:
+            return time.fromisoformat(time_str)
+        except ValueError:
+            # Try HH:MM:SS if HH:MM fails
+            if len(time_str.split(':')) == 2:
+                return time.fromisoformat(f"{time_str}:00")
+            raise
+
     async def get_venues(
         self,
         district: str | None = None,
@@ -465,13 +478,8 @@ class VenueManagementService:
         Raises:
             ValueError: If venue not owned by merchant
         """
-        venue = await self.get_venue_by_id(venue_id)
-
-        if not venue:
-            return None
-
-        # Verify ownership
-        if venue.merchant_id != merchant_id:
+        venue, _, _ = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this venue")
 
         # Update fields
@@ -509,13 +517,9 @@ class VenueManagementService:
         Raises:
             ValueError: If venue not owned by merchant
         """
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
 
-        if not venue:
-            return False
-
-        # Verify ownership
-        if venue.merchant_id != merchant_id:
+        if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to deactivate this venue")
 
         # Soft delete
@@ -568,7 +572,7 @@ class VenueManagementService:
             ValueError: If venue not owned by merchant
         """
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add services to this venue")
 
@@ -701,7 +705,7 @@ class VenueManagementService:
             Created pricing slot or None
         """
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add pricing to this venue")
 
@@ -710,8 +714,8 @@ class VenueManagementService:
             title=title,
             day_type=day_type,
             days_of_week=days_of_week,
-            start_time=time.fromisoformat(start_time),
-            end_time=time.fromisoformat(end_time),
+            start_time=self._parse_time(start_time),
+            end_time=self._parse_time(end_time),
             price=price,
             is_default=is_default,
         )
@@ -733,8 +737,7 @@ class VenueManagementService:
         """
         Create multiple pricing slots for a group of days.
         """
-        # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to manage pricing for this venue")
 
@@ -754,8 +757,8 @@ class VenueManagementService:
                 title=title,
                 day_type=day_type,
                 days_of_week=days_of_week,
-                start_time=time.fromisoformat(s_data["start_time"]),
-                end_time=time.fromisoformat(s_data["end_time"]),
+                start_time=self._parse_time(s_data["start_time"]),
+                end_time=self._parse_time(s_data["end_time"]),
                 price=s_data["price"],
                 is_default=s_data.get("is_default", False),
             )
@@ -791,7 +794,7 @@ class VenueManagementService:
             return None
 
         # Verify ownership
-        venue = await self.get_venue_by_id(slot.venue_id)
+        venue, _, _ = await self.get_venue_by_id(slot.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this pricing")
 
@@ -830,7 +833,7 @@ class VenueManagementService:
             return False
 
         # Verify ownership
-        venue = await self.get_venue_by_id(slot.venue_id)
+        venue, _, _ = await self.get_venue_by_id(slot.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to delete this pricing")
 
@@ -931,7 +934,7 @@ class VenueManagementService:
     ) -> bool:
         """Apply a pricing profile to a venue (replaces existing slots)."""
         # Verify venue ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to manage pricing for this venue")
 
@@ -983,7 +986,7 @@ class VenueManagementService:
         Returns:
             Dict with venue_id, date, slots list, open_time, close_time
         """
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
 
         if not venue:
             return {

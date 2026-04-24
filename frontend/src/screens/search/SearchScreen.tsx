@@ -25,66 +25,76 @@ export const SearchScreen: React.FC = () => {
   const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
-<<<<<<< feat/long
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeType, setActiveType] = useState<string | null>(null);
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      loadVenues();
-    }, 500);
-=======
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
   const loadVenues = async (currentLoc?: Coordinates | null) => {
+    setLoading(true);
     try {
-      const res = await fetchVenues();
+      const params: any = {};
+      if (activeType) params.venue_type = activeType;
+
+      const res = await fetchVenues(params);
       if (res?.items) {
-        setVenues(res.items);
+        let filtered = res.items;
+
+        // Frontend search filter if BE doesn't support it yet
+        if (searchQuery) {
+          filtered = filtered.filter(v =>
+            v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (v.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+
+        // Calculate distances if location is available
         const loc = currentLoc || userLocation;
         if (loc) {
-          calculateDistances(res.items, loc);
+          filtered = filtered.map(v => {
+            if (v.location) {
+              const dist = locationService.calculateAirDistance(loc, {
+                latitude: v.location.lat,
+                longitude: v.location.lng
+              });
+              return { ...v, distance: `${dist.toFixed(1)} km` };
+            }
+            return v;
+          });
         }
+
+        setVenues(filtered);
       }
     } catch (error) {
       console.error('Error fetching venues:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const calculateDistances = (items: any[], loc: Coordinates) => {
-    const updatedItems = items.map(v => {
-      if (v.location) {
-        const dist = locationService.calculateAirDistance(loc, {
-          latitude: v.location.lat,
-          longitude: v.location.lng
-        });
-        return { ...v, distance: `${dist.toFixed(1)} km` };
-      }
-      return v;
-    });
-    setVenues(updatedItems);
-  };
-
+  // Initial location and data fetch
   useEffect(() => {
-    loadVenues(); // Immediate fetch
-
     const init = async () => {
       try {
         const loc = await locationService.getCurrentLocation();
         setUserLocation(loc);
+        await loadVenues(loc);
       } catch (err) {
         console.log('Location error:', err);
+        await loadVenues();
       }
     };
     init();
   }, [user]);
 
+  // Debounced search when query or type changes
   useEffect(() => {
-    if (userLocation && venues.length > 0 && !venues.some(v => v.distance)) {
-      calculateDistances(venues, userLocation);
-    }
-  }, [userLocation]);
+    const delayDebounceFn = setTimeout(() => {
+      loadVenues();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeType]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -96,7 +106,7 @@ export const SearchScreen: React.FC = () => {
       await loadVenues();
     }
     setRefreshing(false);
-  }, [userLocation]);
+  }, [userLocation, searchQuery, activeType]);
 
   const handleToggleFavorite = async (id: string) => {
     if (!user) {
@@ -109,35 +119,6 @@ export const SearchScreen: React.FC = () => {
       setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
-    }
-  };
->>>>>>> main
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, activeType]);
-
-  const loadVenues = async () => {
-    setLoading(true);
-    try {
-      const params: any = {};
-      if (activeType) params.venue_type = activeType;
-      // Note: If backend doesn't support 'q' or 'name' search yet, 
-      // we still fetch and can filter on frontend or use district
-      const res = await fetchVenues(params);
-      if (res?.items) {
-        let filtered = res.items;
-        if (searchQuery) {
-          filtered = filtered.filter(v =>
-            v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (v.address || '').toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        }
-        setVenues(filtered);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -178,11 +159,7 @@ export const SearchScreen: React.FC = () => {
               is_favorite={item.is_favorite}
               onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
               onBook={() => navigation.navigate('VenueDetails', { venueId: item.id })}
-<<<<<<< feat/long
-              onFavoriteToggle={() => { }}
-=======
               onFavoriteToggle={() => handleToggleFavorite(item.id)}
->>>>>>> main
             />
           )}
           ListEmptyComponent={

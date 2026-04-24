@@ -8,6 +8,7 @@ import { BookingCell } from '../../components/BookingCell';
 import { BookingSummaryBar } from '../../components/BookingSummaryBar';
 import { fetchVenueAvailability } from '../../services/venue-service';
 import type { AvailabilityResponse } from '../../types/api-types';
+import { formatCurrency } from '../../utils/format';
 
 const COURT_COLUMN_WIDTH = 100;
 const TIME_CELL_WIDTH = 60;
@@ -18,20 +19,21 @@ export const BookingDetailsScreen: React.FC = () => {
   const route = useRoute<any>();
   const { venueId } = route.params || {};
 
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
 
   // Generate 14 days from today
   const dates = useMemo(() => {
+    const today = new Date();
     const list = [];
     for (let i = 0; i < 14; i++) {
-      const d = new Date();
+      const d = new Date(today);
       d.setDate(today.getDate() + i);
       list.push(d);
     }
     return list;
-  }, [today]);
+  }, []);
 
   const formatDate = (date: Date) => {
     const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -45,13 +47,11 @@ export const BookingDetailsScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchVenueAvailability(venueId, selectedDate).then(setAvailability).catch(console.error);
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    fetchVenueAvailability(venueId, dateStr).then(setAvailability).catch(console.error);
   }, [venueId, selectedDate]);
 
   // Format price helper
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  };
 
   // Calculations
   const bookingSummary = useMemo(() => {
@@ -233,7 +233,7 @@ export const BookingDetailsScreen: React.FC = () => {
         totalPrice={bookingSummary.totalPrice}
         onNext={() => navigation.navigate('Payment', { 
           venueId, 
-          bookingDate: selectedDate,
+          bookingDate: selectedDate.toISOString().split('T')[0],
           selectedSlotsData: bookingSummary.selectedSlotsData,
           totalAmount: bookingSummary.totalAmount
         })}

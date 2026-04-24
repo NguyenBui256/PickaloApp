@@ -17,6 +17,7 @@ import COLORS from '@theme/colors';
 import { fetchVenueById } from '../../services/venue-service';
 import { InfoCard } from '../../components/InfoCard';
 import { useAuthStore } from '../../store/auth-store';
+import { formatCurrency } from '../../utils/format';
 
 
 export const PaymentScreen: React.FC = () => {
@@ -42,9 +43,6 @@ export const PaymentScreen: React.FC = () => {
   const isFormValid = user?.full_name && user?.phone;
   const totalPrice = totalAmount;
 
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  };
 
   return (
     <View style={styles.container}>
@@ -81,13 +79,13 @@ export const PaymentScreen: React.FC = () => {
                     <Text style={styles.courtText}>{slot.courtName}</Text>
                     <Text style={styles.timeText}>Khung giờ: {slot.time}</Text>
                   </View>
-                  <Text style={styles.slotPrice}>{formatCurrency(slot.price)} đ</Text>
+                  <Text style={styles.slotPrice}>{formatCurrency(slot.price)}</Text>
                 </View>
               );
             })}
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tổng tiền</Text>
-              <Text style={styles.totalPriceText}>{formatCurrency(totalPrice)} đ</Text>
+               <Text style={styles.totalPriceText}>{formatCurrency(totalPrice)}</Text>
             </View>
           </InfoCard>
 

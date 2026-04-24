@@ -45,6 +45,22 @@ class BookingService:
         """Initialize booking service with database session."""
         self.session = session
 
+    @staticmethod
+    def _parse_time(time_str: str) -> time:
+        """Helper to parse time strings, handling special case '24:00'."""
+        if time_str == "24:00":
+            return time(23, 59, 59)
+        try:
+            return datetime.strptime(time_str, "%H:%M").time()
+        except ValueError:
+            # Try ISO format if strptime fails
+            try:
+                return time.fromisoformat(time_str)
+            except ValueError:
+                if len(time_str.split(':')) == 2:
+                    return time.fromisoformat(f"{time_str}:00")
+                raise
+
     async def check_availability(
         self,
         court_id: uuid.UUID,
@@ -56,10 +72,9 @@ class BookingService:
         """
         Check if time slot is available for a specific court.
         """
-        # Parse times
         try:
-            start = datetime.strptime(start_time, "%H:%M").time()
-            end = datetime.strptime(end_time, "%H:%M").time()
+            start = self._parse_time(start_time)
+            end = self._parse_time(end_time)
         except ValueError as e:
             raise ValueError(f"Invalid time format: {e}")
 
@@ -131,10 +146,9 @@ class BookingService:
         self.session.add(booking)
         await self.session.flush()
 
-        # 3. Create booking slots
         for slot in slots_data:
-            start = datetime.strptime(slot["start_time"], "%H:%M").time()
-            end = datetime.strptime(slot["end_time"], "%H:%M").time()
+            start = self._parse_time(slot["start_time"])
+            end = self._parse_time(slot["end_time"])
             
             booking_slot = BookingSlot(
                 booking_id=booking.id,
@@ -604,6 +618,80 @@ class BookingService:
             "open_time": open_time_str,
             "close_time": close_time_str,
             "courts": courts_data
+        }
+
+    async def get_merchant_revenue_trend(
+        self,
+        merchant_id: uuid.UUID,
+        days: int = 7,
+    ) -> dict[str, Any]:
+        """
+        Get daily revenue and booking count for the last N days for a merchant.
+        """
+        # Get merchant's venues
+        venue_result = await self.session.execute(
+            select(Venue.id).where(Venue.merchant_id == merchant_id)
+        )
+        venue_ids = [row[0] for row in venue_result.all()]
+
+        if not venue_ids:
+            return {
+                "items": [],
+                "total_revenue": Decimal("0"),
+                "total_bookings": 0,
+            }
+
+        end_date = date.today()
+        start_date = end_date - timedelta(days=days - 1)
+
+        # Query daily revenue
+        # We group by booking_date
+        query = (
+            select(
+                Booking.booking_date,
+                func.sum(Booking.total_price).label("revenue"),
+                func.count(Booking.id).label("booking_count"),
+            )
+            .where(
+                and_(
+                    Booking.venue_id.in_(venue_ids),
+                    Booking.booking_date >= start_date,
+                    Booking.booking_date <= end_date,
+                    Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+                )
+            )
+            .group_by(Booking.booking_date)
+            .order_by(Booking.booking_date)
+        )
+
+        result = await self.session.execute(query)
+        daily_stats = {row.booking_date: row for row in result.all()}
+
+        # Fill in gaps for days with no bookings
+        items = []
+        total_revenue = Decimal("0")
+        total_bookings = 0
+
+        for i in range(days):
+            current_date = start_date + timedelta(days=i)
+            stats = daily_stats.get(current_date)
+            
+            revenue = stats.revenue if stats else Decimal("0")
+            count = stats.booking_count if stats else 0
+            
+            items.append({
+                "date": current_date.isoformat(),
+                "revenue": revenue,
+                "booking_count": count,
+            })
+            
+            total_revenue += revenue
+            total_bookings += count
+
+        return {
+            "items": items,
+            "total_revenue": total_revenue,
+            "total_bookings": total_bookings,
         }
 
     async def get_merchant_stats(

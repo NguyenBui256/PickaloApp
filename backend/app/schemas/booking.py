@@ -265,3 +265,17 @@ class MerchantStatsResponse(BaseModel):
 
     venues: list[MerchantVenueStats]
     currency: str = "VND"
+
+class RevenueTrendItem(BaseModel):
+    """Daily revenue item."""
+    date: str
+    revenue: Decimal
+    booking_count: int
+
+
+class RevenueTrendResponse(BaseModel):
+    """Response containing revenue trend data."""
+    items: list[RevenueTrendItem]
+    total_revenue: Decimal
+    total_bookings: int
+    currency: str = "VND"

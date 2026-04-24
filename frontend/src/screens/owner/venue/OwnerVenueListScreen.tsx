@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchMyVenues, OwnerVenueItem } from '../../../services/merchant-service';
+import { formatCurrency } from '../../../utils/format';
 
 export const OwnerVenueListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -63,7 +64,7 @@ export const OwnerVenueListScreen: React.FC = () => {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Doanh thu / tháng</Text>
-          <Text style={styles.statValue}>{(item.revenue_mtd).toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.statValue}>{formatCurrency(item.revenue_mtd)}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Lượt đặt</Text>

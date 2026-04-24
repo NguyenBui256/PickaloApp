@@ -17,7 +17,9 @@ import { LineChart } from 'react-native-chart-kit';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { differenceInDays, format, addDays } from 'date-fns';
 import COLORS from '@theme/colors';
-import { fetchMyVenues } from '../../services/merchant-service';
+import { fetchMyVenues, fetchRevenueTrend } from '../../services/merchant-service';
+import { vi } from 'date-fns/locale';
+import { formatCurrency } from '../../utils/format';
 
 export const OwnerRevenueReportScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -32,15 +34,25 @@ export const OwnerRevenueReportScreen: React.FC = () => {
     revenue_mtd: 0, total_bookings: 0, name: 'Đang tải...', rating: 0, status: 'ACTIVE',
   });
 
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+
   useEffect(() => {
     fetchMyVenues().then(res => {
       if (res?.length > 0) setOwnerVenue(res[0]);
     });
   }, []);
 
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
-  };
+  useEffect(() => {
+    const days = timeRange === 'WEEK' ? 7 : timeRange === 'MONTH' ? 30 : differenceInDays(endDate, startDate) + 1;
+    if (days > 0 && days <= 31) {
+      fetchRevenueTrend(days).then(res => {
+        if (res?.items) {
+          setRevenueData(res.items);
+        }
+      });
+    }
+  }, [timeRange, startDate, endDate]);
+
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
     setShowStartPicker(Platform.OS === 'ios');
@@ -79,25 +91,12 @@ export const OwnerRevenueReportScreen: React.FC = () => {
   let data: number[] = [];
   let isDataValid = true;
 
-  if (timeRange === 'WEEK') {
-    labels = weekLabels;
-    data = weekData;
-  } else if (timeRange === 'MONTH') {
-    labels = monthLabels;
-    data = monthData;
-  } else {
-    const diff = differenceInDays(endDate, startDate);
-    if (diff < 0 || diff > 6) {
-      isDataValid = false;
-    } else {
-      // Create mock data for custom range
-      for (let i = 0; i <= diff; i++) {
-        const d = addDays(startDate, i);
-        labels.push(format(d, 'dd/MM'));
-        // random logic to mock missing data (50% chance of 0)
-        data.push(Math.random() > 0.5 ? Math.random() * 2000000 : 0);
-      }
-    }
+  if (isDataValid && revenueData.length > 0) {
+    labels = revenueData.map(item => {
+      const d = new Date(item.date);
+      return timeRange === 'WEEK' ? format(d, 'eee', { locale: vi }) : format(d, 'dd/MM');
+    });
+    data = revenueData.map(item => Number(item.revenue));
   }
 
   const currentTotal = isDataValid && data.length > 0 ? data.reduce((a, b) => a + b, 0) : 0;
@@ -135,7 +134,7 @@ export const OwnerRevenueReportScreen: React.FC = () => {
               style={[styles.filterChip, timeRange === 'MONTH' && styles.activeChip]}
               onPress={() => setTimeRange('MONTH')}
             >
-              <Text style={[styles.filterText, timeRange === 'MONTH' && styles.activeFilterText]}>Tháng này ({ownerVenue.revenue_mtd / 1000000}M)</Text>
+              <Text style={[styles.filterText, timeRange === 'MONTH' && styles.activeFilterText]}>Tháng này ({Math.round(ownerVenue.revenue_mtd / 1000000)}M)</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.filterChip, timeRange === 'CUSTOM' && styles.activeChip]}

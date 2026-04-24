@@ -20,6 +20,7 @@ import {
   approveBooking, 
   rejectBooking 
 } from '../../services/merchant-service';
+import { formatCurrency } from '../../utils/format';
 
 // Colors
 const PRIMARY_BLUE = '#1976D2';
@@ -88,6 +89,8 @@ export const OwnerBookingDetailScreen: React.FC = () => {
               await rejectBooking(booking.id, { reason: 'Merchant rejected' });
             }
             loadBooking();
+            // Trigger a refresh in the list screen if we can, 
+            // but useFocusEffect in the list screen will handle it when user goes back.
             Alert.alert('Thành công', `Đã ${actionText} đơn đặt lịch.`);
           } catch (error) {
             Alert.alert('Lỗi', 'Thao tác thất bại.');
@@ -109,7 +112,7 @@ export const OwnerBookingDetailScreen: React.FC = () => {
   const customerName = booking.customer_name || 'Khách hàng';
   const customerPhone = booking.customer_phone || 'N/A';
   const bookingDate = booking.booking_date;
-  const totalPrice = Number(booking.total_price).toLocaleString('vi-VN');
+  const totalPrice = formatCurrency(booking.total_price);
   const status = booking.status;
   const slots = booking.slots || [];
   const services = booking.services || [];
@@ -170,11 +173,34 @@ export const OwnerBookingDetailScreen: React.FC = () => {
               <InfoItem label="Mã đơn hàng" value={booking.id} />
               <InfoItem label="Cơ sở sân" value={booking.venue_name || 'N/A'} />
               <InfoItem label="Sân" value={slots.map((s: any) => s.court_name).join(', ') || 'N/A'} />
-              <InfoItem label="Trạng thái" value={status === 'PENDING' ? 'Chờ duyệt' : status} isYellow />
+              <InfoItem 
+                label="Trạng thái" 
+                value={
+                  status === 'PENDING' ? 'Chờ duyệt' : 
+                  status === 'CONFIRMED' ? 'Đã duyệt' : 
+                  status === 'CANCELLED' ? 'Đã hủy' : 
+                  status === 'COMPLETED' ? 'Hoàn thành' : status
+                } 
+                isYellow 
+              />
               <InfoItem label="Thời gian" value={slots.map((s: any) => `${s.start_time}-${s.end_time}`).join(', ') || 'N/A'} />
               <InfoItem label="Ngày tháng" value={bookingDate} />
-              <InfoItem label="Tổng phí" value={`${totalPrice} đ`} isYellow />
+              <InfoItem label="Tổng phí" value={totalPrice} isYellow />
               <InfoItem label="Số điện thoại" value={customerPhone} isClickable />
+              
+              {booking.payment_proof && (
+                <View style={styles.proofPreviewContainer}>
+                  <Text style={styles.infoLabel}>Minh chứng:</Text>
+                  <TouchableOpacity onPress={() => setActiveTab('Minh chứng')}>
+                    <Image 
+                      source={{ uri: getImageUrl(booking.payment_proof) }} 
+                      style={styles.proofThumbnail} 
+                    />
+                    <Text style={styles.viewMoreText}>Xem chi tiết minh chứng</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {booking.notes && (
                 <View style={styles.noteBox}>
                   <Text style={styles.noteText}>GHI CHÚ: {booking.notes}</Text>
@@ -469,5 +495,25 @@ const styles = StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  proofPreviewContainer: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+  },
+  proofThumbnail: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 10,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  viewMoreText: {
+    color: HIGHLIGHT_YELLOW,
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });

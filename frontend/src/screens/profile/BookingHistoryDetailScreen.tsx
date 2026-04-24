@@ -15,6 +15,7 @@ import COLORS from '@theme/colors';
 import type { BookingListItem, BookingResponse } from '../../types/api-types';
 import { useAuthStore } from '../../store/auth-store';
 import { fetchBookingById } from '../../services/booking-service';
+import { formatCurrency } from '../../utils/format';
 
 // Helpers
 const formatBookingTime = (b: any) => {
@@ -28,8 +29,6 @@ const formatBookingTime = (b: any) => {
 const formatBookingDate = (b: any) =>
   new Date(b.booking_date).toLocaleDateString('vi-VN');
 
-const formatCurrency = (amount: number | string) =>
-  `${Number(amount).toLocaleString('vi-VN')} đ`;
 
 // Color constants from user specs
 const PRIMARY_GREEN = '#064e3b';

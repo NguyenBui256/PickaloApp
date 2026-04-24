@@ -14,6 +14,7 @@ import type {
   BookingApproveRejectRequest,
   BookingCancelRequest,
   MerchantStatsResponse,
+  RevenueTrendResponse,
 } from '../types/api-types';
 
 // ==========================================
@@ -23,6 +24,11 @@ import type {
 /** Get merchant booking & revenue stats. BE: GET /merchant/bookings/stats */
 export const fetchMerchantStats = async (): Promise<MerchantStatsResponse> => {
   return apiClient.get('/merchant/bookings/stats');
+};
+
+/** Get daily revenue trend for the last 7 days. BE: GET /merchant/bookings/revenue-trend */
+export const fetchRevenueTrend = async (days: number = 7): Promise<RevenueTrendResponse> => {
+  return apiClient.get('/merchant/bookings/revenue-trend', { params: { days } });
 };
 
 // ==========================================

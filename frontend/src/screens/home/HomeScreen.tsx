@@ -9,6 +9,8 @@ import {
   TextInput,
   StatusBar,
   Image,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,7 +26,6 @@ import { fetchVenues } from '../../services/venue-service';
 import { toggleFavorite } from '../../services/favorite-service';
 import { useAuthStore } from '../../store/auth-store';
 import { locationService, Coordinates } from '../../services/location-service';
-import { Alert } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -41,7 +42,7 @@ export const HomeScreen: React.FC = () => {
     loadVenues();
   }, [activeQuickFilter]);
 
-  const loadVenues = async () => {
+  const loadVenues = async (currentLoc?: Coordinates | null) => {
     setLoading(true);
     try {
       const params: any = {};
@@ -179,16 +180,22 @@ export const HomeScreen: React.FC = () => {
               >
                 <View style={styles.logoContainer}>
                   {user?.avatar_url ? (
-                    <Image 
-                      source={{ uri: user.avatar_url }} 
-                      style={styles.avatar} 
+                    <Image
+                      source={{ uri: user.avatar_url }}
+                      style={styles.avatar}
                     />
                   ) : (
                     <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
                   )}
                 </View>
                 <View style={styles.textInfo}>
-                  <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
+                  <Text style={styles.dateText}>
+                    {(() => {
+                      const d = new Date();
+                      const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                      return `${days[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                    })()}
+                  </Text>
                   <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
                 </View>
               </TouchableOpacity>
@@ -226,7 +233,7 @@ export const HomeScreen: React.FC = () => {
                 <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.favFloatingBtn}
               onPress={() => navigation.navigate('Favorites')}
             >

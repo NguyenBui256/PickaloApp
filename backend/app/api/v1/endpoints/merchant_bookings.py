@@ -22,6 +22,7 @@ from app.schemas.booking import (
     BookingApproveReject,
     BookingCancel,
     MerchantStatsResponse,
+    RevenueTrendResponse,
 )
 from app.services.booking import BookingService, get_booking_service
 
@@ -38,6 +39,22 @@ async def get_merchant_booking_stats(
     """
     stats = await booking_service.get_merchant_stats(merchant_id=current_user.id)
     return MerchantStatsResponse(**stats)
+
+
+@router.get("/revenue-trend", response_model=RevenueTrendResponse)
+async def get_merchant_revenue_trend(
+    current_user: Annotated[User, Depends(get_current_merchant)],
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+    days: int = Query(7, ge=1, le=30),
+) -> RevenueTrendResponse:
+    """
+    Get daily revenue trend for the merchant.
+    """
+    trend = await booking_service.get_merchant_revenue_trend(
+        merchant_id=current_user.id,
+        days=days,
+    )
+    return RevenueTrendResponse(**trend)
 
 
 @router.get("", response_model=BookingListResponse)

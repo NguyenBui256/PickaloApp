@@ -38,6 +38,7 @@ import type {
   DayType,
   PricingProfileResponse
 } from '../../../types/api-types';
+import { formatCurrency as formatCurrencyUtil } from '../../../utils/format';
 
 type VenueConfigurationRouteProp = RouteProp<
   { VenueConfiguration: { venueId: string } },
@@ -313,7 +314,7 @@ export const VenueConfigurationScreen: React.FC = () => {
         day_type: pricingFormData.day_type,
         slots: pricingFormData.slots.map(s => ({
           start_time: s.is_default ? '00:00' : s.start_time,
-          end_time: s.is_default ? '23:59' : s.end_time,
+          end_time: (s.is_default || s.end_time === '24:00') ? '23:59' : s.end_time,
           price: parseFloat(s.price),
           is_default: s.is_default,
           day_type: pricingFormData.day_type
@@ -422,7 +423,7 @@ export const VenueConfigurationScreen: React.FC = () => {
   };
 
   const formatPrice = (price: number): string => {
-    return `${price.toLocaleString('vi-VN')} đ/giờ`;
+    return `${formatCurrencyUtil(price)}/giờ`;
   };
 
   const formatDaysOfWeek = (days: number[] | null | undefined): string => {

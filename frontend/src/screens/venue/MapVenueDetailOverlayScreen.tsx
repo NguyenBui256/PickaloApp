@@ -370,10 +370,12 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
             <View style={styles.tabContentContainer}>
               {renderTabContent()}
             </View>
-          </View>
-          </View>
-        </ScrollView>
-      </Animated.View>
+        </View>
+      </View>
+    </View>
+  </GestureDetector>
+</ScrollView>
+</Animated.View>
 
       <BookingModal
         isVisible={isBookingModalVisible}
