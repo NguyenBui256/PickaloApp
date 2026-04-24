@@ -49,4 +49,6 @@ __all__ = [
     "AdminAction",
     "ActionType",
     "TargetType",
+    # Favorites
+    "UserFavorite",
 ]

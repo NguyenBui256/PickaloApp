@@ -42,6 +42,8 @@ export const VenueRegistrationScreen: React.FC = () => {
     type: 'Pickleball' as const,
     price: '',
     description: '',
+    lat: 0,
+    lng: 0,
   });
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(
@@ -529,6 +531,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: COLORS.GRAY_MEDIUM,
     fontSize: 14,
+  },
+  mapSelected: {
+    backgroundColor: '#E8F5E9',
+    borderColor: COLORS.PRIMARY,
+    borderStyle: 'solid',
+  },
+  mapTextSelected: {
+    color: COLORS.PRIMARY,
+    fontWeight: 'bold',
   },
   imageScroll: {
     flexDirection: 'row',

@@ -19,6 +19,7 @@ import { MapScreen } from '@screens/map/MapScreen';
 import { ExploreScreen } from '@screens/explore/ExploreScreen';
 import { HighlightsScreen } from '@screens/highlights/HighlightsScreen';
 import { ProfileScreen } from '@screens/profile/ProfileScreen';
+import { FavoritesScreen } from '@screens/favorite/FavoritesScreen';
 import { BookingDetailsScreen } from '@screens/booking/BookingDetailsScreen';
 import { PaymentScreen } from '@screens/booking/PaymentScreen';
 import { FinalPaymentScreen } from '@screens/booking/FinalPaymentScreen';
@@ -39,6 +40,7 @@ import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
 import { OwnerNavigator } from './OwnerNavigator';
 import { AdminNavigator } from './AdminNavigator';
+import { VenueLocationPickerScreen } from '@screens/owner/venue/VenueLocationPickerScreen';
 
 /**
  * Screen types for type-safe navigation.
@@ -55,6 +57,7 @@ export type RootStackParamList = {
   BookingHistoryDetail: { booking: any };
   PaymentResult: { bookingId: string };
   Search: undefined;
+  Favorites: undefined;
   EditProfile: undefined;
   Settings: undefined;
   VenueRegistration: { selectedLocation?: { lat: number; lng: number } };
@@ -65,6 +68,7 @@ export type RootStackParamList = {
   OwnerBookingDetail: { bookingId: string; booking?: any };
   OwnerRevenueReport: undefined;
   ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
+  VenueLocationPicker: { onLocationSelected: (location: { lat: number; lng: number, address: string }) => void, initialLocation?: { lat: number; lng: number, address: string } };
 };
 
 export type MainTabParamList = {
@@ -271,6 +275,10 @@ export function AppNavigator(): React.JSX.Element {
               component={SearchScreen}
             />
             <Stack.Screen
+              name="Favorites"
+              component={FavoritesScreen}
+            />
+            <Stack.Screen
               name="EditProfile"
               component={EditProfileScreen}
             />
@@ -311,6 +319,14 @@ export function AppNavigator(): React.JSX.Element {
               name="ReviewSubmission"
               component={ReviewSubmissionScreen}
               options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="VenueLocationPicker"
+              component={VenueLocationPickerScreen}
+              options={{ 
+                headerShown: false,
+                presentation: 'fullScreenModal'
+              }}
             />
           </>
         ) : (

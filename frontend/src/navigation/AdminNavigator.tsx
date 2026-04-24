@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 
@@ -16,6 +16,8 @@ export type AdminTabParamList = {
   Posts: undefined;
   Profile: undefined;
 };
+
+export type AdminNavigationProp = BottomTabNavigationProp<AdminTabParamList>;
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 

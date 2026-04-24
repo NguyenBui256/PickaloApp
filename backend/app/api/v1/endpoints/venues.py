@@ -63,6 +63,10 @@ async def list_venues(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    lat: float | None = Query(None, ge=-90, le=90),
+    lng: float | None = Query(None, ge=-180, le=180),
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     List venues with optional filters.
@@ -78,11 +82,15 @@ async def list_venues(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
+        user_lat=lat,
+        user_lng=lng,
     )
 
     # Convert to list items
     items = []
-    for venue in venues:
+    for venue, is_fav, v_lat, v_lng, dist in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -91,15 +99,18 @@ async def list_venues(
             fullAddress=venue.address,
             venue_type=venue.venue_type,
             category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
-            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+            location=Coordinates(lat=v_lat if v_lat is not None else 0.0, lng=v_lng if v_lng is not None else 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
+            is_favorite=is_fav,
+            distance=dist,
             images=venue.images,
             amenities=venue.amenities,
             logo=venue.logo,
             bookingLink=venue.booking_link,
             rating=venue.rating,
-            review_count=venue.review_count
+            review_count=venue.review_count,
+            operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         ))
 
     pages = (total + limit - 1) // limit
@@ -125,6 +136,8 @@ async def search_venues_nearby(
     max_price: Decimal | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    only_favorites: bool = False,
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueListResponse:
     """
     Search venues within radius using PostGIS geospatial query.
@@ -142,11 +155,15 @@ async def search_venues_nearby(
         max_price=max_price,
         skip=skip,
         limit=limit,
+        user_id=current_user.id if current_user else None,
+        only_favorites=only_favorites,
+        user_lat=lat,
+        user_lng=lng,
     )
 
     # Convert to list items
     items = []
-    for venue in venues:
+    for venue, is_fav, v_lat, v_lng, dist in venues:
         items.append(VenueListItem(
             id=str(venue.id),
             name=venue.name,
@@ -155,15 +172,18 @@ async def search_venues_nearby(
             fullAddress=venue.address,
             venue_type=venue.venue_type,
             category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
-            location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+            location=Coordinates(lat=v_lat if v_lat is not None else 0.0, lng=v_lng if v_lng is not None else 0.0),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
+            is_favorite=is_fav,
+            distance=dist,
             images=venue.images,
             amenities=venue.amenities,
             logo=venue.logo,
             bookingLink=venue.booking_link,
             rating=venue.rating,
-            review_count=venue.review_count
+            review_count=venue.review_count,
+            operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         ))
 
     pages = (total + limit - 1) // limit
@@ -182,19 +202,27 @@ async def get_venue(
     venue_id: str,
     session: DBSession,
     venue_service: Annotated[VenueManagementService, Depends(get_venue_service)],
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
 ) -> VenueResponse:
     """
     Get venue details by ID.
 
     Public endpoint for viewing venue information.
     """
-    venue = await venue_service.get_venue_by_id(uuid.UUID(venue_id))
+    venue, lat, lng = await venue_service.get_venue_by_id(uuid.UUID(venue_id))
 
     if not venue:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Venue not found",
         )
+
+    # Check if favorite
+    is_fav = False
+    if current_user:
+        from app.services.favorite import FavoriteService
+        fav_service = FavoriteService(session)
+        is_fav = await fav_service.is_favorite(current_user.id, uuid.UUID(venue_id))
 
     # Build response
     return VenueResponse(
@@ -204,7 +232,7 @@ async def get_venue(
         address=venue.address,
         district=venue.district,
         fullAddress=venue.address,
-        location=Coordinates(lat=venue.latitude or 0.0, lng=venue.longitude or 0.0),
+        location=Coordinates(lat=lat if lat is not None else 0.0, lng=lng if lng is not None else 0.0),
         venue_type=venue.venue_type,
         category=venue.venue_type.value if hasattr(venue.venue_type, 'value') else str(venue.venue_type),
         description=venue.description,
@@ -213,11 +241,12 @@ async def get_venue(
         review_count=venue.review_count,
         bookingLink=venue.booking_link,
         images=venue.images,
-        operating_hours={"open": "06:00", "close": "22:00"},
+        operating_hours=venue.operating_hours or {"open": "06:00", "close": "22:00"},
         amenities=venue.amenities,
         base_price_per_hour=venue.base_price_per_hour,
         is_active=venue.is_active,
         is_verified=venue.is_verified,
+        is_favorite=is_fav,
         created_at=venue.created_at.isoformat(),
         updated_at=venue.updated_at.isoformat(),
     )

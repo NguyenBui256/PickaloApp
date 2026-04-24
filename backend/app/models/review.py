@@ -26,7 +26,6 @@ class VenueReview(Base):
     
     rating: Mapped[int] = mapped_column(Integer, nullable=False) # 1-5 stars
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    images: Mapped[list[str] | None] = mapped_column(JSON, nullable=True) # List of image URLs
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)

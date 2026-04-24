@@ -8,14 +8,16 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, Platform } from 'react-native';
 import COLORS from '@theme/colors';
 import { getImageUrl } from '../utils/image-upload-helper';
 
 const { width } = Dimensions.get('window');
 
 interface VenueCardProps {
-  name: string;
-  address: string;
+  id?: string;
+  name?: string | null;
+  address?: string | null;
   distance?: string;           // FE-only: tự tính từ location + user GPS. BE không trả.
   images?: string[];            // BE: VenueListItem.images
   cover_image?: string;         // BE: VenueListItem.cover_image
@@ -31,6 +33,7 @@ interface VenueCardProps {
 }
 
 export const VenueCard: React.FC<VenueCardProps> = ({
+  id,
   name,
   address,
   distance = '',
@@ -41,7 +44,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   hours,
   operating_hours,
   badges = [],
-  isFavorite = false,
+  is_favorite = false,
   onPress,
   onFavoriteToggle,
   onBook,
@@ -51,13 +54,26 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '');
   const displayLogo = logo || 'https://via.placeholder.com/100';
 
+  const openMap = () => {
+    const query = encodeURIComponent(`${name}, ${address}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        console.error("Don't know how to open URI: " + url);
+      }
+    }).catch(err => console.error("Error opening maps", err));
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       {/* Top Section with Image and Badges */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: getImageUrl(displayImage) }} style={styles.image} />
 
-        <View style={styles.badgeContainer}>
+        {/* <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
             <View
               key={index}
@@ -69,13 +85,13 @@ export const VenueCard: React.FC<VenueCardProps> = ({
               <Text style={styles.badgeText}>{badge}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         <View style={styles.topActions}>
           <TouchableOpacity style={styles.actionCircle} onPress={onFavoriteToggle}>
-            <MaterialCommunityIcons               name={isFavorite ? 'heart' : 'heart-outline'}
+            <MaterialCommunityIcons name={is_favorite ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFavorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
+              color={is_favorite ? COLORS.ERROR : COLORS.GRAY_MEDIUM}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionCircle}>
@@ -88,9 +104,9 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       <View style={styles.content}>
         <View style={styles.infoSection}>
           <View style={styles.details}>
-            <Text style={styles.name} numberOfLines={1}>{name}</Text>
-            <Text style={styles.distance}>{distance}</Text>
-            <Text style={styles.address} numberOfLines={1}>{address}</Text>
+            <Text style={styles.name} numberOfLines={1}>{name || 'Tên sân'}</Text>
+            {distance ? <Text style={styles.distance}>{distance}</Text> : null}
+            <Text style={styles.address} numberOfLines={1}>{address || 'Chưa có địa chỉ'}</Text>
             <View style={styles.hoursRow}>
               <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} />
               <Text style={styles.hoursText}>{displayHours}</Text>
@@ -98,9 +114,19 @@ export const VenueCard: React.FC<VenueCardProps> = ({
           </View>
         </View>
 
-        <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
-          <Text style={styles.bookText}>ĐẶT LỊCH</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity 
+            style={styles.mapButton} 
+            onPress={openMap} 
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.PRIMARY} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
+            <Text style={styles.bookText}>ĐẶT LỊCH</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -198,12 +224,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.GRAY_MEDIUM,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 10,
+  },
+  mapButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bookButton: {
     backgroundColor: COLORS.YELLOW,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginLeft: 10,
   },
   bookText: {
     color: COLORS.TEXT_PRIMARY,

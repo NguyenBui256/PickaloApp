@@ -16,15 +16,17 @@ interface BookingCellProps {
 export const BookingCell: React.FC<BookingCellProps> = React.memo(({ status, isSelected, onPress, isMaintenanceMode }) => {
   const getBackgroundColor = () => {
     if (isSelected) return '#dcfce7'; // Light Green
-    switch (status) {
+    const s = status?.toLowerCase();
+    switch (s) {
       case 'booked': return '#ff5252'; // Red
-      case 'locked': return '#9e9e9e'; // Gray
+      case 'locked': return '#9e9e9e'; // Gray (Quá giờ)
+      case 'maintenance': return '#FF9800'; // Orange (Bảo trì)
       case 'event': return '#e040fb'; // Purple
       default: return COLORS.WHITE; // Available
     }
   };
 
-  const isClickable = isMaintenanceMode ? true : status === 'available';
+  const isClickable = isMaintenanceMode ? true : (status?.toLowerCase() === 'available');
 
   return (
     <TouchableOpacity

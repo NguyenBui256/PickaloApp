@@ -13,24 +13,133 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenues } from '../../services/venue-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import { VenueCard } from '../../components/VenueCard';
+import { useAuthStore } from '../../store/auth-store';
+import { Alert } from 'react-native';
+
+import { locationService, Coordinates } from '../../services/location-service';
 
 export const SearchScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [venues, setVenues] = useState<any[]>([]);
+<<<<<<< feat/long
+  const [loading, setLoading] = useState(false);
+  const [activeType, setActiveType] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchVenues().then(res => {
-      if (res?.items) setVenues(res.items);
-    });
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      loadVenues();
+    }, 500);
+=======
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filteredVenues = venues.filter(v =>
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (v.address || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (v.category || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadVenues = async (currentLoc?: Coordinates | null) => {
+    try {
+      const res = await fetchVenues();
+      if (res?.items) {
+        setVenues(res.items);
+        const loc = currentLoc || userLocation;
+        if (loc) {
+          calculateDistances(res.items, loc);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+    }
+  };
+
+  const calculateDistances = (items: any[], loc: Coordinates) => {
+    const updatedItems = items.map(v => {
+      if (v.location) {
+        const dist = locationService.calculateAirDistance(loc, {
+          latitude: v.location.lat,
+          longitude: v.location.lng
+        });
+        return { ...v, distance: `${dist.toFixed(1)} km` };
+      }
+      return v;
+    });
+    setVenues(updatedItems);
+  };
+
+  useEffect(() => {
+    loadVenues(); // Immediate fetch
+
+    const init = async () => {
+      try {
+        const loc = await locationService.getCurrentLocation();
+        setUserLocation(loc);
+      } catch (err) {
+        console.log('Location error:', err);
+      }
+    };
+    init();
+  }, [user]);
+
+  useEffect(() => {
+    if (userLocation && venues.length > 0 && !venues.some(v => v.distance)) {
+      calculateDistances(venues, userLocation);
+    }
+  }, [userLocation]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const loc = await locationService.getCurrentLocation();
+      setUserLocation(loc);
+      await loadVenues(loc);
+    } catch (err) {
+      await loadVenues();
+    }
+    setRefreshing(false);
+  }, [userLocation]);
+
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(id);
+      setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    }
+  };
+>>>>>>> main
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeType]);
+
+  const loadVenues = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
+      if (activeType) params.venue_type = activeType;
+      // Note: If backend doesn't support 'q' or 'name' search yet, 
+      // we still fetch and can filter on frontend or use district
+      const res = await fetchVenues(params);
+      if (res?.items) {
+        let filtered = res.items;
+        if (searchQuery) {
+          filtered = filtered.filter(v =>
+            v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (v.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        setVenues(filtered);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -58,15 +167,22 @@ export const SearchScreen: React.FC = () => {
         </View>
 
         <FlatList
-          data={filteredVenues}
+          data={venues}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => (
             <VenueCard
               {...item}
+              is_favorite={item.is_favorite}
               onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
               onBook={() => navigation.navigate('VenueDetails', { venueId: item.id })}
-              onFavoriteToggle={() => {}}
+<<<<<<< feat/long
+              onFavoriteToggle={() => { }}
+=======
+              onFavoriteToggle={() => handleToggleFavorite(item.id)}
+>>>>>>> main
             />
           )}
           ListEmptyComponent={
@@ -117,6 +233,37 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingTop: 10,
+  },
+  filterContainer: {
+    paddingVertical: 10,
+    backgroundColor: COLORS.WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  filterScroll: {
+    paddingHorizontal: 15,
+    gap: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+  },
+  activeFilterChip: {
+    backgroundColor: COLORS.PRIMARY,
+    borderColor: COLORS.PRIMARY,
+  },
+  filterChipText: {
+    fontSize: 13,
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '500',
+  },
+  activeFilterChipText: {
+    color: COLORS.WHITE,
   },
   emptyContainer: {
     alignItems: 'center',

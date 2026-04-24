@@ -1,7 +1,12 @@
 /**
- * Review Service — API Backend Reviews
- *
- * Backend source: backend/app/api/v1/endpoints/reviews.py
+ * ============================================================
+ * Review Service — Gọi API Backend Reviews
+ * ============================================================
+ * 
+ * Backend spec: docs/api-specs/review-service.yaml
+ * Port mặc định: 8088 (Local development)
+ * 
+ * ============================================================
  */
 
 import { apiClient } from './api-client';
@@ -16,32 +21,55 @@ import type {
 // PUBLIC ENDPOINTS
 // ==========================================
 
-/** List reviews for a venue. BE: GET /venues/{venue_id}/reviews */
+/**
+ * Lấy danh sách đánh giá của sân.
+ * ┌─────────────────────────────────────────────────────┐
+ * │ BE: GET /api/v1/venues/{venue_id}/reviews           │
+ * └─────────────────────────────────────────────────────┘
+ */
 export const fetchVenueReviews = async (
-  venueId: string,
-  page: number = 1,
+  venueId: string, 
+  page: number = 1, 
   limit: number = 10
 ): Promise<ReviewListResponse> => {
-  return apiClient.get(`/venues/${venueId}/reviews`, { params: { page, limit } });
+  return await apiClient.get(`/venues/${venueId}/reviews`, { 
+    params: { page, limit } 
+  });
 };
 
-/** Submit a review (requires completed booking). BE: POST /venues/{venue_id}/reviews */
+/**
+ * Gửi đánh giá mới cho sân.
+ * ┌─────────────────────────────────────────────────────┐
+ * │ BE: POST /api/v1/venues/{venue_id}/reviews          │
+ * │ Yêu cầu: User đã hoàn thành booking tại sân này.    │
+ * └─────────────────────────────────────────────────────┘
+ */
 export const createReview = async (
-  venueId: string,
+  venueId: string, 
   data: ReviewCreateRequest
 ): Promise<ReviewResponse> => {
-  return apiClient.post(`/venues/${venueId}/reviews`, data);
+  return await apiClient.post(`/venues/${venueId}/reviews`, data);
 };
 
-/** Update own review. BE: PUT /reviews/{review_id} */
+/**
+ * Cập nhật đánh giá của chính mình.
+ * ┌─────────────────────────────────────────────────────┐
+ * │ BE: PUT /api/v1/reviews/{review_id}                 │
+ * └─────────────────────────────────────────────────────┘
+ */
 export const updateReview = async (
-  reviewId: string,
+  reviewId: string, 
   data: ReviewUpdateRequest
 ): Promise<ReviewResponse> => {
-  return apiClient.put(`/reviews/${reviewId}`, data);
+  return await apiClient.put(`/reviews/${reviewId}`, data);
 };
 
-/** Delete own review. BE: DELETE /reviews/{review_id} */
+/**
+ * Xóa đánh giá.
+ * ┌─────────────────────────────────────────────────────┐
+ * │ BE: DELETE /api/v1/reviews/{review_id}              │
+ * └─────────────────────────────────────────────────────┘
+ */
 export const deleteReview = async (reviewId: string): Promise<void> => {
   await apiClient.delete(`/reviews/${reviewId}`);
 };

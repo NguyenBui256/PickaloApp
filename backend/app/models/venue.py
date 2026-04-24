@@ -197,9 +197,17 @@ class Venue(BaseModel):
         if self.location is not None:
             from geoalchemy2.shape import to_shape
             try:
+                # Standard GeoAlchemy2 way
                 return to_shape(self.location).y
             except Exception:
-                return None
+                # Fallback: try to parse from string if it's not a WKBElement
+                try:
+                    loc_str = str(self.location)
+                    if 'POINT' in loc_str:
+                        # Extract from 'POINT(lng lat)'
+                        return float(loc_str.split('(')[1].split(')')[0].split(' ')[1])
+                except Exception:
+                    return None
         return None
 
     @property
@@ -208,9 +216,17 @@ class Venue(BaseModel):
         if self.location is not None:
             from geoalchemy2.shape import to_shape
             try:
+                # Standard GeoAlchemy2 way
                 return to_shape(self.location).x
             except Exception:
-                return None
+                # Fallback: try to parse from string if it's not a WKBElement
+                try:
+                    loc_str = str(self.location)
+                    if 'POINT' in loc_str:
+                        # Extract from 'POINT(lng lat)'
+                        return float(loc_str.split('(')[1].split(')')[0].split(' ')[0])
+                except Exception:
+                    return None
         return None
 
     def to_dict(self) -> dict[str, Any]:
