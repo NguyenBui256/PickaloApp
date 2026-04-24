@@ -71,8 +71,19 @@ export const LoginScreen: React.FC = () => {
       await AsyncStorage.setItem('@alobo_access_token', response.access_token);
       await AsyncStorage.setItem('@alobo_refresh_token', response.refresh_token);
 
-      // Cập nhật trạng thái Store - Hệ thống sẽ tự động chuyển màn hình ngay sau dòng này
+      // Update auth store with real user data and tokens
       login(response.user as any, response.access_token, response.refresh_token);
+
+      // Navigate based on role
+      if (response.user.role === 'ADMIN') {
+        // @ts-ignore
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      } else {
+        navigation.navigate('Main');
+      }
 
       // Đăng ký nhận thông báo đẩy
       await registerForPushNotificationsAsync();
