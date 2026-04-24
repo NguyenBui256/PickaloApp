@@ -17,6 +17,7 @@ from geoalchemy2 import functions as geofunc, Geometry, Geography
 
 from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
+from app.models.pricing_profile import PricingProfile, PricingProfileSlot
 from app.models.booking import Booking, BookingStatus
 from app.models.court import Court
 from app.models.favorite import UserFavorite
@@ -61,6 +62,19 @@ class VenueManagementService:
     def __init__(self, session: AsyncSession):
         """Initialize venue service with database session."""
         self.session = session
+
+    @staticmethod
+    def _parse_time(time_str: str) -> time:
+        """Helper to parse time strings, handling special case '24:00'."""
+        if time_str == "24:00":
+            return time(23, 59, 59)
+        try:
+            return time.fromisoformat(time_str)
+        except ValueError:
+            # Try HH:MM:SS if HH:MM fails
+            if len(time_str.split(':')) == 2:
+                return time.fromisoformat(f"{time_str}:00")
+            raise
 
     async def get_venues(
         self,
@@ -387,8 +401,11 @@ class VenueManagementService:
         base_price_per_hour: Decimal,
         description: str | None = None,
         images: list[str] | None = None,
+        cover_image: str | None = None,
         operating_hours: dict | None = None,
         amenities: list[str] | None = None,
+        logo: str | None = None,
+        booking_link: str | None = None,
     ) -> Venue:
         """
         Create new venue for merchant.
@@ -426,8 +443,11 @@ class VenueManagementService:
             venue_type=venue_type,
             description=description,
             images=images,
+            cover_image=cover_image,
             operating_hours=operating_hours,
             amenities=amenities,
+            logo=logo,
+            booking_link=booking_link,
             base_price_per_hour=base_price_per_hour,
             is_active=True,
             is_verified=False,
@@ -458,13 +478,8 @@ class VenueManagementService:
         Raises:
             ValueError: If venue not owned by merchant
         """
-        venue = await self.get_venue_by_id(venue_id)
-
-        if not venue:
-            return None
-
-        # Verify ownership
-        if venue.merchant_id != merchant_id:
+        venue, _, _ = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this venue")
 
         # Update fields
@@ -502,13 +517,9 @@ class VenueManagementService:
         Raises:
             ValueError: If venue not owned by merchant
         """
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
 
-        if not venue:
-            return False
-
-        # Verify ownership
-        if venue.merchant_id != merchant_id:
+        if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to deactivate this venue")
 
         # Soft delete
@@ -561,7 +572,7 @@ class VenueManagementService:
             ValueError: If venue not owned by merchant
         """
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add services to this venue")
 
@@ -580,7 +591,7 @@ class VenueManagementService:
 
     async def update_venue_service(
         self,
-        service_id: int,
+        service_id: uuid.UUID,
         merchant_id: uuid.UUID,
         **updates: Any,
     ) -> VenueService | None:
@@ -618,7 +629,7 @@ class VenueManagementService:
 
     async def delete_venue_service(
         self,
-        service_id: int,
+        service_id: uuid.UUID,
         merchant_id: uuid.UUID,
     ) -> bool:
         """
@@ -673,7 +684,10 @@ class VenueManagementService:
         day_type: DayType,
         start_time: str,
         end_time: str,
-        price_factor: Decimal,
+        price: Decimal,
+        is_default: bool = False,
+        days_of_week: list[int] | None = None,
+        title: str | None = None,
     ) -> PricingTimeSlot | None:
         """
         Add pricing time slot.
@@ -684,22 +698,26 @@ class VenueManagementService:
             day_type: Day type for pricing
             start_time: Start time (HH:MM)
             end_time: End time (HH:MM)
-            price_factor: Price multiplier
+            price: Price amount (VND)
+            is_default: Whether this is the default slot for the day type
 
         Returns:
             Created pricing slot or None
         """
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add pricing to this venue")
 
         slot = PricingTimeSlot(
             venue_id=venue_id,
+            title=title,
             day_type=day_type,
-            start_time=time.fromisoformat(start_time),
-            end_time=time.fromisoformat(end_time),
-            price_factor=price_factor,
+            days_of_week=days_of_week,
+            start_time=self._parse_time(start_time),
+            end_time=self._parse_time(end_time),
+            price=price,
+            is_default=is_default,
         )
 
         self.session.add(slot)
@@ -707,9 +725,52 @@ class VenueManagementService:
 
         return slot
 
+    async def bulk_create_pricing_slots(
+        self,
+        venue_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+        days_of_week: list[int],
+        slots_data: list[dict[str, Any]],
+        title: str | None = None,
+        day_type: DayType = DayType.WEEKDAY,
+    ) -> list[PricingTimeSlot]:
+        """
+        Create multiple pricing slots for a group of days.
+        """
+        venue, _, _ = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to manage pricing for this venue")
+
+        created_slots = []
+        
+        # Sort and validate for overlaps
+        non_default_slots = [s for s in slots_data if not s.get("is_default", False)]
+        if len(non_default_slots) > 1:
+            sorted_slots = sorted(non_default_slots, key=lambda x: x["start_time"])
+            for i in range(len(sorted_slots) - 1):
+                if sorted_slots[i]["end_time"] > sorted_slots[i+1]["start_time"]:
+                    raise ValueError(f"Khung giờ bị chồng lấn: {sorted_slots[i]['start_time']}-{sorted_slots[i]['end_time']} và {sorted_slots[i+1]['start_time']}-{sorted_slots[i+1]['end_time']}")
+
+        for s_data in slots_data:
+            slot = PricingTimeSlot(
+                venue_id=venue_id,
+                title=title,
+                day_type=day_type,
+                days_of_week=days_of_week,
+                start_time=self._parse_time(s_data["start_time"]),
+                end_time=self._parse_time(s_data["end_time"]),
+                price=s_data["price"],
+                is_default=s_data.get("is_default", False),
+            )
+            self.session.add(slot)
+            created_slots.append(slot)
+
+        await self.session.flush()
+        return created_slots
+
     async def update_pricing_slot(
         self,
-        slot_id: int,
+        slot_id: uuid.UUID,
         merchant_id: uuid.UUID,
         **updates: Any,
     ) -> PricingTimeSlot | None:
@@ -733,7 +794,7 @@ class VenueManagementService:
             return None
 
         # Verify ownership
-        venue = await self.get_venue_by_id(slot.venue_id)
+        venue, _, _ = await self.get_venue_by_id(slot.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this pricing")
 
@@ -750,7 +811,7 @@ class VenueManagementService:
 
     async def delete_pricing_slot(
         self,
-        slot_id: int,
+        slot_id: uuid.UUID,
         merchant_id: uuid.UUID,
     ) -> bool:
         """
@@ -772,13 +833,142 @@ class VenueManagementService:
             return False
 
         # Verify ownership
-        venue = await self.get_venue_by_id(slot.venue_id)
+        venue, _, _ = await self.get_venue_by_id(slot.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to delete this pricing")
 
         await self.session.delete(slot)
         await self.session.flush()
 
+        return True
+
+    # ===== Pricing Profile Management =====
+
+    async def get_pricing_profiles(self, merchant_id: uuid.UUID) -> list[PricingProfile]:
+        """Get all pricing profiles for a merchant."""
+        result = await self.session.execute(
+            select(PricingProfile).where(PricingProfile.merchant_id == merchant_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_pricing_profile(
+        self,
+        merchant_id: uuid.UUID,
+        name: str,
+        description: str | None = None,
+        slots: list[dict] | None = None,
+    ) -> PricingProfile:
+        """Create a new pricing profile with optional slots."""
+        profile = PricingProfile(
+            merchant_id=merchant_id,
+            name=name,
+            description=description,
+        )
+        self.session.add(profile)
+        await self.session.flush()
+
+        if slots:
+            for s in slots:
+                slot = PricingProfileSlot(
+                    profile_id=profile.id,
+                    day_type=s["day_type"],
+                    start_time=time.fromisoformat(s["start_time"]),
+                    end_time=time.fromisoformat(s["end_time"]),
+                    price=s["price"],
+                    is_default=s.get("is_default", False),
+                )
+                self.session.add(slot)
+            await self.session.flush()
+
+        return profile
+
+    async def update_pricing_profile(
+        self,
+        profile_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+        **updates: Any,
+    ) -> PricingProfile | None:
+        """Update pricing profile details."""
+        result = await self.session.execute(
+            select(PricingProfile).where(
+                PricingProfile.id == profile_id,
+                PricingProfile.merchant_id == merchant_id,
+            )
+        )
+        profile = result.scalar_one_or_none()
+        if not profile:
+            return None
+
+        for field, value in updates.items():
+            if value is not None and hasattr(profile, field):
+                setattr(profile, field, value)
+
+        await self.session.flush()
+        return profile
+
+    async def delete_pricing_profile(
+        self,
+        profile_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+    ) -> bool:
+        """Delete a pricing profile."""
+        result = await self.session.execute(
+            select(PricingProfile).where(
+                PricingProfile.id == profile_id,
+                PricingProfile.merchant_id == merchant_id,
+            )
+        )
+        profile = result.scalar_one_or_none()
+        if not profile:
+            return False
+
+        await self.session.delete(profile)
+        await self.session.flush()
+        return True
+
+    async def apply_pricing_profile(
+        self,
+        venue_id: uuid.UUID,
+        profile_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+    ) -> bool:
+        """Apply a pricing profile to a venue (replaces existing slots)."""
+        # Verify venue ownership
+        venue, _, _ = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to manage pricing for this venue")
+
+        # Verify profile ownership
+        result = await self.session.execute(
+            select(PricingProfile).where(
+                PricingProfile.id == profile_id,
+                PricingProfile.merchant_id == merchant_id,
+            )
+        )
+        profile = result.scalar_one_or_none()
+        if not profile:
+            return False
+
+        # Clear existing pricing slots for the venue
+        from sqlalchemy import delete
+        await self.session.execute(
+            delete(PricingTimeSlot).where(PricingTimeSlot.venue_id == venue_id)
+        )
+
+        # Copy slots from profile to venue
+        for p_slot in profile.slots:
+            v_slot = PricingTimeSlot(
+                venue_id=venue_id,
+                day_type=p_slot.day_type,
+                days_of_week=p_slot.days_of_week,
+                start_time=p_slot.start_time,
+                end_time=p_slot.end_time,
+                price=p_slot.price,
+                is_default=p_slot.is_default,
+            )
+            self.session.add(v_slot)
+
+        await self.session.flush()
         return True
 
     async def get_venue_availability(
@@ -796,7 +986,7 @@ class VenueManagementService:
         Returns:
             Dict with venue_id, date, slots list, open_time, close_time
         """
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
 
         if not venue:
             return {
@@ -940,6 +1130,54 @@ class VenueManagementService:
 
         await self.session.flush()
         return court
+
+    async def delete_court(
+        self,
+        court_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+    ) -> bool:
+        """Delete a court with ownership verification."""
+        result = await self.session.execute(
+            select(Court).where(Court.id == court_id)
+        )
+        court = result.scalar_one_or_none()
+        if not court:
+            return False
+
+        # Verify ownership
+        venue = await self.get_venue_by_id(court.venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to delete this court")
+
+        await self.session.delete(court)
+        await self.session.flush()
+        return True
+
+    async def bulk_create_courts(
+        self,
+        venue_id: uuid.UUID,
+        merchant_id: uuid.UUID,
+        names: list[str],
+        is_active: bool = True,
+    ) -> list[Court]:
+        """Bulk create multiple courts for a venue."""
+        # Verify ownership
+        venue = await self.get_venue_by_id(venue_id)
+        if not venue or venue.merchant_id != merchant_id:
+            raise ValueError("Not authorized to add courts to this venue")
+
+        courts = []
+        for name in names:
+            court = Court(
+                venue_id=venue_id,
+                name=name,
+                is_active=is_active,
+            )
+            self.session.add(court)
+            courts.append(court)
+
+        await self.session.flush()
+        return courts
 
 
 async def get_venue_service(session: Annotated[AsyncSession, Depends(get_db)]) -> VenueManagementService:

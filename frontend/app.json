@@ -8,13 +8,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true
+      "supportsTabletMode": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload venue and court images.",
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos for your venue and court images."
+      }
     },
     "android": {
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "CAMERA"
+      ]
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "This app needs access to your photo library to upload venue and court images.",
+          "cameraPermission": "This app needs access to your camera to take photos for your venue and court images."
+        }
+      ]
     ]
   }
 }

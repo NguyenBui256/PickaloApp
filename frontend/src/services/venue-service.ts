@@ -17,6 +17,7 @@ import type {
   VenueServiceResponse,
   PricingSlotCreateRequest,
   PricingSlotResponse,
+  CourtResponse,
 } from '../types/api-types';
 
 // ==========================================
@@ -64,22 +65,22 @@ export const fetchDistrictsList = async (): Promise<{ districts: string[] }> => 
 // MERCHANT ENDPOINTS
 // ==========================================
 
-/** Merchant creates venue. BE: POST /venues */
+/** Merchant creates venue. BE: POST /venues/merchant */
 export const createVenue = async (data: VenueCreateRequest): Promise<VenueResponse> => {
-  return apiClient.post('/venues', data);
+  return apiClient.post('/venues/merchant', data);
 };
 
-/** Merchant updates venue. BE: PUT /venues/{venue_id} */
+/** Merchant updates venue. BE: PUT /venues/merchant/{venue_id} */
 export const updateVenue = async (
   venueId: string,
   data: VenueUpdateRequest
 ): Promise<VenueResponse> => {
-  return apiClient.put(`/venues/${venueId}`, data);
+  return apiClient.put(`/venues/merchant/${venueId}`, data);
 };
 
-/** Merchant deactivates venue (soft delete). BE: DELETE /venues/{venue_id} */
+/** Merchant deactivates venue (soft delete). BE: DELETE /venues/merchant/{venue_id} */
 export const deactivateVenue = async (venueId: string): Promise<void> => {
-  await apiClient.delete(`/venues/${venueId}`);
+  await apiClient.delete(`/venues/merchant/${venueId}`);
 };
 
 // ==========================================
@@ -128,6 +129,91 @@ export const createPricingSlot = async (
   data: PricingSlotCreateRequest
 ): Promise<PricingSlotResponse> => {
   return apiClient.post(`/venues/${venueId}/pricing`, data);
+};
+
+/** Bulk create pricing slots. BE: POST /venues/{venue_id}/pricing/bulk */
+export const bulkCreatePricingSlots = async (
+  venueId: string,
+  data: PricingBulkCreateRequest
+): Promise<PricingSlotResponse[]> => {
+  return apiClient.post(`/venues/${venueId}/pricing/bulk`, data);
+};
+
+/** Update pricing slot. BE: PUT /venues/{venue_id}/pricing/{slot_id} */
+export const updatePricingSlot = async (
+  venueId: string,
+  slotId: string,
+  data: Partial<PricingSlotCreateRequest>
+): Promise<PricingSlotResponse> => {
+  return apiClient.put(`/venues/${venueId}/pricing/${slotId}`, data);
+};
+
+/** Delete pricing slot. BE: DELETE /venues/{venue_id}/pricing/{slot_id} */
+export const deletePricingSlot = async (venueId: string, slotId: string): Promise<void> => {
+  await apiClient.delete(`/venues/${venueId}/pricing/${slotId}`);
+};
+
+// ==========================================
+// COURTS
+// ==========================================
+
+/** Get venue courts. BE: GET /venues/{venue_id}/courts */
+export const fetchVenueCourts = async (venueId: string): Promise<CourtResponse[]> => {
+  return apiClient.get(`/venues/${venueId}/courts`);
+};
+
+/** Create court. BE: POST /venues/{venue_id}/courts */
+export const createCourt = async (
+  venue_id: string,
+  data: { name: string }
+): Promise<CourtResponse> => {
+  return apiClient.post(`/venues/${venue_id}/courts`, data);
+};
+
+/** Bulk create courts. BE: POST /venues/{venue_id}/courts/bulk */
+export const bulkCreateCourts = async (
+  venue_id: string,
+  data: { names: string[] }
+): Promise<CourtResponse[]> => {
+  return apiClient.post(`/venues/${venue_id}/courts/bulk`, data);
+};
+
+/** Update court. BE: PUT /venues/courts/{court_id} */
+export const updateCourt = async (
+  courtId: string,
+  data: { name?: string; is_active?: boolean }
+): Promise<CourtResponse> => {
+  return apiClient.put(`/venues/courts/${courtId}`, data);
+};
+
+/** Delete court. BE: DELETE /venues/courts/{court_id} */
+export const deleteCourt = async (courtId: string): Promise<void> => {
+  await apiClient.delete(`/venues/courts/${courtId}`);
+};
+
+// ==========================================
+// PRICING PROFILES
+// ==========================================
+
+/** List pricing profiles. BE: GET /pricing-profiles */
+export const fetchPricingProfiles = async (): Promise<PricingProfileResponse[]> => {
+  return apiClient.get('/pricing-profiles');
+};
+
+/** Apply pricing profile to venue. BE: POST /pricing-profiles/apply/{profile_id}/to-venue/{venue_id} */
+export const applyPricingProfile = async (
+  venueId: string,
+  profileId: string
+): Promise<{ message: string }> => {
+  return apiClient.post(`/pricing-profiles/apply/${profileId}/to-venue/${venueId}`);
+};
+
+/** Update pricing profile. BE: PUT /pricing-profiles/{profile_id} */
+export const updatePricingProfile = async (
+  profileId: string,
+  data: { name?: string; description?: string }
+): Promise<PricingProfileResponse> => {
+  return apiClient.put(`/pricing-profiles/${profileId}`, data);
 };
 
 // ==========================================

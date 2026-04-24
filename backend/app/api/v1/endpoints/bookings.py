@@ -125,6 +125,7 @@ async def create_booking(
         total_price=pricing_result["total"],
         services=[s.model_dump() for s in services_list] if services_list else None,
         notes=booking_data.notes,
+        payment_proof=booking_data.payment_proof,
     )
 
     await session.commit()
@@ -307,6 +308,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         payment_method=booking.payment_method,
         payment_id=booking.payment_id,
         paid_at=booking.paid_at.isoformat() if booking.paid_at else None,
+        payment_proof=booking.payment_proof,
         notes=booking.notes,
         cancelled_at=booking.cancelled_at.isoformat() if booking.cancelled_at else None,
         cancelled_by=booking.cancelled_by,
@@ -332,4 +334,8 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         is_paid=booking.is_paid,
         is_cancelable=booking.is_cancelable,
         created_at=booking.created_at.isoformat(),
+        payment_proof=booking.payment_proof,
+        start_time=booking.slots[0].start_time.strftime("%H:%M") if booking.slots and booking.slots[0].start_time else None,
+        end_time=booking.slots[0].end_time.strftime("%H:%M") if booking.slots and booking.slots[0].end_time else None,
+        court_name=booking.slots[0].court.name if booking.slots and hasattr(booking.slots[0], 'court') and booking.slots[0].court else None,
     )

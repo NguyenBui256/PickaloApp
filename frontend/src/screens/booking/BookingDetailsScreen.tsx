@@ -8,33 +8,32 @@ import { BookingCell } from '../../components/BookingCell';
 import { BookingSummaryBar } from '../../components/BookingSummaryBar';
 import { fetchVenueAvailability } from '../../services/venue-service';
 import type { AvailabilityResponse } from '../../types/api-types';
+import { formatCurrency } from '../../utils/format';
 
 const COURT_COLUMN_WIDTH = 100;
 const TIME_CELL_WIDTH = 60;
 const CELL_HEIGHT = 40;
-const PRICE_PER_SLOT = 95000;
 
 export const BookingDetailsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { venueId } = route.params || {};
 
-  // Current Date/Time Logic
-  const today = useMemo(() => new Date(), []);
-  const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
 
   // Generate 14 days from today
   const dates = useMemo(() => {
+    const today = new Date();
     const list = [];
     for (let i = 0; i < 14; i++) {
-      const d = new Date();
+      const d = new Date(today);
       d.setDate(today.getDate() + i);
       list.push(d);
     }
     return list;
-  }, [today]);
+  }, []);
 
   const formatDate = (date: Date) => {
     const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -48,31 +47,64 @@ export const BookingDetailsScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    fetchVenueAvailability(venueId, today).then(setAvailability).catch(console.error);
-  }, [venueId]);
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    fetchVenueAvailability(venueId, dateStr).then(setAvailability).catch(console.error);
+  }, [venueId, selectedDate]);
 
   // Format price helper
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  };
 
   // Calculations
   const bookingSummary = useMemo(() => {
-    const totalSlots = selectedSlots.length;
-    const totalMinutes = totalSlots * 30;
+    let totalMinutes = 0;
+    let totalAmount = 0;
+    const selectedSlotsData: any[] = [];
+
+    if (availability) {
+      selectedSlots.forEach(slotId => {
+        const [courtId, startTime] = slotId.split('|');
+        const court = availability.courts.find(c => c.court_id === courtId);
+        if (court) {
+          const slot = court.slots.find(s => s.start_time === startTime);
+          if (slot) {
+            // Calculate duration in minutes
+            const [startH, startM] = slot.start_time.split(':').map(Number);
+            const [endH, endM] = slot.end_time.split(':').map(Number);
+            const duration = (endH * 60 + endM) - (startH * 60 + startM);
+            totalMinutes += duration;
+
+            if (slot.price) {
+              totalAmount += slot.price;
+            }
+
+            selectedSlotsData.push({
+              courtId: court.court_id,
+              courtName: court.court_name,
+              time: `${slot.start_time} - ${slot.end_time}`,
+              start_time: slot.start_time,
+              end_time: slot.end_time,
+              price: slot.price,
+            });
+          }
+        }
+      });
+    }
+
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    const timeStr = hours > 0 ? `${hours}h${minutes > 0 ? minutes : '00'}` : `${minutes}ph`;
+    const timeStr = hours > 0 
+      ? `${hours}h${minutes > 0 ? (minutes < 10 ? '0' + minutes : minutes) : '00'}` 
+      : `${minutes}ph`;
 
     return {
       timeStr,
-      totalPrice: formatCurrency(totalSlots * PRICE_PER_SLOT),
+      totalPrice: formatCurrency(totalAmount),
+      totalAmount,
+      selectedSlotsData,
     };
-  }, [selectedSlots]);
+  }, [selectedSlots, availability]);
 
   const toggleSlot = useCallback((court: string, slot: string) => {
-    const slotId = `${court}-${slot}`;
+    const slotId = `${court}|${slot}`;
     setSelectedSlots((prev) =>
       prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
@@ -176,7 +208,7 @@ export const BookingDetailsScreen: React.FC = () => {
 
                   {/* Row Cells */}
                   {court.slots.map((slot) => {
-                    const slotId = `${court.court_id}-${slot.start_time}`;
+                    const slotId = `${court.court_id}|${slot.start_time}`;
                     return (
                       <BookingCell
                         key={slotId}
@@ -199,7 +231,12 @@ export const BookingDetailsScreen: React.FC = () => {
         isVisible={selectedSlots.length > 0}
         totalHours={bookingSummary.timeStr}
         totalPrice={bookingSummary.totalPrice}
-        onNext={() => navigation.navigate('Payment', { venueId, selectedSlots })}
+        onNext={() => navigation.navigate('Payment', { 
+          venueId, 
+          bookingDate: selectedDate.toISOString().split('T')[0],
+          selectedSlotsData: bookingSummary.selectedSlotsData,
+          totalAmount: bookingSummary.totalAmount
+        })}
       />
     </View>
   );

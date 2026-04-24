@@ -26,6 +26,7 @@ import Animated, {
 import { fetchVenueById } from '../../services/venue-service';
 import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
+import { getImageUrl } from '../../utils/image-upload-helper';
 import type { ReviewResponse } from '../../types/api-types';
 import COLORS from '@theme/colors';
 
@@ -153,6 +154,31 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
         </View>
       );
     }
+    if (activeTab === 'Hình ảnh') {
+      return (
+        <View style={styles.tabContent}>
+          <Text style={styles.sectionTitle}>Thư viện hình ảnh</Text>
+            <View style={styles.imagesGrid}>
+              {venue.images && Array.isArray(venue.images) && venue.images.length > 0 ? (
+                venue.images.map((img: string, index: number) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image 
+                      source={{ uri: getImageUrl(img) }} 
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <MaterialCommunityIcons name="image-off-outline" size={48} color={COLORS.GRAY_LIGHT} />
+                  <Text style={styles.emptyText}>Sân này chưa cập nhật hình ảnh.</Text>
+                </View>
+              )}
+            </View>
+        </View>
+      );
+    }
     if (activeTab === 'Đánh giá') {
       return (
         <View style={styles.tabContent}>
@@ -234,27 +260,36 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
             style={styles.contentScrollView}
             contentContainerStyle={styles.scrollContainer}
           >
-            {/* Venue Cover Image */}
-            <View style={styles.coverSection}>
-              <Image 
-                source={{ uri: venue.images?.[0] || 'https://via.placeholder.com/400' }} 
-                style={styles.coverImage} 
-              />
+            <View style={styles.paddingForMap} />
+            
+            <GestureDetector gesture={panGesture}>
+              <View>
+                {/* Draggable Handle Indicator */}
+                <View style={styles.handleContainer}>
+                  <View style={styles.handle} />
+                </View>
 
-              <View style={styles.coverActions}>
-                <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
-                  <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
-                  <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.bookNowBtn}
-                  onPress={handleBookPress}
-                >
-                  <Text style={styles.bookNowText}>Đặt lịch</Text>
-                </TouchableOpacity>
-              </View>
+                {/* Venue Cover Image */}
+                <View style={[styles.coverSection, { borderTopLeftRadius: 0, borderTopRightRadius: 0 }]}>
+            <Image 
+              source={{ uri: getImageUrl(venue.cover_image || venue.images?.[0] || venue.image) }} 
+              style={styles.coverImage} 
+            />
+
+            <View style={styles.coverActions}>
+              <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
+                <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
+                <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.bookNowBtn}
+                onPress={handleBookPress}
+              >
+                <Text style={styles.bookNowText}>Đặt lịch</Text>
+              </TouchableOpacity>
+            </View>
 
               {/* Rating Badge */}
               <View style={styles.ratingBadge}>
@@ -267,7 +302,7 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
           {/* Venue Info Card */}
           <View style={styles.infoCard}>
             <View style={styles.infoHeader}>
-              <Image source={{ uri: venue.logo }} style={styles.logo} />
+              <Image source={{ uri: getImageUrl(venue.logo) }} style={styles.logo} />
               <View style={styles.titleArea}>
                 <Text style={styles.venueName}>{venue.name}</Text>
                 <View style={[styles.catBadge, { borderColor: venue.category === 'Pickleball' ? '#3498DB' : COLORS.PRIMARY }]}>
@@ -335,10 +370,12 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
             <View style={styles.tabContentContainer}>
               {renderTabContent()}
             </View>
-          </View>
-          </View>
-        </ScrollView>
-      </Animated.View>
+        </View>
+      </View>
+    </View>
+  </GestureDetector>
+</ScrollView>
+</Animated.View>
 
       <BookingModal
         isVisible={isBookingModalVisible}
@@ -648,5 +685,30 @@ const styles = StyleSheet.create({
   emptyReviews: {
     alignItems: 'center',
     paddingVertical: 30,
+  },
+  imagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 10,
+  },
+  imageWrapper: {
+    width: (Dimensions.get('window').width - 50) / 2,
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyContainer: {
+    width: '100%',
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
