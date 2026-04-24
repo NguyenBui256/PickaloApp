@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,12 +9,16 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchVenues } from '../../services/venue-service';
 import { locationService, Coordinates } from '../../services/location-service';
+import { matchService } from '../../services/match-service';
+import { MatchResponse } from '../../types/api-types';
+import { MatchDetailModal } from '../match/MatchDetailModal';
+import { MatchFilterModal } from '../match/MatchFilterModal';
 
 const { height } = Dimensions.get('window');
 
@@ -32,10 +36,23 @@ export const MapScreen = () => {
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [venues, setVenues] = useState<any[]>([]);
+  const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [routeCoords, setRouteCoords] = useState<Coordinates[]>([]);
   const [routeInfo, setRouteInfo] = useState<{ distance: string, duration: string } | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking' | 'cycling'>('driving');
+  const [mapMode, setMapMode] = useState<'venue' | 'match'>('venue');
+  const [selectedMatch, setSelectedMatch] = useState<MatchResponse | null>(null);
+  const [selectedMatchGroup, setSelectedMatchGroup] = useState<MatchResponse[] | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ 
+    skillLevel: 'ALL', 
+    members: null,
+    date: null,
+    startTime: null,
+    endTime: null,
+    radiusKm: null as number | null,
+  });
 
   const clearRoute = () => {
     setRouteCoords([]);
@@ -43,16 +60,38 @@ export const MapScreen = () => {
     navigation.setParams({ showRoute: false, destination: null });
   };
 
+  const fetchNearbyMatches = async () => {
+    try {
+      const res = await matchService.searchNearbyMatches({
+        lat: userLocation?.latitude || INITIAL_REGION.latitude,
+        lng: userLocation?.longitude || INITIAL_REGION.longitude,
+        radius: 10000,
+        skill_level: filters.skillLevel === 'ALL' ? undefined : filters.skillLevel as any,
+        min_slots: filters.members ? parseInt(filters.members) : undefined,
+        date: filters.date || undefined,
+        start_time: filters.startTime || undefined,
+        end_time: filters.endTime || undefined,
+      });
+      setMatches(res);
+    } catch (err) {
+      console.error('Error fetching matches:', err);
+    }
+  };
+
   useEffect(() => {
     console.log('MapScreen: Nav Params:', { showRoute, destination, targetVenueId });
     
-    fetchVenues().then(res => {
-      if (res?.items) {
-        setVenues(res.items);
-      }
-    }).catch(err => {
-      console.error('MapScreen: Error fetching venues:', err);
-    });
+    if (mapMode === 'venue') {
+      fetchVenues().then(res => {
+        if (res?.items) {
+          setVenues(res.items);
+        }
+      }).catch(err => {
+        console.error('MapScreen: Error fetching venues:', err);
+      });
+    } else {
+      fetchNearbyMatches();
+    }
 
     // START REAL-TIME LOCATION WATCHING
     let locationSubscription: any = null;
@@ -76,7 +115,7 @@ export const MapScreen = () => {
         console.log('MapScreen: Location watcher stopped');
       }
     };
-  }, [showRoute, destination, targetVenueId]);
+  }, [showRoute, destination, targetVenueId, mapMode]);
 
   useEffect(() => {
     if (showRoute && destination && userLocation) {
@@ -112,6 +151,35 @@ export const MapScreen = () => {
     }
   }, [routeCoords]);
 
+  const groupedMatches = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    matches.forEach(m => {
+      const key = m.venue_id || (m.location ? `${m.location.lat},${m.location.lng}` : 'unknown');
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(m);
+    });
+    return Object.values(groups);
+  }, [matches]);
+
+  // Filter groups by radius if set
+  const filteredGroupedMatches = useMemo(() => {
+    if (!filters.radiusKm || !userLocation) return groupedMatches;
+    const radiusM = filters.radiusKm * 1000;
+    return groupedMatches.filter(group => {
+      const m = group[0];
+      if (!m.location) return false;
+      // Haversine distance in meters
+      const R = 6371000;
+      const lat1 = userLocation.latitude * Math.PI / 180;
+      const lat2 = m.location.lat * Math.PI / 180;
+      const dLat = (m.location.lat - userLocation.latitude) * Math.PI / 180;
+      const dLng = (m.location.lng - userLocation.longitude) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return dist <= radiusM;
+    });
+  }, [groupedMatches, filters.radiusKm, userLocation]);
+
   const getMarkerColor = (category: string) => {
     const cat = (category || '').toLowerCase();
     if (cat.includes('pickleball')) return '#3498DB';
@@ -132,13 +200,11 @@ export const MapScreen = () => {
         style={styles.map}
         initialRegion={INITIAL_REGION}
       >
-        {venues
-          .map((venue) => {
-            // Safety check for location
+        {mapMode === 'venue' ? (
+          venues.map((venue) => {
             if (!venue.location || typeof venue.location.lat !== 'number' || typeof venue.location.lng !== 'number') {
               return null;
             }
-            
             return (
               <Marker
                 key={venue.id}
@@ -149,7 +215,44 @@ export const MapScreen = () => {
                 onPress={() => navigation.navigate('MapVenueDetailOverlay', { venueId: venue.id })}
               />
             );
-          })}
+          })
+        ) : (
+          filteredGroupedMatches.map((group) => {
+            const firstMatch = group[0];
+            const isGroup = group.length > 1;
+            
+            if (!firstMatch.location || typeof firstMatch.location.lat !== 'number' || typeof firstMatch.location.lng !== 'number') {
+              return null;
+            }
+            return (
+              <Marker
+                key={isGroup ? `group-${firstMatch.venue_id}` : firstMatch.id}
+                coordinate={{ latitude: firstMatch.location.lat, longitude: firstMatch.location.lng }}
+                onPress={() => {
+                  if (isGroup) {
+                    setSelectedMatchGroup(group);
+                  } else {
+                    setSelectedMatch(firstMatch);
+                  }
+                }}
+              >
+                <View style={[styles.markerContainer, { backgroundColor: isGroup ? '#E74C3C' : '#FF8C00' }]}>
+                  <View style={[styles.markerBadge, { backgroundColor: isGroup ? '#E74C3C' : '#FF8C00' }]}>
+                    <Text style={{color: COLORS.WHITE, fontWeight: 'bold', fontSize: 12}}>
+                      {group.length}
+                    </Text>
+                  </View>
+                  <View style={[styles.markerArrow, { borderTopColor: isGroup ? '#E74C3C' : '#FF8C00' }]} />
+                  {isGroup && (
+                    <View style={styles.groupIndicator}>
+                      <MaterialCommunityIcons name="layers-outline" size={10} color={COLORS.WHITE} />
+                    </View>
+                  )}
+                </View>
+              </Marker>
+            );
+          })
+        )}
 
         {routeCoords.length > 0 && (
           <Polyline
@@ -159,26 +262,90 @@ export const MapScreen = () => {
             lineDashPattern={[0]}
           />
         )}
+
+        {/* Radius Circle (Search Area) */}
+        {filters.radiusKm && userLocation && (
+          <Circle
+            center={{ latitude: userLocation.latitude, longitude: userLocation.longitude }}
+            radius={filters.radiusKm * 1000}
+            strokeColor="rgba(59,130,246,0.9)"
+            strokeWidth={3}
+            fillColor="rgba(59,130,246,0.08)"
+          />
+        )}
       </MapView>
 
-      {/* Search Overlay UI */}
-      <View style={styles.searchOverlay}>
+      {/* Header Area with Search & Mode Toggle */}
+      <View style={styles.headerArea}>
         <View style={styles.searchBar}>
-          <View style={styles.logoContainer}>
-            <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.PRIMARY} />
-          </View>
+          <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm sân thể thao..."
+            placeholder="Tìm kiếm khu vực sân..."
             placeholderTextColor={COLORS.GRAY_MEDIUM}
           />
-          <TouchableOpacity style={styles.searchIcon}>
-            <MaterialCommunityIcons name="magnify" size={24} color={COLORS.GRAY_MEDIUM} />
+          <TouchableOpacity 
+            style={styles.filterBtn}
+            onPress={() => setShowFilters(true)}
+          >
+            <MaterialCommunityIcons name="tune" size={22} color={COLORS.WHITE} />
           </TouchableOpacity>
         </View>
 
-        {/* Categories removed */}
+        {/* --- MAP MODE TOGGLE --- */}
+        <View style={styles.modeToggleContainer}>
+          <TouchableOpacity 
+            style={[styles.toggleBtn, mapMode === 'venue' && styles.toggleBtnActive]}
+            onPress={() => setMapMode('venue')}
+          >
+            <Text style={[styles.toggleText, mapMode === 'venue' && styles.toggleTextActive]}>Tìm sân</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.toggleBtn, mapMode === 'match' && styles.toggleBtnActive]}
+            onPress={() => setMapMode('match')}
+          >
+            <Text style={[styles.toggleText, mapMode === 'match' && styles.toggleTextActive]}>Ghép kèo</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Category Chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsScroll}
+        contentContainerStyle={styles.chipsContainer}
+      >
+        {MAP_CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            onPress={() => setActiveCategory(cat.id)}
+            style={[
+              styles.chip,
+              activeCategory === cat.id && styles.activeChip,
+            ]}
+          >
+            <MaterialCommunityIcons name={cat.icon as any}
+              size={18}
+              color={activeCategory === cat.id ? COLORS.WHITE : COLORS.GRAY_MEDIUM}
+            />
+            <Text
+              style={[
+                styles.chipText,
+                activeCategory === cat.id && styles.activeChipText,
+              ]}
+            >
+              {cat.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <MatchDetailModal 
+        visible={!!selectedMatch}
+        match={selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+      />
 
       {/* Floating UI: Map Controls */}
       <View style={styles.controlsLeft}>
@@ -246,6 +413,27 @@ export const MapScreen = () => {
           </View>
         </View>
       )}
+
+      <MatchDetailModal 
+        visible={!!selectedMatch || !!selectedMatchGroup}
+        match={selectedMatch}
+        matches={selectedMatchGroup || undefined}
+        onClose={() => {
+          setSelectedMatch(null);
+          setSelectedMatchGroup(null);
+        }}
+      />
+
+      <MatchFilterModal 
+        visible={showFilters}
+        onClose={() => setShowFilters(false)}
+        initialFilters={filters}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+          // Here we would refetch matches, for now logic is handled in fetchNearbyMatches
+          fetchNearbyMatches(); 
+        }}
+      />
     </View>
   );
 };
@@ -259,7 +447,7 @@ const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  searchOverlay: {
+  headerArea: {
     position: 'absolute',
     top: 50,
     left: 20,
@@ -270,25 +458,87 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.WHITE,
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: 8,
+    borderRadius: 30,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     shadowColor: COLORS.BLACK,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  logoContainer: {
-    paddingHorizontal: 8,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    marginLeft: 10,
+    fontSize: 16,
     color: COLORS.TEXT_PRIMARY,
   },
-  searchIcon: {
-    paddingHorizontal: 10,
+  filterBtn: {
+    backgroundColor: COLORS.PRIMARY,
+    padding: 8,
+    borderRadius: 20,
+  },
+  modeToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 25,
+    padding: 4,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    alignSelf: 'flex-start',
+  },
+  toggleBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  toggleBtnActive: {
+    backgroundColor: '#FF8C00',
+  },
+  toggleText: {
+    color: COLORS.GRAY_MEDIUM,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  toggleTextActive: {
+    color: COLORS.WHITE,
+  },
+  chipsScroll: {
+    marginTop: 15,
+    position: 'absolute',
+    top: 160,
+    left: 20,
+    zIndex: 10,
+  },
+  chipsContainer: {
+    paddingRight: 20,
+    gap: 10,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE,
+    paddingHorizontal: 16,
+    height: 36,
+    borderRadius: 18,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    gap: 6,
+  },
+  activeChip: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  chipText: {
+    fontSize: 13,
+    color: COLORS.GRAY_MEDIUM,
+    fontWeight: '600',
   },
   activeChipText: {
     color: COLORS.WHITE,
@@ -398,5 +648,53 @@ const styles = StyleSheet.create({
   },
   closeRouteBtn: {
     padding: 8,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+  },
+  markerBadge: {
+    backgroundColor: COLORS.PRIMARY,
+    padding: 2,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: COLORS.WHITE,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: COLORS.PRIMARY,
+    marginTop: -2,
+  },
+  groupIndicator: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#C0392B',
+    borderRadius: 10,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.WHITE,
   },
 });

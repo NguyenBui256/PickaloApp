@@ -12,6 +12,9 @@ from app.models.court import Court
 from app.models.post import Post, Comment, PostType, PostStatus, SportType
 from app.models.admin import AdminAction, ActionType, TargetType
 from app.models.review import VenueReview
+from app.models.favorite import UserFavorite
+from app.models.match import Match, MatchRequest
+from app.models.chat import ChatRoom, ChatMessage
 from app.models.pricing_profile import PricingProfile, PricingProfileSlot
 
 __all__ = [
@@ -51,4 +54,9 @@ __all__ = [
     "TargetType",
     # Favorites
     "UserFavorite",
+    # Matchmaking & Chat
+    "Match",
+    "MatchRequest",
+    "ChatRoom",
+    "ChatMessage",
 ]

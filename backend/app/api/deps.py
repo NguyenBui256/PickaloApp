@@ -26,6 +26,33 @@ security = HTTPBearer(auto_error=False)
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
+async def get_current_user_from_token(token: str, session: AsyncSession) -> User:
+    """Helper for WebSocket authentication."""
+    user_id = verify_token(token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    result = await session.execute(
+        select(User).where(User.id == UUID(user_id), User.deleted_at.is_(None))
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
+        
+    return user
 async def get_storage_service() -> StorageService:
     """Get storage service instance."""
     return StorageService()
@@ -41,16 +68,6 @@ async def get_current_user(
 ) -> User:
     """
     Dependency to get current authenticated User from JWT token.
-
-    Args:
-        credentials: HTTP Bearer credentials from Authorization header
-        session: Database session
-
-    Returns:
-        Authenticated User instance
-
-    Raises:
-        HTTPException: If token is missing, invalid, or user not found
     """
     if credentials is None:
         raise HTTPException(
@@ -59,15 +76,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = credentials.credentials
-    user_id = verify_token(token)
-
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return await get_current_user_from_token(credentials.credentials, session)
 
     # Get user from database
     result = await session.execute(

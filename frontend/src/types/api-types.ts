@@ -48,6 +48,13 @@ export type BookingStatus =
 export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
 
 // ==========================================
+// MATCH & CHAT ENUMS
+// ==========================================
+export type MatchStatus = 'OPEN' | 'FULL' | 'CANCELLED' | 'CLOSED';
+export type MatchSkillLevel = 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
+// ==========================================
 // COMMON SCHEMAS
 // ==========================================
 
@@ -651,4 +658,65 @@ export interface AdminReportedPostItem {
   venue_name?: string;
   venue_image?: string;
   created_at: string;
+}
+
+// ==========================================
+// MATCHMAKING & CHAT SCHEMAS (app/schemas/match.py & chat.py)
+// ==========================================
+
+export interface MatchCreateRequest {
+  booking_id: string;
+  slots_needed: number;
+  price_per_slot: number;
+  skill_level: MatchSkillLevel;
+  note?: string | null;
+}
+
+export interface MatchResponse {
+  id: string;
+  booking_id: string;
+  slots_needed: number;
+  slots_filled: number;
+  available_slots: number;
+  price_per_slot: number;
+  skill_level: MatchSkillLevel;
+  note: string | null;
+  status: MatchStatus;
+  created_at: string;
+  updated_at: string;
+  location?: Coordinates; // Only present in /nearby search
+  distance?: number;      // Only present in /nearby search
+  venue_id?: string;
+  venue_name?: string;
+  venue_address?: string;
+  host_name?: string;
+  start_time?: string;
+  end_time?: string;
+  booking_date?: string;
+}
+
+export interface MatchRequestCreateRequest {
+  member_count: number;
+}
+
+export interface MatchRequestResponse {
+  id: string;
+  match_id: string;
+  requester_id: string;
+  member_count: number;
+  status: MatchRequestStatus;
+  chat_room_id?: string; // Bổ sung để điều hướng vào chat
+  created_at: string;
+  updated_at: string;
+  requester?: UserResponse | null;
+}
+
+export interface ChatMessageResponse {
+  id: string;
+  room_id: string;
+  sender_id?: string | null;
+  content: string;
+  is_system_message: boolean;
+  created_at: string;
+  sender?: UserResponse | null;
 }

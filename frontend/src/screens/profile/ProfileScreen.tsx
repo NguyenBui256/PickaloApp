@@ -117,6 +117,15 @@ export const ProfileScreen: React.FC = () => {
             <Text style={styles.groupTitle}>Tài khoản & Bảo mật</Text>
             <View style={styles.menuCard}>
               <MenuItem 
+                icon="message-text-outline" 
+                label="Tin nhắn ghép kèo" 
+                color="#F97316"
+                onPress={() => navigation.navigate('ChatList')}
+              />
+              <View style={styles.divider} />
+              <MenuItem icon="account-group-outline" label="Nhóm của tôi" />
+              <View style={styles.divider} />
+              <MenuItem icon="format-list-bulleted" label="Danh sách lịch học" />
                 icon="account-edit-outline" 
                 label="Chỉnh sửa hồ sơ" 
                 onPress={() => navigation.navigate('EditProfile')}

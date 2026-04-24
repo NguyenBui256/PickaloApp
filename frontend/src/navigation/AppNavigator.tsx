@@ -16,6 +16,8 @@ import { VenueDetailScreen } from '@screens/venue/VenueDetailScreen';
 import { MapVenueDetailOverlayScreen } from '@screens/venue/MapVenueDetailOverlayScreen';
 import { ReviewSubmissionScreen } from '@screens/venue/ReviewSubmissionScreen';
 import { MapScreen } from '@screens/map/MapScreen';
+import { ChatScreen } from '@screens/match/ChatScreen';
+import { ChatListScreen } from '@screens/match/ChatListScreen';
 import { ExploreScreen } from '@screens/explore/ExploreScreen';
 import { HighlightsScreen } from '@screens/highlights/HighlightsScreen';
 import { ProfileScreen } from '@screens/profile/ProfileScreen';
@@ -68,6 +70,8 @@ export type RootStackParamList = {
   OwnerBookingDetail: { bookingId: string; booking?: any };
   OwnerRevenueReport: undefined;
   ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
+  Chat: { roomId: string; requestId?: string };
+  ChatList: undefined;
   VenueLocationPicker: { onLocationSelected: (location: { lat: number; lng: number, address: string }) => void, initialLocation?: { lat: number; lng: number, address: string } };
 };
 
@@ -319,6 +323,16 @@ export function AppNavigator(): React.JSX.Element {
               name="ReviewSubmission"
               component={ReviewSubmissionScreen}
               options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={{ presentation: 'card' }}
+            />
+            <Stack.Screen
+              name="ChatList"
+              component={ChatListScreen}
+              options={{ presentation: 'card' }}
             />
             <Stack.Screen
               name="VenueLocationPicker"

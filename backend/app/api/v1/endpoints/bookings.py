@@ -333,6 +333,7 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         status=booking.status,
         is_paid=booking.is_paid,
         is_cancelable=booking.is_cancelable,
+        has_match=booking.match is not None if hasattr(booking, 'match') else False,
         created_at=booking.created_at.isoformat(),
         payment_proof=booking.payment_proof,
         start_time=booking.slots[0].start_time.strftime("%H:%M") if booking.slots and booking.slots[0].start_time else None,

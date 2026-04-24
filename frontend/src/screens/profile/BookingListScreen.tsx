@@ -13,6 +13,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import type { BookingListItem } from '../../types/api-types';
 import { fetchMyBookings } from '../../services/booking-service';
+import { CreateMatchModal } from '../match/CreateMatchModal';
 
 // Helpers
 const formatBookingTime = (b: BookingListItem) => {
@@ -36,7 +37,16 @@ const Ribbon = ({ text }: { text: string }) => (
   </View>
 );
 
-const BookingCard = ({ item }: { item: BookingListItem }) => {
+const BookingCard = ({
+  item,
+  onPublishMatch,
+}: {
+  item: BookingListItem;
+  onPublishMatch: (item: BookingListItem) => void;
+}) => {
+  const isCanceled = item.status === 'CANCELLED';
+  const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
+
   const getStatusConfig = () => {
     switch (item.status) {
       case 'CANCELLED':
@@ -93,6 +103,14 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
       <View style={styles.cardFooter}>
         <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
         <View style={styles.footerActions}>
+          {item.status === 'CONFIRMED' && !item.has_match && (
+            <TouchableOpacity
+              style={[styles.detailBtn, styles.publishBtn]}
+              onPress={() => onPublishMatch(item)}
+            >
+              <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở ghép kèo</Text>
+            </TouchableOpacity>
+          )}
           {item.status === 'COMPLETED' && (
             <TouchableOpacity
               style={[styles.detailBtn, styles.reviewBtn]}
@@ -125,6 +143,7 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
 export const BookingListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
+  const [createMatchTarget, setCreateMatchTarget] = useState<BookingListItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadBookings = useCallback(async () => {
@@ -180,9 +199,26 @@ export const BookingListScreen: React.FC = () => {
       <FlatList
         data={bookings}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BookingCard item={item} />}
+        renderItem={({ item }) => (
+          <BookingCard item={item} onPublishMatch={(b) => setCreateMatchTarget(b)} />
+        )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <CreateMatchModal
+        visible={!!createMatchTarget}
+        booking={createMatchTarget}
+        onClose={() => setCreateMatchTarget(null)}
+        onSuccess={() => {
+          setCreateMatchTarget(null);
+          // Refresh list to hide the "Mở ghép kèo" button
+          fetchMyBookings().then((res) => {
+            if (res?.items) {
+              setBookings(res.items as any);
+            }
+          });
+        }}
       />
     </View>
   );
@@ -364,5 +400,12 @@ const styles = StyleSheet.create({
   },
   reviewBtnText: {
     color: COLORS.WHITE,
+  },
+  publishBtn: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#F97316',
+  },
+  publishBtnText: {
+    color: '#F97316',
   },
 });

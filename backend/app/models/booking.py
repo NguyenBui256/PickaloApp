@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.models.venue import Venue
     from app.models.venue_services import VenueService
     from app.models.court import Court
+    from app.models.match import Match
 
 
 class BookingStatus(str, Enum):
@@ -143,6 +144,12 @@ class Booking(BaseModel):
         back_populates="booking",
         lazy="selectin",
         cascade="all, delete-orphan",
+    )
+    match: Mapped["Match"] = relationship(
+        "Match",
+        back_populates="booking",
+        lazy="selectin",
+        uselist=False,
     )
 
     @property
