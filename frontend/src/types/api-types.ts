@@ -542,37 +542,66 @@ export interface AdminStatsResponse {
   total_merchants: number;
   total_venues: number;
   total_bookings: number;
-  revenue_total: number;
+  active_users: number;
+  verified_venues: number;
+  pending_verifications: number;
+  total_revenue: number | null;
 }
 
 export interface AdminUserListItem {
   id: string;
-  full_name: string;
   phone: string;
-  email?: string | null;
+  full_name: string;
+  email: string | null;
   role: UserRole;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
+  venues_count: number;
+  bookings_count: number;
 }
 
 export interface AdminVenueListItem {
   id: string;
   name: string;
-  owner_name: string;
+  merchant_id: string;
+  merchant_name: string;
   address: string;
-  status: 'ACTIVE' | 'PENDING' | 'DELETED';
+  is_verified: boolean;
+  is_active: boolean;
   created_at: string;
+  bookings_count: number;
 }
 
 export interface AdminReportedPostItem {
   id: string;
-  author_name: string;
   author_id: string;
+  author_name: string;
   content: string;
-  report_reason: string;
-  status: 'PENDING' | 'RESOLVED';
-  venue_name?: string;
-  venue_image?: string;
+  post_type: string;
+  status: string;
+  created_at: string;
+  comments_count: number;
+}
+
+export interface BookingAdminDetail extends BookingAdminListItem {
+  payment_id?: string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  cancellation_reason?: string | null;
+  user_phone?: string | null;
+  merchant_phone?: string | null;
+  notes?: string | null;
+  audit_trail: AuditLogItem[];
+}
+
+export interface AuditLogItem {
+  id: string;
+  admin_id: string;
+  admin_name: string;
+  action_type: string;
+  target_type?: string | null;
+  target_id?: string | null;
+  reason?: string | null;
   created_at: string;
 }

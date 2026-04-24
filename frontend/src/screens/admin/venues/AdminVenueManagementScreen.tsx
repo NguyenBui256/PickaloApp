@@ -21,8 +21,22 @@ export const AdminVenueManagementScreen = () => {
   const loadVenues = async () => {
     setLoading(true);
     try {
-      const data = await getAdminVenues(activeTab);
-      setVenues(data);
+      // Mapping tabs to backend filters
+      // ACTIVE -> is_verified: true
+      // PENDING -> is_verified: false
+      // DELETED -> is_active: false
+      let is_verified: boolean | undefined = undefined;
+      if (activeTab === 'ACTIVE') is_verified = true;
+      if (activeTab === 'PENDING') is_verified = false;
+      
+      const data = await getAdminVenues(is_verified);
+      
+      // If filtering for deleted (inactive) venues
+      if (activeTab === 'DELETED') {
+        setVenues(data.filter(v => !v.is_active));
+      } else {
+        setVenues(data.filter(v => v.is_active));
+      }
     } catch (error) {
       console.error('Error loading venues:', error);
     } finally {
@@ -39,8 +53,12 @@ export const AdminVenueManagementScreen = () => {
         { 
           text: 'Duyệt', 
           onPress: async () => {
-            await verifyVenue(venue.id);
-            loadVenues();
+            try {
+              await verifyVenue(venue.id, true, 'Duyệt sân hợp lệ');
+              loadVenues();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể duyệt sân');
+            }
           } 
         }
       ]
@@ -49,16 +67,20 @@ export const AdminVenueManagementScreen = () => {
 
   const handleDelete = (venue: AdminVenueListItem) => {
     Alert.alert(
-      'Xác nhận xóa',
-      `Bạn có chắc chắn muốn xóa sân "${venue.name}"?`,
+      'Xác nhận đình chỉ',
+      `Bạn có chắc chắn muốn ngừng hoạt động sân "${venue.name}"?`,
       [
         { text: 'Hủy', style: 'cancel' },
         { 
-          text: 'Xóa', 
+          text: 'Đình chỉ', 
           style: 'destructive',
           onPress: async () => {
-            await updateVenueStatus(venue.id, 'DELETED');
-            loadVenues();
+            try {
+              await updateVenueStatus(venue.id, false, 'Vi phạm chính sách hệ thống');
+              loadVenues();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể ngừng hoạt động sân');
+            }
           } 
         }
       ]
@@ -74,8 +96,12 @@ export const AdminVenueManagementScreen = () => {
         { 
           text: 'Khôi phục', 
           onPress: async () => {
-            await updateVenueStatus(venue.id, 'ACTIVE');
-            loadVenues();
+            try {
+              await updateVenueStatus(venue.id, true, 'Đã khắc phục sự cố');
+              loadVenues();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể khôi phục sân');
+            }
           } 
         }
       ]
@@ -89,7 +115,7 @@ export const AdminVenueManagementScreen = () => {
         onPress={() => navigation.navigate('VenueDetails', { venueId: item.id })}
       >
         <Text style={styles.venueName}>{item.name}</Text>
-        <Text style={styles.venueOwner}>Chủ sân: {item.owner_name}</Text>
+        <Text style={styles.venueOwner}>Chủ sân: {item.merchant_name}</Text>
         <View style={styles.addressContainer}>
           <MaterialCommunityIcons name="map-marker" size={14} color={COLORS.GRAY_MEDIUM} />
           <Text style={styles.venueAddress}>{item.address}</Text>
