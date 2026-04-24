@@ -100,10 +100,6 @@ export const AdminDashboardScreen = () => {
               <MaterialCommunityIcons name="shield-check" size={24} color={COLORS.PRIMARY} />
               <Text style={styles.actionText}>Duyệt sân mới</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Posts')}>
-              <MaterialCommunityIcons name="alert-circle" size={24} color="#F44336" />
-              <Text style={styles.actionText}>Báo cáo bài đăng</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Users')}>
               <MaterialCommunityIcons name="account-search" size={24} color="#607D8B" />
               <Text style={styles.actionText}>Tìm người dùng</Text>
@@ -178,46 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.GRAY_MEDIUM,
     marginTop: 2,
-  },
-  revenueCard: {
-    backgroundColor: COLORS.WHITE,
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  revenueHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  revenueLabel: {
-    fontSize: 14,
-    color: COLORS.GRAY_MEDIUM,
-    marginLeft: 8,
-  },
-  revenueValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    marginBottom: 8,
-  },
-  currency: {
-    fontSize: 18,
-    fontWeight: 'normal',
-  },
-  revenueTrend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  trendText: {
-    fontSize: 12,
-    color: '#4CAF50',
-    marginLeft: 4,
   },
   section: {
     marginBottom: 24,

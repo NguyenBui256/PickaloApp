@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { useAuthStore } from '../../../store/auth-store';
 
 export const AdminProfileScreen = () => {
+  const navigation = useNavigation<any>();
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -62,7 +64,7 @@ export const AdminProfileScreen = () => {
             icon="history" 
             title="Nhật ký hoạt động" 
             subtitle="Xem các thay đổi gần đây trên hệ thống" 
-            onPress={() => {}} 
+            onPress={() => navigation.navigate('AdminAuditLog')} 
           />
           <MenuItem 
             icon="file-document-outline" 

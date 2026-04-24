@@ -24,7 +24,7 @@ const formatBookingTime = (b: BookingListItem) => {
 const formatBookingDate = (b: BookingListItem) =>
   new Date(b.booking_date).toLocaleDateString('vi-VN');
 const formatBookingPrice = (b: BookingListItem) =>
-  `${Number(b.total_price).toLocaleString('vi-VN')} đ`;
+  `${Number(b.total_price || 0).toLocaleString('vi-VN')} đ`;
 
 const Ribbon = ({ text }: { text: string }) => (
   <View style={styles.ribbonContainer}>

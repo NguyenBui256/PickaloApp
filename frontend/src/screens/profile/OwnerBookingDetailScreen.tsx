@@ -171,41 +171,16 @@ export const OwnerBookingDetailScreen: React.FC = () => {
 
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
-              <InfoItem label="Cơ sở sân" value={booking.venue_name || 'N/A'} />
-              <InfoItem label="Sân" value={slots.map((s: any) => s.court_name).join(', ') || 'N/A'} />
-              <InfoItem 
-                label="Trạng thái" 
-                value={
-                  status === 'PENDING' ? 'Chờ duyệt' : 
-                  status === 'CONFIRMED' ? 'Đã duyệt' : 
-                  status === 'CANCELLED' ? 'Đã hủy' : 
-                  status === 'COMPLETED' ? 'Hoàn thành' : status
-                } 
-                isYellow 
-              />
-              <InfoItem label="Thời gian" value={slots.map((s: any) => `${s.start_time}-${s.end_time}`).join(', ') || 'N/A'} />
-              <InfoItem label="Ngày tháng" value={bookingDate} />
-              <InfoItem label="Tổng phí" value={totalPrice} isYellow />
-              <InfoItem label="Số điện thoại" value={customerPhone} isClickable />
-              
-              {booking.payment_proof && (
-                <View style={styles.proofPreviewContainer}>
-                  <Text style={styles.infoLabel}>Minh chứng:</Text>
-                  <TouchableOpacity onPress={() => setActiveTab('Minh chứng')}>
-                    <Image 
-                      source={{ uri: getImageUrl(booking.payment_proof) }} 
-                      style={styles.proofThumbnail} 
-                    />
-                    <Text style={styles.viewMoreText}>Xem chi tiết minh chứng</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {booking.notes && (
-                <View style={styles.noteBox}>
-                  <Text style={styles.noteText}>GHI CHÚ: {booking.notes}</Text>
-                </View>
-              )}
+              <InfoItem label="Cơ sở sân" value={booking.venueName} />
+              <InfoItem label="Sân" value={booking.court} />
+              <InfoItem label="Trạng thái" value={booking.status === 'Đang xếp lịch' || booking.status === 'PENDING' ? 'Mới' : booking.status} isYellow />
+              <InfoItem label="Thời gian" value={booking.time} />
+              <InfoItem label="Ngày tháng" value={booking.date} />
+              <InfoItem label="Tổng phí" value={`${(booking.totalPrice || (booking as any).total_price || 0).toLocaleString('vi-VN')} đ`} isYellow />
+              <InfoItem label="Số điện thoại" value={booking.phone} isClickable />
+              <View style={styles.noteBox}>
+                <Text style={styles.noteText}>YÊU CẦU DUYỆT</Text>
+              </View>
             </View>
           </View>
         )}

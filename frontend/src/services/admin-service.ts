@@ -19,8 +19,9 @@ import type {
   AdminUserListItem,
   AdminVenueListItem,
   AdminReportedPostItem,
-  UserRole
-} from '../types/api-types';
+  UserRole,
+  AuditLogItem
+} from '@api-types/api-types';
 
 // ==========================================
 // STATISTICS
@@ -28,17 +29,10 @@ import type {
 
 /**
  * Lấy thống kê tổng quan hệ thống.
- * BE: GET /admin/dashboard/stats (Chưa có)
+ * BE: GET /admin/dashboard
  */
 export const getAdminStats = async (): Promise<AdminStatsResponse> => {
-  // console.log('[API] getAdminStats');
-  // const response = await apiClient.get('/admin/dashboard/stats');
-  // return response.data;
-
-  // Mock Fallback
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(ADMIN_STATS), 500);
-  });
+  return await apiClient.get('/admin/dashboard');
 };
 
 // ==========================================
@@ -47,25 +41,43 @@ export const getAdminStats = async (): Promise<AdminStatsResponse> => {
 
 /**
  * Danh sách người dùng theo vai trò.
- * BE: GET /admin/users (Chưa có)
+ * BE: GET /admin/users
  */
-export const getAdminUsers = async (role: UserRole): Promise<AdminUserListItem[]> => {
-  // const response = await apiClient.get('/admin/users', { params: { role } });
-  // return response.data;
-
-  // Mock Fallback
-  return new Promise((resolve) => {
-    const filtered = ADMIN_USERS.filter(u => u.role === role);
-    setTimeout(() => resolve(filtered as AdminUserListItem[]), 500);
-  });
+export const getAdminUsers = async (role?: UserRole): Promise<AdminUserListItem[]> => {
+  const data = await apiClient.get<any>('/admin/users', { params: { role } });
+  return data.users;
 };
 
 /**
- * Khóa/Mở khóa người dùng.
+ * Tạo người dùng mới.
  */
-export const toggleUserStatus = async (userId: string, active: boolean): Promise<void> => {
-  console.log(`[MOCK] toggleUserStatus: ${userId} -> ${active}`);
-  return new Promise((resolve) => setTimeout(resolve, 500));
+export const createUser = async (userData: any): Promise<AdminUserListItem> => {
+  return await apiClient.post('/admin/users', userData);
+};
+
+/**
+ * Khóa người dùng.
+ */
+export const banUser = async (userId: string, reason: string): Promise<void> => {
+  await apiClient.patch(`/admin/users/${userId}/ban`, { reason });
+};
+
+/**
+ * Mở khóa người dùng.
+ */
+export const unbanUser = async (userId: string, reason: string): Promise<void> => {
+  await apiClient.patch(`/admin/users/${userId}/unban`, { reason });
+};
+
+/**
+ * Bật/Tắt trạng thái hoạt động của người dùng.
+ */
+export const toggleUserStatus = async (userId: string, isActive: boolean): Promise<void> => {
+  if (isActive) {
+    return await unbanUser(userId, 'Mở khóa bởi Admin');
+  } else {
+    return await banUser(userId, 'Khóa bởi Admin');
+  }
 };
 
 // ==========================================
@@ -73,36 +85,26 @@ export const toggleUserStatus = async (userId: string, active: boolean): Promise
 // ==========================================
 
 /**
- * Danh sách sân theo trạng thái.
- * BE: GET /admin/venues (Chưa có)
+ * Danh sách sân.
+ * BE: GET /admin/venues
  */
-export const getAdminVenues = async (status: 'ACTIVE' | 'PENDING' | 'DELETED'): Promise<AdminVenueListItem[]> => {
-  // const response = await apiClient.get('/admin/venues', { params: { status } });
-  // return response.data;
-
-  // Mock Fallback
-  return new Promise((resolve) => {
-    const filtered = ADMIN_VENUES.filter(v => v.status === status);
-    setTimeout(() => resolve(filtered as AdminVenueListItem[]), 500);
-  });
+export const getAdminVenues = async (is_verified?: boolean): Promise<AdminVenueListItem[]> => {
+  const data = await apiClient.get<any>('/admin/venues', { params: { is_verified } });
+  return data.venues;
 };
 
 /**
  * Duyệt sân.
- * BE: POST /venues/{id}/verify (Đã có logic, auth.py)
  */
-export const verifyVenue = async (venueId: string): Promise<void> => {
-  // await apiClient.post(`/venues/${venueId}/verify`);
-  console.log(`[MOCK] verifyVenue: ${venueId}`);
-  return new Promise((resolve) => setTimeout(resolve, 500));
+export const verifyVenue = async (venue_id: string, verified: boolean, reason: string): Promise<void> => {
+  await apiClient.patch(`/admin/venues/${venue_id}/verify`, { verified, reason });
 };
 
 /**
- * Xóa/Khôi phục sân.
+ * Cập nhật trạng thái sân.
  */
-export const updateVenueStatus = async (venueId: string, status: 'ACTIVE' | 'DELETED'): Promise<void> => {
-  console.log(`[MOCK] updateVenueStatus: ${venueId} -> ${status}`);
-  return new Promise((resolve) => setTimeout(resolve, 500));
+export const updateVenueStatus = async (venueId: string, is_active: boolean, reason: string): Promise<void> => {
+  await apiClient.patch(`/admin/venues/${venueId}/status`, { is_active, reason });
 };
 
 // ==========================================
@@ -110,26 +112,45 @@ export const updateVenueStatus = async (venueId: string, status: 'ACTIVE' | 'DEL
 // ==========================================
 
 /**
- * Danh sách bài đăng bị báo cáo.
+ * Danh sách bài đăng quản trị.
  */
 export const getReportedPosts = async (): Promise<AdminReportedPostItem[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(ADMIN_REPORTED_POSTS as any), 500);
-  });
+  const data = await apiClient.get<any>('/admin/posts');
+  return data.posts;
 };
 
 /**
  * Xóa bài đăng.
  */
 export const deletePost = async (postId: string): Promise<void> => {
-  console.log(`[MOCK] deletePost: ${postId}`);
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  await apiClient.delete(`/admin/posts/${postId}`);
 };
 
 /**
- * Khóa người dùng đăng bài vi phạm.
+ * Lấy nhật ký hệ thống.
+ */
+export const getAuditLog = async (params?: any): Promise<AuditLogItem[]> => {
+  const data = await apiClient.get<any>('/admin/audit-log', { params });
+  return data.actions;
+};
+
+/**
+ * Danh sách đặt sân quản trị.
+ */
+export const getAdminBookings = async (params?: any): Promise<any> => {
+  return await apiClient.get('/admin/bookings', { params });
+};
+
+/**
+ * Chi tiết đặt sân.
+ */
+export const getAdminBookingDetail = async (id: string): Promise<any> => {
+  return await apiClient.get(`/admin/bookings/${id}`);
+};
+
+/**
+ * Khóa người dùng thông qua bài đăng bị báo cáo.
  */
 export const banUserByPost = async (userId: string): Promise<void> => {
-  console.log(`[MOCK] banUserByPost: ${userId}`);
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  return await banUser(userId, 'Vi phạm chính sách nội dung qua bài đăng bị báo cáo');
 };

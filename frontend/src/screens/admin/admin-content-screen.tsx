@@ -4,6 +4,13 @@
  * Full implementation in Phase 5.
  */
 
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
+import { getAdminPosts, deletePost } from '@services/admin-service';
+import type { AdminReportedPostItem } from '@types/api-types';
+import { Ionicons } from '@expo/vector-icons';
+import COLORS from '@theme/colors';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import type { AdminNavigationProp } from '@navigation/AdminNavigator';
@@ -13,99 +20,227 @@ interface AdminContentScreenProps {
 }
 
 export function AdminContentScreen({ navigation }: AdminContentScreenProps): React.JSX.Element {
+  const [posts, setPosts] = useState<AdminReportedPostItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchPosts = async () => {
+    try {
+      const data = await getAdminPosts();
+      setPosts(data);
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handleDeletePost = (post: AdminReportedPostItem) => {
+    Alert.alert(
+      'Xác nhận xóa',
+      'Bạn có chắc chắn muốn xóa bài đăng này?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePost(post.id);
+              fetchPosts();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể xóa bài đăng');
+            }
+          } 
+        }
+      ]
+    );
+  };
+
+  const renderPostItem = ({ item }: { item: AdminReportedPostItem }) => (
+    <View style={styles.postCard}>
+      <View style={styles.postHeader}>
+        <View style={styles.authorInfo}>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarText}>{item.author_name.charAt(0)}</Text>
+          </View>
+          <View>
+            <Text style={styles.authorName}>{item.author_name}</Text>
+            <Text style={styles.postDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeletePost(item)}>
+          <Ionicons name="trash-outline" size={20} color="#DC3545" />
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.postContent} numberOfLines={3}>{item.content}</Text>
+      
+      <View style={styles.postFooter}>
+        <View style={styles.tagBadge}>
+          <Text style={styles.tagText}>{item.post_type}</Text>
+        </View>
+        <View style={styles.commentInfo}>
+          <Ionicons name="chatbubble-outline" size={14} color="#6C757D" />
+          <Text style={styles.commentCount}>{item.comments_count} bình luận</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Content Moderation</Text>
         <Text style={styles.subtitle}>Review and moderate user-generated content</Text>
       </View>
 
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>Features coming in Phase 5:</Text>
-        <Text style={styles.placeholderBullet}>• List all posts and comments</Text>
-        <Text style={styles.placeholderBullet}>• Search content by keywords</Text>
-        <Text style={styles.placeholderBullet}>• Delete inappropriate posts</Text>
-        <Text style={styles.placeholderBullet}>• Delete inappropriate comments</Text>
-        <Text style={styles.placeholderBullet}>• View flagged content</Text>
-        <Text style={styles.placeholderBullet}>• Audit trail for moderation</Text>
-      </View>
-
-      <View style={styles.tabs}>
-        <View style={[styles.tab, styles.tabActive]}>
-          <Text style={[styles.tabText, styles.tabTextActive]}>Posts</Text>
-        </View>
-        <View style={styles.tab}>
-          <Text style={styles.tabText}>Comments</Text>
-        </View>
-      </View>
-    </ScrollView>
+      {loading && !refreshing ? (
+        <ActivityIndicator style={styles.loader} size="large" color="#0066CC" />
+      ) : (
+        <FlatList
+          data={posts}
+          renderItem={renderPostItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          onRefresh={() => {
+            setRefreshing(true);
+            fetchPosts();
+          }}
+          refreshing={refreshing}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="document-text-outline" size={64} color="#DEE2E6" />
+              <Text style={styles.emptyText}>Chưa có bài đăng nào</Text>
+            </View>
+          }
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  contentContainer: {
-    padding: 16,
+    backgroundColor: '#F8F9FA',
   },
   header: {
-    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
+    color: '#212529',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: 14,
+    color: '#6C757D',
+    marginTop: 4,
   },
-  placeholder: {
-    backgroundColor: '#FFFFFF',
+  listContent: {
+    padding: 16,
+  },
+  postCard: {
+    backgroundColor: '#FFF',
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  placeholderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  placeholderBullet: {
-    fontSize: 14,
-    color: '#666666',
-    marginLeft: 8,
-    marginBottom: 4,
-  },
-  tabs: {
+  authorInfo: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 8,
   },
-  tabActive: {
-    backgroundColor: '#0066CC',
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#0066CC20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
-  tabText: {
+  avatarText: {
+    color: '#0066CC',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  authorName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#666666',
+    fontWeight: '700',
+    color: '#212529',
   },
-  tabTextActive: {
-    color: '#FFFFFF',
+  postDate: {
+    fontSize: 11,
+    color: '#6C757D',
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  postContent: {
+    fontSize: 14,
+    color: '#495057',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  postFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F3F5',
+    paddingTop: 12,
+  },
+  tagBadge: {
+    backgroundColor: '#E9ECEF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tagText: {
+    fontSize: 11,
+    color: '#495057',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
+  commentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  commentCount: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  loader: {
+    marginTop: 40,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: {
+    color: '#ADB5BD',
+    fontSize: 16,
+    marginTop: 12,
   },
 });

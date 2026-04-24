@@ -211,6 +211,19 @@ class BookingAdminListItem(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BookingAdminDetail(BookingAdminListItem):
+    """Detailed booking information for admin."""
+
+    payment_id: str | None = None
+    payment_status: str | None = None
+    payment_method: str | None = None
+    cancellation_reason: str | None = None
+    user_phone: str | None = None
+    merchant_phone: str | None = None
+    notes: str | None = None
+    audit_trail: list["AuditLogItem"] = []
+
+
 class CancelBookingRequest(BaseModel):
     """Request to cancel a booking."""
 
@@ -338,6 +351,57 @@ class AuditLogItem(BaseModel):
         return str(v)
 
     model_config = {"from_attributes": True}
+
+
+# Report Management
+class ReportAdminListItem(BaseModel):
+    """User report on content or entity."""
+
+    id: str
+    reporter_id: str
+    reporter_name: str
+    target_type: str  # POST, COMMENT, VENUE, USER
+    target_id: str
+    reason: str
+    description: str | None
+    status: str  # PENDING, RESOLVED, DISMISSED
+    created_at: str
+    resolved_at: str | None = None
+    resolver_id: str | None = None
+
+    @field_validator("id", "reporter_id", "target_id", "resolver_id", mode="before")
+    @classmethod
+    def convert_uuid_to_str(cls, v: uuid.UUID | None) -> str | None:
+        if v is None:
+            return None
+        return str(v)
+
+    @field_validator("created_at", "resolved_at", mode="before")
+    @classmethod
+    def convert_datetime_to_str(cls, v: datetime | None) -> str | None:
+        if v is None:
+            return None
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return str(v)
+
+    model_config = {"from_attributes": True}
+
+
+class ReportListResponse(BaseModel):
+    """Response for paginated report list."""
+
+    reports: list[ReportAdminListItem]
+    total: int
+    page: int
+    limit: int
+
+
+class UpdateVenueStatusRequest(BaseModel):
+    """Request to update venue active status."""
+
+    is_active: bool
+    reason: str = Field(min_length=10, max_length=500)
 
 
 # Message Responses
