@@ -273,12 +273,12 @@ class MatchService:
             and_(
                 Booking.user_id == requester_id,
                 Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
-                BookingSlot.booking_id == Booking.id,
                 BookingSlot.booking_date == match_date,
                 BookingSlot.start_time < match_end,
                 BookingSlot.end_time > match_start
             )
-        ))
+        )).select_from(Booking).join(BookingSlot, BookingSlot.booking_id == Booking.id)
+        
         if (await self.session.execute(own_overlap_query)).scalar():
             print("DEBUG: create_request - FAILED: Overlapping with owned booking")
             raise ValueError("Bạn đã có yêu cầu/lịch thi đấu khác trong khung giờ này")
@@ -288,15 +288,13 @@ class MatchService:
             and_(
                 MatchRequest.requester_id == requester_id,
                 MatchRequest.status.in_([MatchRequestStatus.PENDING, MatchRequestStatus.ACCEPTED]),
-                MatchRequest.match_id != match_id, # Ignore current match (already checked for duplicate request above)
-                Match.id == MatchRequest.match_id,
-                Booking.id == Match.booking_id,
-                BookingSlot.booking_id == Booking.id,
+                MatchRequest.match_id != match_id, # Ignore current match
                 BookingSlot.booking_date == match_date,
                 BookingSlot.start_time < match_end,
                 BookingSlot.end_time > match_start
             )
-        ))
+        )).select_from(MatchRequest).join(Match, Match.id == MatchRequest.match_id).join(Booking, Booking.id == Match.booking_id).join(BookingSlot, BookingSlot.booking_id == Booking.id)
+
         if (await self.session.execute(request_overlap_query)).scalar():
             print("DEBUG: create_request - FAILED: Overlapping with other match request")
             raise ValueError("Bạn đã có yêu cầu/lịch thi đấu khác trong khung giờ này")
@@ -332,13 +330,14 @@ class MatchService:
             
         await self.session.commit()
         
-        # Fetch the created request with its relationships pre-loaded to avoid lazy load errors
         final_query = select(MatchRequest).where(MatchRequest.id == req.id).options(
             selectinload(MatchRequest.requester),
             selectinload(MatchRequest.chat_room)
         )
         res = await self.session.execute(final_query)
-        return res.scalar_one()
+        result_req = res.scalar_one()
+        print(f"DEBUG BE: create_request SUCCESS! Returning request ID: {result_req.id}")
+        return result_req
 
     async def respond_to_request(
         self,

@@ -6,16 +6,8 @@ import uuid
 import os
 from io import BytesIO
 from typing import BinaryIO
-try:
-    from minio import Minio
-    MINIO_INSTALLED = True
-except ImportError:
-    MINIO_INSTALLED = False
-    print("Warning: minio module not installed. Storage features will be disabled.")
-try:
-    from minio.error import S3Error
-except ImportError:
-    S3Error = Exception # Dummy fallback
+from minio import Minio
+from minio.error import S3Error
 from fastapi import UploadFile, HTTPException, status
 
 from app.core.config import settings
@@ -25,28 +17,17 @@ class StorageService:
     """MinIO-based object storage for images."""
 
     def __init__(self):
-        self.client = None
+        self.client = Minio(
+            endpoint=settings.minio_endpoint,
+            access_key=settings.minio_access_key,
+            secret_key=settings.minio_secret_key,
+            secure=settings.minio_secure
+        )
         self.bucket_name = settings.minio_bucket_name
-        
-        if MINIO_INSTALLED:
-            try:
-                self.client = Minio(
-                    endpoint=settings.minio_endpoint,
-                    access_key=settings.minio_access_key,
-                    secret_key=settings.minio_secret_key,
-                    secure=settings.minio_secure
-                )
-                self._ensure_bucket_exists()
-            except Exception as e:
-                print(f"Warning: Failed to connect to MinIO: {str(e)}")
-                self.client = None
-        else:
-            print("StorageService initialized in dummy mode (minio not installed)")
+        self._ensure_bucket_exists()
 
     def _ensure_bucket_exists(self):
         """Create bucket if it doesn't exist."""
-        if not self.client:
-            return
         try:
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
@@ -84,11 +65,6 @@ class StorageService:
         file: UploadFile
     ) -> str:
         """Upload user avatar image."""
-        if not self.client:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Storage service is currently unavailable (MinIO not installed or configured)"
-            )
         self._validate_image_file(file)
 
         # Generate unique filename
@@ -116,11 +92,6 @@ class StorageService:
         files: list[UploadFile]
     ) -> list[str]:
         """Upload multiple venue images."""
-        if not self.client:
-            # Fallback for dev: return empty list or dummy URLs
-            print("Warning: Skipping image upload (MinIO not available)")
-            return []
-            
         image_urls = []
         for file in files:
             self._validate_image_file(file)
@@ -177,11 +148,6 @@ class StorageService:
         file: UploadFile
     ) -> str:
         """Upload payment proof image for a booking."""
-        if not self.client:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Payment proof storage is currently unavailable"
-            )
         self._validate_image_file(file)
 
         # Generate unique filename

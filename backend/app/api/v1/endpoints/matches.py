@@ -180,6 +180,7 @@ async def request_to_join_match(
     """
     Request to join an open match. Creates a pending request and a chat room.
     """
+    print(f"DEBUG BE: API Hitting /matches/{match_id}/requests from USER {current_user.id}")
     match_service = MatchService(db)
     try:
         req = await match_service.create_request(

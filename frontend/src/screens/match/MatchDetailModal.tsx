@@ -52,12 +52,15 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   if (!visible) return null;
 
   const handleRequest = async () => {
+    console.log("DEBUG FE: handleRequest TRIGGERED! activeMatch ID:", activeMatch?.id);
     if (!activeMatch) return;
     try {
       setSubmitting(true);
+      console.log("DEBUG FE: Calling matchService.joinMatch with memberCount:", memberCount, "message:", message);
       const res = await matchService.joinMatch(activeMatch.id, {
         member_count: memberCount,
       }, message);
+      console.log("DEBUG FE: joinMatch SUCCEEDED! res:", res);
 
       Alert.alert('Thành công', 'Yêu cầu của bạn đã được gửi. Vui lòng chờ chủ kèo chấp nhận.');
       
@@ -70,6 +73,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         partnerName: activeMatch.host_name || 'Chủ kèo'
       });
     } catch (err: any) {
+      console.error("DEBUG FE: Error in handleRequest!", err);
+      if (err.response) {
+         console.error("DEBUG FE: Response Data:", err.response?.data);
+      }
       Alert.alert('Lỗi', err.detail || 'Không thể gửi yêu cầu lúc này.');
     } finally {
       setSubmitting(false);
@@ -335,8 +342,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                        handleHostCancelMatch();
                     } else if (activeMatch?.my_request_status === 'PENDING' || activeMatch?.my_request_status === 'ACCEPTED') {
                       handleCancelRequest();
-                    } else if (!activeMatch?.my_request_status) {
+                    } else if (!activeMatch?.my_request_status || activeMatch.my_request_status === 'CANCELLED') {
                       handleRequest();
+                    } else {
+                      console.log("DEBUG FE: Unhandled request status:", activeMatch?.my_request_status);
                     }
                   }}
                   disabled={submitting || activeMatch?.my_request_status === 'REJECTED'}
