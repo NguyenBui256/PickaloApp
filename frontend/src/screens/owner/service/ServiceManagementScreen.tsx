@@ -42,7 +42,7 @@ export const ServiceManagementScreen: React.FC = () => {
       <View style={styles.serviceInfo}>
         <Text style={styles.serviceName}>{item.name}</Text>
         <Text style={styles.servicePrice}>
-          {item.price.toLocaleString('vi-VN')} đ / {item.unit}
+          {(item.price || 0).toLocaleString('vi-VN')} đ / {item.unit}
         </Text>
       </View>
       <View style={styles.serviceActions}>

@@ -3,7 +3,7 @@
  * Uses React Navigation with native stack and bottom tabs.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -42,6 +42,8 @@ import COLORS from '@theme/colors';
 import { useAuthStore } from '../store/auth-store';
 import { OwnerNavigator } from './OwnerNavigator';
 import { AdminNavigator } from './AdminNavigator';
+import { registerForPushNotificationsAsync } from '../utils/notification-helper';
+import { AdminAuditLogScreen } from '@screens/admin/admin-audit-log-screen';
 import { VenueLocationPickerScreen } from '@screens/owner/venue/VenueLocationPickerScreen';
 
 /**
@@ -70,6 +72,7 @@ export type RootStackParamList = {
   OwnerBookingDetail: { bookingId: string; booking?: any };
   OwnerRevenueReport: undefined;
   ReviewSubmission: { venueId: string; venueName: string; bookingId: string };
+  AdminAuditLog: undefined;
   Chat: { roomId: string; requestId?: string };
   ChatList: undefined;
   VenueLocationPicker: { onLocationSelected: (location: { lat: number; lng: number, address: string }) => void, initialLocation?: { lat: number; lng: number, address: string } };
@@ -223,6 +226,12 @@ function createPlaceholderScreen(name: string): React.JSX.Element {
 export function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, user } = useAuthStore();
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      registerForPushNotificationsAsync();
+    }
+  }, [isAuthenticated]);
+
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -323,6 +332,15 @@ export function AppNavigator(): React.JSX.Element {
               name="ReviewSubmission"
               component={ReviewSubmissionScreen}
               options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="AdminAuditLog"
+              component={AdminAuditLogScreen}
+              options={{ 
+                headerShown: true, 
+                title: 'Nhật ký hệ thống',
+                headerTintColor: COLORS.PRIMARY
+              }}
             />
             <Stack.Screen
               name="Chat"

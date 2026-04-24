@@ -78,7 +78,6 @@ class AdminAction(BaseModel):
         nullable=True,
     )
     target_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
 

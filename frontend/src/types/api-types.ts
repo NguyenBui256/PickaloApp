@@ -625,63 +625,44 @@ export interface AdminStatsResponse {
   total_merchants: number;
   total_venues: number;
   total_bookings: number;
-  revenue_total: number;
+  active_users: number;
+  verified_venues: number;
+  pending_verifications: number;
+  total_revenue: number | null;
 }
 
 export interface AdminUserListItem {
   id: string;
-  full_name: string;
   phone: string;
-  email?: string | null;
+  full_name: string;
+  email: string | null;
   role: UserRole;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
+  venues_count: number;
+  bookings_count: number;
 }
 
 export interface AdminVenueListItem {
   id: string;
   name: string;
-  owner_name: string;
+  merchant_id: string;
+  merchant_name: string;
   address: string;
-  status: 'ACTIVE' | 'PENDING' | 'DELETED';
+  is_verified: boolean;
+  is_active: boolean;
   created_at: string;
+  bookings_count: number;
 }
 
 export interface AdminReportedPostItem {
   id: string;
-  author_name: string;
   author_id: string;
+  author_name: string;
   content: string;
-  report_reason: string;
-  status: 'PENDING' | 'RESOLVED';
-  venue_name?: string;
-  venue_image?: string;
-  created_at: string;
-}
-
-// ==========================================
-// MATCHMAKING & CHAT SCHEMAS (app/schemas/match.py & chat.py)
-// ==========================================
-
-export interface MatchCreateRequest {
-  booking_id: string;
-  slots_needed: number;
-  price_per_slot: number;
-  skill_level: MatchSkillLevel;
-  note?: string | null;
-}
-
-export interface MatchResponse {
-  id: string;
-  booking_id: string;
-  slots_needed: number;
-  slots_filled: number;
-  available_slots: number;
-  price_per_slot: number;
-  skill_level: MatchSkillLevel;
-  note: string | null;
-  status: MatchStatus;
+  post_type: string;
+  status: string;
   created_at: string;
   updated_at: string;
   location?: Coordinates; // Only present in /nearby search
@@ -699,28 +680,30 @@ export interface MatchResponse {
   host_id?: string;
 }
 
-export interface MatchRequestCreateRequest {
-  member_count: number;
+export interface BookingAdminDetail extends BookingAdminListItem {
+  payment_id?: string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  cancellation_reason?: string | null;
+  user_phone?: string | null;
+  merchant_phone?: string | null;
+  notes?: string | null;
+  audit_trail: AuditLogItem[];
 }
 
-export interface MatchRequestResponse {
+export interface AuditLogItem {
   id: string;
-  match_id: string;
-  requester_id: string;
-  member_count: number;
-  status: MatchRequestStatus;
-  chat_room_id?: string; // Bổ sung để điều hướng vào chat
+  admin_id: string;
+  admin_name: string;
+  action_type: string;
+  target_type?: string | null;
+  target_id?: string | null;
+  reason?: string | null;
   created_at: string;
-  updated_at: string;
-  requester?: UserResponse | null;
 }
-
-export interface ChatMessageResponse {
-  id: string;
-  room_id: string;
-  sender_id?: string | null;
-  content: string;
-  is_system_message: boolean;
-  created_at: string;
-  sender?: UserResponse | null;
+export interface AuditLogResponse {
+  actions: AuditLogItem[];
+  total: number;
+  page: number;
+  limit: number;
 }

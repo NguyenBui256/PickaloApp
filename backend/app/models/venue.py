@@ -229,6 +229,11 @@ class Venue(BaseModel):
                     return None
         return None
 
+    @property
+    def merchant_name(self) -> str:
+        """Get merchant's full name."""
+        return self.merchant.full_name if self.merchant else "N/A"
+
     def to_dict(self) -> dict[str, Any]:
         """Convert venue to dictionary with location coordinates."""
         data = super().to_dict()

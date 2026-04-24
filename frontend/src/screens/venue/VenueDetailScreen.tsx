@@ -113,7 +113,7 @@ export const VenueDetailScreen: React.FC = () => {
           onPress: async () => {
             setIsDeleting(true);
             try {
-              await updateVenueStatus(venueId, 'DELETED');
+              await updateVenueStatus(venueId, false, 'Ngừng hoạt động bởi Admin');
               Alert.alert('Thành công', 'Đã xóa sân thành công');
               navigation.goBack();
             } catch (error) {

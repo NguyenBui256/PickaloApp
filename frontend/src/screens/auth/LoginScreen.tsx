@@ -24,6 +24,7 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { SocialButton } from '../../components/SocialButton';
 import { useAuthStore } from '../../store/auth-store';
 import { login as loginApi } from '../../services/auth-service';
+import { registerForPushNotificationsAsync } from '../../utils/notification-helper';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -70,9 +71,11 @@ export const LoginScreen: React.FC = () => {
       await AsyncStorage.setItem('@alobo_access_token', response.access_token);
       await AsyncStorage.setItem('@alobo_refresh_token', response.refresh_token);
 
-      // Update auth store with real user data and tokens
-      // AppNavigator will automatically switch to Main stack based on isAuthenticated
+      // Cập nhật trạng thái Store - Hệ thống sẽ tự động chuyển màn hình ngay sau dòng này
       login(response.user as any, response.access_token, response.refresh_token);
+
+      // Đăng ký nhận thông báo đẩy
+      await registerForPushNotificationsAsync();
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Đăng nhập thất bại', 'Số điện thoại hoặc mật khẩu không chính xác.');

@@ -6,14 +6,12 @@ import COLORS from '@theme/colors';
 import { AdminDashboardScreen } from '../screens/admin/dashboard/AdminDashboardScreen';
 import { AdminUserManagementScreen } from '../screens/admin/users/AdminUserManagementScreen';
 import { AdminVenueManagementScreen } from '../screens/admin/venues/AdminVenueManagementScreen';
-import { AdminPostManagementScreen } from '../screens/admin/posts/AdminPostManagementScreen';
 import { AdminProfileScreen } from '../screens/admin/profile/AdminProfileScreen';
 
 export type AdminTabParamList = {
   Dashboard: undefined;
   Users: undefined;
   Venues: undefined;
-  Posts: undefined;
   Profile: undefined;
 };
 
@@ -64,16 +62,6 @@ export function AdminNavigator() {
           tabBarLabel: 'Quản lý sân',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="stadium" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Posts"
-        component={AdminPostManagementScreen}
-        options={{
-          tabBarLabel: 'Bài đăng',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="newspaper-variant-outline" size={size} color={color} />
           ),
         }}
       />
