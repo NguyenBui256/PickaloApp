@@ -9,7 +9,6 @@ class ReviewBase(BaseModel):
     """Base review schema."""
     rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5 stars")
     comment: str | None = Field(None, max_length=1000)
-    images: list[str] | None = None
 
 
 class ReviewCreate(ReviewBase):
@@ -21,7 +20,6 @@ class ReviewUpdate(BaseModel):
     """Schema for updating a review."""
     rating: int | None = Field(None, ge=1, le=5)
     comment: str | None = Field(None, max_length=1000)
-    images: list[str] | None = None
 
 
 class ReviewUser(BaseModel):

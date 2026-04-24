@@ -24,12 +24,12 @@ import type {
 
 /** Login with phone + password. BE: POST /auth/login */
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
-  return apiClient.post('/auth/login', data);
+  return apiClient.post('/auth/login', data, { skipAuth: true });
 };
 
 /** Register new account. BE: POST /auth/register */
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
-  return apiClient.post('/auth/register', data);
+  return apiClient.post('/auth/register', data, { skipAuth: true });
 };
 
 /** Refresh access token. BE: POST /auth/refresh */

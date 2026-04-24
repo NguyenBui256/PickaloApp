@@ -11,14 +11,15 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import Depends
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, exists, literal, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from geoalchemy2 import functions as geofunc
+from geoalchemy2 import functions as geofunc, Geometry, Geography
 
 from app.core.database import get_db
 from app.models.venue import Venue, VenueType, DayType, VenueService, PricingTimeSlot
 from app.models.booking import Booking, BookingStatus
 from app.models.court import Court
+from app.models.favorite import UserFavorite
 
 
 class VenueManagementService:
@@ -71,7 +72,11 @@ class VenueManagementService:
         has_lights: bool | None = None,
         skip: int = 0,
         limit: int = 20,
-    ) -> tuple[list[Venue], int]:
+        user_id: uuid.UUID | None = None,
+        only_favorites: bool = False,
+        user_lat: float | None = None,
+        user_lng: float | None = None,
+    ) -> tuple[list[Any], int]:
         """
         List venues with optional filters.
 
@@ -109,23 +114,65 @@ class VenueManagementService:
         # Note: Amenities filtering done at app level (stored as JSON)
         # TODO: Add dedicated columns for has_parking, has_lights for efficient filtering
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
+        # Build base query
+        # Fetch coordinates directly using PostGIS functions for reliability
+        from geoalchemy2 import Geometry
+        from sqlalchemy import cast
+        
+        user_point = None
+        if user_lat is not None and user_lng is not None:
+            user_point = cast(geofunc.ST_SetSRID(geofunc.ST_MakePoint(user_lng, user_lat), 4326), Geography)
+
+        distance_col = literal(0.0).label("distance")
+        if user_point is not None:
+            distance_col = geofunc.ST_Distance(Venue.location, user_point).label("distance")
+
+        query = select(
+            Venue, 
+            is_fav_subquery.label("is_favorite"),
+            func.ST_Y(cast(Venue.location, Geometry)).label("lat"),
+            func.ST_X(cast(Venue.location, Geometry)).label("lng"),
+            distance_col
+        ).where(and_(*conditions))
+        
+        count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
+
+        if only_favorites and user_id:
+            query = query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+            count_query = count_query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+
         # Get total count
-        count_result = await self.session.execute(
-            select(func.count()).select_from(Venue).where(and_(*conditions))
-        )
+        count_result = await self.session.execute(count_query)
         total = count_result.scalar()
 
         # Get paginated results
+        ordering = [Venue.created_at.desc()]
+        if user_point is not None:
+            ordering = [geofunc.ST_Distance(Venue.location, user_point).asc()]
+
         result = await self.session.execute(
-            select(Venue)
-            .where(and_(*conditions))
-            .order_by(Venue.created_at.desc())
+            query
+            .order_by(*ordering)
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool, lat, lng, distance)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def get_merchant_venues(
         self,
@@ -204,7 +251,7 @@ class VenueManagementService:
 
         return items, total
 
-    async def get_venue_by_id(self, venue_id: uuid.UUID) -> Venue | None:
+    async def get_venue_by_id(self, venue_id: uuid.UUID) -> tuple[Venue | None, float | None, float | None]:
         """
         Get venue by ID with full details.
 
@@ -212,15 +259,23 @@ class VenueManagementService:
             venue_id: Venue UUID
 
         Returns:
-            Venue instance or None if not found
+            Tuple of (Venue instance or None, latitude, longitude)
         """
+        from geoalchemy2 import Geometry
         result = await self.session.execute(
-            select(Venue).where(
+            select(
+                Venue,
+                func.ST_Y(func.cast(Venue.location, Geometry)).label("lat"),
+                func.ST_X(func.cast(Venue.location, Geometry)).label("lng"),
+            ).where(
                 Venue.id == venue_id,
                 Venue.deleted_at.is_(None),
             )
         )
-        return result.scalar_one_or_none()
+        row = result.first()
+        if row:
+            return row[0], row[1], row[2]
+        return None, None, None
 
     async def search_venues_by_radius(
         self,
@@ -232,7 +287,9 @@ class VenueManagementService:
         max_price: Decimal | None = None,
         skip: int = 0,
         limit: int = 20,
-    ) -> tuple[list[Venue], int]:
+        user_id: uuid.UUID | None = None,
+        only_favorites: bool = False,
+    ) -> tuple[list[Any], int]:
         """
         Search venues within radius using PostGIS.
 
@@ -247,12 +304,17 @@ class VenueManagementService:
             max_price: Optional maximum price filter
             skip: Pagination offset
             limit: Results per page
+            user_lat: Optional user latitude for relative distance
+            user_lng: Optional user longitude for relative distance
 
         Returns:
             Tuple of (venues list, total count)
         """
         # Create point from coordinates
-        point = geofunc.ST_SetSRID(geofunc.ST_MakePoint(lng, lat), 4326)
+        point = cast(geofunc.ST_SetSRID(geofunc.ST_MakePoint(lng, lat), 4326), Geography)
+        
+        # Use provided user location if available, otherwise use search center
+        user_point = point
 
         # Build conditions
         conditions = [
@@ -270,25 +332,49 @@ class VenueManagementService:
         if max_price is not None:
             conditions.append(Venue.base_price_per_hour <= max_price)
 
+        # Add favorite status check if user_id is provided
+        is_fav_subquery = literal(False)
+        if user_id:
+            if only_favorites:
+                is_fav_subquery = literal(True)
+            else:
+                is_fav_subquery = exists().where(
+                    and_(
+                        UserFavorite.venue_id == Venue.id,
+                        UserFavorite.user_id == user_id
+                    )
+                ).correlate(Venue)
+
+        # Build queries
+        query = select(
+            Venue, 
+            is_fav_subquery.label("is_favorite"),
+            func.ST_Y(cast(Venue.location, Geometry)).label("lat"),
+            func.ST_X(cast(Venue.location, Geometry)).label("lng"),
+            geofunc.ST_Distance(Venue.location, user_point).label("distance")
+        ).where(and_(*conditions))
+        
+        count_query = select(func.count()).select_from(Venue).where(and_(*conditions))
+
+        if only_favorites and user_id:
+            query = query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+            count_query = count_query.join(UserFavorite, UserFavorite.venue_id == Venue.id).where(UserFavorite.user_id == user_id)
+
         # Get total count
-        count_result = await self.session.execute(
-            select(func.count())
-            .select_from(Venue)
-            .where(and_(*conditions))
-        )
+        count_result = await self.session.execute(count_query)
         total = count_result.scalar()
 
         # Get results ordered by distance
         result = await self.session.execute(
-            select(Venue)
-            .where(and_(*conditions))
+            query
             .order_by(geofunc.ST_Distance(Venue.location, point))
             .offset(skip)
             .limit(limit)
         )
-        venues = list(result.scalars().all())
+        # Results are tuples of (Venue, is_favorite_bool, lat, lng, distance)
+        venues_with_fav = list(result.all())
 
-        return venues, total
+        return venues_with_fav, total
 
     async def create_venue(
         self,

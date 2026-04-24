@@ -112,6 +112,7 @@ export interface VenueResponse {
   description?: string | null;
   fullAddress?: string | null;
   location: Coordinates;
+  distance?: string;
   venue_type: VenueType;
   category?: string | null;
   logo?: string | null;
@@ -123,7 +124,7 @@ export interface VenueResponse {
   base_price_per_hour: number;
   is_active: boolean;
   is_verified: boolean;
-  isFavorite?: boolean; // FE-only field
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -137,9 +138,10 @@ export interface VenueListItem {
   fullAddress?: string | null;
   venue_type: VenueType;
   location: Coordinates;
+  distance?: string;
   base_price_per_hour: number;
   is_verified: boolean;
-  isFavorite?: boolean; // FE-only field
+  is_favorite: boolean;
   images?: string[] | null;
   amenities?: string[] | null;
   logo?: string | null;
@@ -499,25 +501,29 @@ export interface UserUpdateRequest {
 export interface ReviewCreateRequest {
   rating: number; // 1-5
   comment?: string | null;
-  images?: string[] | null;
 }
 
 /** Backend: ReviewUpdate — PUT /reviews/{id} */
 export interface ReviewUpdateRequest {
   rating?: number | null;
   comment?: string | null;
-  images?: string[] | null;
+}
+
+export interface ReviewUser {
+  id: string;
+  full_name: string;
+  avatar_url?: string | null;
 }
 
 /** Backend: ReviewResponse — GET /venues/{id}/reviews, POST /venues/{id}/reviews */
 export interface ReviewResponse {
   id: string;
-  user_id: string;
   venue_id: string;
+  user: ReviewUser;
   rating: number;
   comment?: string | null;
-  user_name: string;
   created_at: string;
+  updated_at: string;
 }
 
 /** Backend: ReviewListResponse — GET /venues/{id}/reviews */
@@ -525,6 +531,7 @@ export interface ReviewListResponse {
   items: ReviewResponse[];
   total: number;
   page: number;
+  limit: number;
   pages: number;
 }
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,13 +21,17 @@ import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
 import { QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
+import { toggleFavorite } from '../../services/favorite-service';
 import { useAuthStore } from '../../store/auth-store';
+import { locationService, Coordinates } from '../../services/location-service';
+import { Alert } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const user = useAuthStore(state => state.user);
   const [venues, setVenues] = useState<any[]>([]);
-  const [favoriteVenues, setFavoriteVenues] = useState<string[]>([]);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Tất cả');
@@ -46,19 +52,94 @@ export const HomeScreen: React.FC = () => {
       const res = await fetchVenues(params);
       if (res?.items) {
         setVenues(res.items);
-        setFavoriteVenues(res.items.filter((v: any) => v.isFavorite).map((v: any) => v.id));
+        // If we already have location, calculate distances immediately
+        const loc = currentLoc || userLocation;
+        if (loc) {
+          calculateDistances(res.items, loc);
+        }
       }
     } catch (error) {
-      console.error('Error loading home venues:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching venues:', error);
     }
   };
 
-  const toggleFavorite = (id: string) => {
-    setFavoriteVenues(prev =>
-      prev.includes(id) ? prev.filter(vId => vId !== id) : [...prev, id]
-    );
+  const calculateDistances = (items: any[], loc: Coordinates) => {
+    const updatedItems = items.map(venue => {
+      if (venue.location) {
+        const dist = locationService.calculateAirDistance(loc, {
+          latitude: venue.location.lat,
+          longitude: venue.location.lng,
+        });
+        return { ...venue, distance: `${dist.toFixed(1)} km` };
+      }
+      return venue;
+    });
+
+    // If quick filter is "Gần nhất", sort
+    if (activeQuickFilter === 'Gần nhất') {
+      updatedItems.sort((a, b) => {
+        const dA = parseFloat(a.distance || '999');
+        const dB = parseFloat(b.distance || '999');
+        return dA - dB;
+      });
+    }
+
+    setVenues(updatedItems);
+  };
+
+  useEffect(() => {
+    // 1. Load venues immediately (Fast)
+    loadVenues();
+
+    // 2. Then get location (Slower hardware call)
+    const initLocation = async () => {
+      const hasPermission = await locationService.requestPermission();
+      if (hasPermission) {
+        try {
+          const loc = await locationService.getCurrentLocation();
+          setUserLocation(loc);
+        } catch (err) {
+          console.log('Location error:', err);
+        }
+      }
+    };
+
+    initLocation();
+  }, []);
+
+  // Update distances whenever location or venues or filters change
+  useEffect(() => {
+    if (userLocation && venues.length > 0 && !venues[0].distance) {
+      calculateDistances(venues, userLocation);
+    }
+  }, [userLocation, activeQuickFilter]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    // Refresh location too
+    try {
+      const loc = await locationService.getCurrentLocation();
+      setUserLocation(loc);
+      await loadVenues(loc);
+    } catch (err) {
+      await loadVenues();
+    }
+    setRefreshing(false);
+  }, [userLocation]);
+
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để lưu sân yêu thích');
+      return;
+    }
+
+    try {
+      const res = await toggleFavorite(id);
+      // Update local state for immediate feedback
+      setVenues(prev => prev.map(v => v.id === id ? { ...v, is_favorite: res.is_favorite } : v));
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể cập nhật trạng thái yêu thích');
+    }
   };
 
   const handleBookPress = (venueId: string) => {
@@ -79,6 +160,14 @@ export const HomeScreen: React.FC = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]} // Keep search bar sticky or semi-sticky if desired
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.PRIMARY]} // Android
+            tintColor={COLORS.PRIMARY} // iOS
+          />
+        }
       >
         {/* Header Section */}
         <LinearGradient colors={COLORS.GRADIENT_GREEN} style={styles.header}>
@@ -130,7 +219,10 @@ export const HomeScreen: React.FC = () => {
                 <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.favFloatingBtn}>
+            <TouchableOpacity 
+              style={styles.favFloatingBtn}
+              onPress={() => navigation.navigate('Favorites')}
+            >
               <MaterialCommunityIcons name="heart-outline" size={24} color={COLORS.PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -169,8 +261,8 @@ export const HomeScreen: React.FC = () => {
               <VenueCard
                 key={venue.id}
                 {...venue}
-                isFavorite={favoriteVenues.includes(venue.id)}
-                onFavoriteToggle={() => toggleFavorite(venue.id)}
+                is_favorite={venue.is_favorite}
+                onFavoriteToggle={() => handleToggleFavorite(venue.id)}
                 onBook={() => handleBookPress(venue.id)}
                 onPress={() => navigation.navigate('VenueDetails', { venueId: venue.id })}
               />

@@ -172,10 +172,10 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               <View key={item.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
                   <View style={styles.userAvatarPlaceholder}>
-                    <Text style={styles.avatarText}>{item.user_name.charAt(0)}</Text>
+                    <Text style={styles.avatarText}>{(item.user?.full_name || 'U').charAt(0)}</Text>
                   </View>
                   <View style={styles.reviewUserInfo}>
-                    <Text style={styles.reviewUserName}>{item.user_name}</Text>
+                    <Text style={styles.reviewUserName}>{item.user?.full_name || 'Người dùng'}</Text>
                     <View style={styles.starsRow}>
                       {[1, 2, 3, 4, 5].map((s) => (
                         <MaterialCommunityIcons
@@ -211,59 +211,57 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* Backdrop to close when tapping outside */}
+      <TouchableOpacity 
+        style={styles.backdrop} 
+        activeOpacity={1} 
+        onPress={closeScreen} 
+      />
 
       {/* 3. Main Detail Overlay Panel */}
       <Animated.View style={[styles.gestureContainer, animatedStyle]}>
+          <GestureDetector gesture={panGesture}>
+            <View style={styles.handleContainer}>
+              <View style={styles.handle} />
+            </View>
+          </GestureDetector>
+
           <ScrollView 
             showsVerticalScrollIndicator={false}
             style={styles.contentScrollView}
             contentContainerStyle={styles.scrollContainer}
-            stickyHeaderIndices={[1]}
           >
-            <View style={styles.paddingForMap} />
-            
-            <GestureDetector gesture={panGesture}>
-              <View>
-                {/* Draggable Handle Indicator */}
-                <View style={styles.handleContainer}>
-                  <View style={styles.handle} />
-                </View>
+            {/* Venue Cover Image */}
+            <View style={styles.coverSection}>
+              <Image 
+                source={{ uri: venue.images?.[0] || 'https://via.placeholder.com/400' }} 
+                style={styles.coverImage} 
+              />
 
-                {/* Venue Cover Image */}
-                <View style={[styles.coverSection, { borderTopLeftRadius: 0, borderTopRightRadius: 0 }]}>
-            <Image source={{ uri: venue.image }} style={styles.coverImage} />
+              <View style={styles.coverActions}>
+                <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
+                  <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
+                  <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.bookNowBtn}
+                  onPress={handleBookPress}
+                >
+                  <Text style={styles.bookNowText}>Đặt lịch</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.coverActions}>
-              <TouchableOpacity onPress={handleShare} style={styles.circularBtn}>
-                <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.BLACK} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={styles.circularBtn}>
-                <MaterialCommunityIcons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? COLORS.ERROR : COLORS.BLACK} />
-              </TouchableOpacity>
-              
-              {/* Map/Direction Button */}
-              <TouchableOpacity onPress={openMap} style={styles.circularBtn}>
-                <MaterialCommunityIcons name="map-marker-outline" size={22} color={COLORS.PRIMARY} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.bookNowBtn}
-                onPress={handleBookPress}
-              >
-                <Text style={styles.bookNowText}>Đặt lịch</Text>
-              </TouchableOpacity>
+              {/* Rating Badge */}
+              <View style={styles.ratingBadge}>
+                <MaterialCommunityIcons name="star" size={16} color={COLORS.WHITE} />
+                <Text style={styles.ratingText}>{venue.rating || '5.0'}</Text>
+              </View>
             </View>
-
-            {/* Rating Badge */}
-            <View style={styles.ratingBadge}>
-              <MaterialCommunityIcons name="star" size={16} color={COLORS.WHITE} />
-              <Text style={styles.ratingText}>{venue.rating}</Text>
-            </View>
-            </View>
-          </View>
-          </GestureDetector>
 
           <View style={[styles.overlayPanel, { minHeight: Dimensions.get('window').height - 180 - 200 }]}>
           {/* Venue Info Card */}
@@ -287,9 +285,30 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
               </View>
               <View style={styles.detailRow}>
                 <MaterialCommunityIcons name="clock-outline" size={20} color={COLORS.GRAY_MEDIUM} />
-                <Text style={styles.detailText}>{venue.hours}</Text>
+                <Text style={styles.detailText}>
+                  {venue.operating_hours 
+                    ? `${venue.operating_hours.open} - ${venue.operating_hours.close}` 
+                    : (venue.hours || '06:00 - 22:00')}
+                </Text>
               </View>
-              <TouchableOpacity style={styles.detailRow}>
+              <TouchableOpacity 
+                style={styles.detailRow} 
+                onPress={() => {
+                  navigation.goBack();
+                  navigation.navigate('Main', {
+                    screen: 'Map',
+                    params: {
+                      destination: { latitude: venue.location.lat, longitude: venue.location.lng },
+                      showRoute: true,
+                      targetVenueId: venue.id
+                    }
+                  });
+                }}
+              >
+                <MaterialCommunityIcons name="directions" size={20} color={COLORS.PRIMARY} />
+                <Text style={[styles.detailText, styles.phoneText]}>Chỉ đường</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.detailRow} activeOpacity={0.7}>
                 <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.GRAY_MEDIUM} />
                 <Text style={[styles.detailText, styles.phoneText]}>Liên hệ</Text>
               </TouchableOpacity>
@@ -333,77 +352,26 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.GRAY_LIGHT,
+    backgroundColor: 'transparent',
   },
-  mapContainer: {
+  backdrop: {
     ...StyleSheet.absoluteFillObject,
-    height: MAP_HEIGHT + 100, // Show map behind navbar
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  navbarOverlay: {
+  gestureContainer: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 100,
-  },
-  navbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    height: height * 0.85,
     backgroundColor: COLORS.WHITE,
-    marginHorizontal: 16,
-    marginTop: 10,
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: 8,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     shadowColor: COLORS.BLACK,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  navBtn: {
-    padding: 4,
-  },
-  navTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
-    marginHorizontal: 10,
-  },
-  chipsScroll: {
-    marginTop: 12,
-  },
-  chipsContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.WHITE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  activeChip: {
-    backgroundColor: COLORS.PRIMARY,
-    borderColor: COLORS.PRIMARY,
-  },
-  chipText: {
-    fontSize: 12,
-    color: COLORS.TEXT_SECONDARY,
-    fontWeight: '500',
-  },
-  activeChipText: {
-    color: COLORS.WHITE,
+    shadowRadius: 10,
+    elevation: 20,
   },
   contentScrollView: {
     flex: 1,
@@ -411,37 +379,24 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingBottom: 40,
   },
-  gestureContainer: {
-    flex: 1,
-  },
-  paddingForMap: {
-    height: MAP_HEIGHT,
-  },
   handleContainer: {
-    backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    height: 24,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: -1, // overlap to prevent gap
   },
   handle: {
     width: 40,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: COLORS.BORDER,
+    backgroundColor: COLORS.GRAY_LIGHT,
   },
   overlayPanel: {
     backgroundColor: COLORS.WHITE,
-    minHeight: height - MAP_HEIGHT,
   },
   coverSection: {
-    height: 200,
+    height: 220,
     width: '100%',
-    overflow: 'hidden',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    position: 'relative',
   },
   coverImage: {
     width: '100%',
@@ -462,33 +417,40 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
+    elevation: 5,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   bookNowBtn: {
-    backgroundColor: '#E3B129',
+    backgroundColor: COLORS.YELLOW,
     paddingHorizontal: 16,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
+    elevation: 5,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   bookNowText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: COLORS.TEXT_PRIMARY,
   },
   ratingBadge: {
     position: 'absolute',
-    bottom: -15,
-    alignSelf: 'center',
+    bottom: 15,
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.PRIMARY,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    elevation: 5,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   ratingText: {
     color: COLORS.WHITE,
@@ -497,8 +459,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   infoCard: {
-    paddingTop: 30,
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
   infoHeader: {
     flexDirection: 'row',

@@ -19,6 +19,7 @@ import { MapScreen } from '@screens/map/MapScreen';
 import { ExploreScreen } from '@screens/explore/ExploreScreen';
 import { HighlightsScreen } from '@screens/highlights/HighlightsScreen';
 import { ProfileScreen } from '@screens/profile/ProfileScreen';
+import { FavoritesScreen } from '@screens/favorite/FavoritesScreen';
 import { BookingDetailsScreen } from '@screens/booking/BookingDetailsScreen';
 import { PaymentScreen } from '@screens/booking/PaymentScreen';
 import { FinalPaymentScreen } from '@screens/booking/FinalPaymentScreen';
@@ -53,6 +54,7 @@ export type RootStackParamList = {
   BookingHistoryDetail: { booking: any };
   PaymentResult: { bookingId: string };
   Search: undefined;
+  Favorites: undefined;
   EditProfile: undefined;
   Settings: undefined;
   VenueRegistration: undefined;
@@ -265,6 +267,10 @@ export function AppNavigator(): React.JSX.Element {
             <Stack.Screen
               name="Search"
               component={SearchScreen}
+            />
+            <Stack.Screen
+              name="Favorites"
+              component={FavoritesScreen}
             />
             <Stack.Screen
               name="EditProfile"

@@ -57,8 +57,10 @@ export const LoginScreen: React.FC = () => {
 
     const loginPayload = {
       phone: normalizedPhone,
-      password: password
+      password: password.trim()
     };
+
+    console.log('Login Payload:', loginPayload);
 
     try {
       // Call real API backend
