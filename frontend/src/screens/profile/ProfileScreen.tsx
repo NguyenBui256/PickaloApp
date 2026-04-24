@@ -123,6 +123,13 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.menuGroup}>
             <Text style={styles.groupTitle}>Hoạt động</Text>
             <View style={styles.menuCard}>
+              <MenuItem 
+                icon="message-text-outline" 
+                label="Tin nhắn ghép kèo" 
+                color="#F97316"
+                onPress={() => navigation.navigate('ChatList')}
+              />
+              <View style={styles.divider} />
               <MenuItem icon="account-group-outline" label="Nhóm của tôi" />
               <View style={styles.divider} />
               <MenuItem icon="format-list-bulleted" label="Danh sách lịch học" />

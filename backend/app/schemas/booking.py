@@ -134,11 +134,11 @@ class BookingPriceResponse(BaseModel):
 class BookingSlotResponse(BaseModel):
     """Schema for a specific slot in a booking."""
 
-    id: str
-    court_id: str
+    id: uuid.UUID
+    court_id: uuid.UUID
     court_name: str | None = None
-    start_time: str
-    end_time: str
+    start_time: time
+    end_time: time
     price: Decimal
 
     model_config = {"from_attributes": True}
@@ -147,10 +147,10 @@ class BookingSlotResponse(BaseModel):
 class BookingResponse(BaseModel):
     """Full booking response."""
 
-    id: str
-    user_id: str
-    venue_id: str
-    booking_date: str
+    id: uuid.UUID
+    user_id: uuid.UUID
+    venue_id: uuid.UUID
+    booking_date: date
 
     # Pricing
     total_price: Decimal
@@ -164,16 +164,16 @@ class BookingResponse(BaseModel):
     # Payment
     payment_method: str | None
     payment_id: str | None
-    paid_at: str | None
+    paid_at: datetime | None
 
     # Additional info
     notes: str | None
-    cancelled_at: str | None
+    cancelled_at: datetime | None
     cancelled_by: str | None
 
     # Timestamps
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     # Relations
     venue_name: str | None = None
@@ -187,16 +187,17 @@ class BookingResponse(BaseModel):
 class BookingListItem(BaseModel):
     """Simplified booking for list views."""
 
-    id: str
-    venue_id: str
+    id: uuid.UUID
+    venue_id: uuid.UUID
     venue_name: str | None
     venue_address: str | None
-    booking_date: str
+    booking_date: date
     total_price: Decimal
     status: BookingStatus
     is_paid: bool
     is_cancelable: bool
-    created_at: str
+    has_match: bool = False
+    created_at: datetime
     customer_name: str | None = None
     customer_phone: str | None = None
 
