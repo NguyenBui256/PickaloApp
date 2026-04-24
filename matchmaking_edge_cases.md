@@ -22,7 +22,7 @@ Tài liệu này liệt kê các tình huống thực tế và logic xử lý đ
 | 7 | **Rút lui (Trạng thái Chờ)** | Người chơi hủy yêu cầu khi Host chưa bấm duyệt. | Xóa yêu cầu khỏi danh sách chờ của Host. Không thông báo cho Host để tránh phiền. |
 | 8 | **Rút lui (Trạng thái Đã Duyệt)** | Người chơi đã được chấp nhận nhưng đột ngột bận không đi được. | Cập nhật `slots_filled -= 1`. Thông báo ngay cho Host để tìm người thay thế. |
 | 9 | **Đuổi thành viên (Kick)** | Host  loại bỏ một người đã duyệt trước đó (do phát hiện lịch sử xấu). | Xóa quan hệ Participant. Slot trống lại. Thông báo lý do cho người bị loại. |
-
+Dai Kim Pickleball Complex
 ---
 
 ## III. Nhóm Xung đột lịch trình (Conflicts)

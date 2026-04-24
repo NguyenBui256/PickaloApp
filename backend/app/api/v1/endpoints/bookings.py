@@ -318,6 +318,7 @@ def _booking_to_response(booking: Any) -> BookingResponse:
         venue_address=booking.venue.address if hasattr(booking, 'venue') and booking.venue else None,
         slots=slots,
         services=services,
+        match_id=booking.match.id if hasattr(booking, 'match') and booking.match else None
     )
 
 
@@ -333,7 +334,8 @@ def _booking_to_list_item(booking: Any) -> BookingListItem:
         status=booking.status,
         is_paid=booking.is_paid,
         is_cancelable=booking.is_cancelable,
-        has_match=booking.match is not None if hasattr(booking, 'match') else False,
+        has_match=booking.match is not None if hasattr(booking, 'match') and booking.match else False,
+        match_id=booking.match.id if hasattr(booking, 'match') and booking.match else None,
         created_at=booking.created_at.isoformat(),
         payment_proof=booking.payment_proof,
         start_time=booking.slots[0].start_time.strftime("%H:%M") if booking.slots and booking.slots[0].start_time else None,

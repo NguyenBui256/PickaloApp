@@ -209,14 +209,98 @@ class MatchService:
             raise ValueError(f"Only {match.available_slots} slots available, cannot take {member_count}")
             
         # Check if already requested
-        exist_req = await self.session.execute(
+        exist_req_res = await self.session.execute(
             select(MatchRequest).where(
                 and_(MatchRequest.match_id == match_id, MatchRequest.requester_id == requester_id)
             )
         )
-        if exist_req.scalar_one_or_none():
+        exist_req = exist_req_res.scalar_one_or_none()
+        if exist_req:
+            if exist_req.status == MatchRequestStatus.REJECTED:
+                print("DEBUG: create_request - FAILED: Already rejected")
+                raise ValueError("Host đã từ chối yêu cầu tham gia của bạn cho kèo này")
+            
+            if exist_req.status == MatchRequestStatus.CANCELLED:
+                # RE-USE the existing request!
+                print("DEBUG: create_request - Re-using CANCELLED request")
+                exist_req.status = MatchRequestStatus.PENDING
+                exist_req.member_count = member_count
+                
+                # Unlock chat room
+                room_res = await self.session.execute(
+                    select(ChatRoom).where(ChatRoom.match_request_id == exist_req.id)
+                )
+                room = room_res.scalar_one_or_none()
+                if room:
+                    room.is_locked = False
+                
+                if initial_message:
+                    msg = ChatMessage(
+                        room_id=room.id,
+                        sender_id=requester_id,
+                        content=initial_message,
+                        is_system_message=False
+                    )
+                    self.session.add(msg)
+                
+                await self.session.commit()
+                # Fetch final
+                final_query = select(MatchRequest).where(MatchRequest.id == exist_req.id).options(
+                    selectinload(MatchRequest.requester),
+                    selectinload(MatchRequest.chat_room)
+                )
+                res = await self.session.execute(final_query)
+                return res.scalar_one()
+
             print("DEBUG: create_request - FAILED: Already requested")
-            raise ValueError("You have already requested to join this match")
+            raise ValueError("Bạn đã gửi yêu cầu tham gia kèo này rồi")
+
+        # --- CASE 10: CHECK OVERLAPPING SCHEDULE ---
+        # 1. Get current match time window
+        slots_res = await self.session.execute(
+            select(BookingSlot).where(BookingSlot.booking_id == match.booking_id)
+        )
+        match_slots = slots_res.scalars().all()
+        if not match_slots:
+            raise ValueError("Không tìm thấy thông tin thời gian của kèo này")
+        
+        match_date = match_slots[0].booking_date
+        match_start = min(s.start_time for s in match_slots)
+        match_end = max(s.end_time for s in match_slots)
+
+        # 2. Check overlap with user's OWN bookings
+        own_overlap_query = select(exists().where(
+            and_(
+                Booking.user_id == requester_id,
+                Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+                BookingSlot.booking_id == Booking.id,
+                BookingSlot.booking_date == match_date,
+                BookingSlot.start_time < match_end,
+                BookingSlot.end_time > match_start
+            )
+        ))
+        if (await self.session.execute(own_overlap_query)).scalar():
+            print("DEBUG: create_request - FAILED: Overlapping with owned booking")
+            raise ValueError("Bạn đã có yêu cầu/lịch thi đấu khác trong khung giờ này")
+
+        # 3. Check overlap with user's OTHER match requests (PENDING or ACCEPTED)
+        request_overlap_query = select(exists().where(
+            and_(
+                MatchRequest.requester_id == requester_id,
+                MatchRequest.status.in_([MatchRequestStatus.PENDING, MatchRequestStatus.ACCEPTED]),
+                MatchRequest.match_id != match_id, # Ignore current match (already checked for duplicate request above)
+                Match.id == MatchRequest.match_id,
+                Booking.id == Match.booking_id,
+                BookingSlot.booking_id == Booking.id,
+                BookingSlot.booking_date == match_date,
+                BookingSlot.start_time < match_end,
+                BookingSlot.end_time > match_start
+            )
+        ))
+        if (await self.session.execute(request_overlap_query)).scalar():
+            print("DEBUG: create_request - FAILED: Overlapping with other match request")
+            raise ValueError("Bạn đã có yêu cầu/lịch thi đấu khác trong khung giờ này")
+        # -------------------------------------------
 
         # 1. Create Match Request
         req = MatchRequest(
@@ -321,3 +405,168 @@ class MatchService:
         await self.session.commit()
         await self.session.refresh(req)
         return req
+
+    async def kick_member(
+        self,
+        request_id: uuid.UUID,
+        owner_id: uuid.UUID,
+        reason: str = "Chủ kèo đã mời bạn ra khỏi nhóm."
+    ) -> MatchRequest:
+        """Host kicks an already accepted member (Case 9)."""
+        result = await self.session.execute(
+            select(MatchRequest)
+            .join(Match)
+            .join(Booking)
+            .where(MatchRequest.id == request_id)
+        )
+        req = result.scalar_one_or_none()
+        
+        if not req:
+            raise ValueError("Request not found")
+            
+        match_result = await self.session.execute(select(Match).where(Match.id == req.match_id))
+        match = match_result.scalar_one()
+        
+        booking_result = await self.session.execute(select(Booking).where(Booking.id == match.booking_id))
+        booking = booking_result.scalar_one()
+        
+        if booking.user_id != owner_id:
+            raise ValueError("Only match owner can kick members")
+            
+        if req.status != MatchRequestStatus.ACCEPTED:
+            raise ValueError("Chỉ có thể kick thành viên đã được duyệt.")
+            
+        # 1. Update status and free up slots
+        req.status = MatchRequestStatus.REJECTED
+        match.slots_filled -= req.member_count
+        
+        if match.status == MatchStatus.FULL:
+            match.status = MatchStatus.OPEN
+            
+        # 2. Lock chat room and send system message
+        room_res = await self.session.execute(
+            select(ChatRoom).where(ChatRoom.match_request_id == req.id)
+        )
+        room = room_res.scalar_one_or_none()
+        if room:
+            room.is_locked = True
+            sys_msg = ChatMessage(
+                room_id=room.id,
+                sender_id=None,
+                content=f"Hệ thống: {reason}",
+                is_system_message=True
+            )
+            self.session.add(sys_msg)
+
+        await self.session.commit()
+        await self.session.refresh(req)
+        return req
+
+
+    async def delete_match(self, match_id: uuid.UUID, owner_id: uuid.UUID) -> bool:
+        """Delete a match and all related data (requests, chats)."""
+        result = await self.session.execute(
+            select(Match).join(Booking).where(
+                and_(Match.id == match_id, Booking.user_id == owner_id)
+            )
+        )
+        match = result.scalar_one_or_none()
+        
+        if not match:
+            raise ValueError("Match not found or you don't have permission to delete it")
+            
+        await self.session.delete(match)
+        await self.session.commit()
+        return True
+
+    async def cancel_match(self, match_id: uuid.UUID, owner_id: uuid.UUID | None = None, reason: str = "Chủ kèo đã hủy ghép kèo này.") -> Match:
+        """Cancel an entire match (Case 5 & 6) and notify all participants."""
+        query = select(Match)
+        if owner_id:
+            query = query.join(Booking).where(and_(Match.id == match_id, Booking.user_id == owner_id))
+        else:
+            query = query.where(Match.id == match_id)
+            
+        result = await self.session.execute(query)
+        match = result.scalar_one_or_none()
+        
+        if not match:
+            raise ValueError("Match not found or you don't have permission to cancel it")
+            
+        # 1. Update Match status
+        match.status = MatchStatus.CANCELLED
+        match.slots_filled = 0
+        
+        # 2. Cancel all active requests & notify via ChatRooms
+        req_result = await self.session.execute(
+            select(MatchRequest).where(
+                and_(
+                    MatchRequest.match_id == match_id,
+                    MatchRequest.status.in_([MatchRequestStatus.PENDING, MatchRequestStatus.ACCEPTED])
+                )
+            )
+        )
+        active_requests = req_result.scalars().all()
+        
+        for req in active_requests:
+            req.status = MatchRequestStatus.CANCELLED
+            
+            # Find and lock chat room, send message
+            room_res = await self.session.execute(
+                select(ChatRoom).where(ChatRoom.match_request_id == req.id)
+            )
+            room = room_res.scalar_one_or_none()
+            if room:
+                room.is_locked = True
+                sys_msg = ChatMessage(
+                    room_id=room.id,
+                    sender_id=None,
+                    content=f"Hệ thống: {reason}",
+                    is_system_message=True
+                )
+                self.session.add(sys_msg)
+                
+        await self.session.commit()
+        return match
+
+    async def cancel_request(self, request_id: uuid.UUID, requester_id: uuid.UUID) -> bool:
+        """Player cancels their own join request."""
+        result = await self.session.execute(
+            select(MatchRequest)
+            .join(Match)
+            .where(and_(MatchRequest.id == request_id, MatchRequest.requester_id == requester_id))
+        )
+        req = result.scalar_one_or_none()
+        
+        if not req:
+            raise ValueError("Yêu cầu không tồn tại hoặc bạn không có quyền hủy")
+            
+        match_result = await self.session.execute(select(Match).where(Match.id == req.match_id))
+        match = match_result.scalar_one()
+        
+        if req.status == MatchRequestStatus.ACCEPTED:
+            # Case 8: Revert slots
+            match.slots_filled -= req.member_count
+            if match.status == MatchStatus.FULL:
+                match.status = MatchStatus.OPEN
+            
+        # Update status to CANCELLED instead of deleting
+        req.status = MatchRequestStatus.CANCELLED
+        
+        # Lock chat room and send system message
+        room_res = await self.session.execute(
+            select(ChatRoom).where(ChatRoom.match_request_id == req.id)
+        )
+        room = room_res.scalar_one_or_none()
+        if room:
+            room.is_locked = True
+            sys_msg = ChatMessage(
+                room_id=room.id,
+                sender_id=None,
+                content="Người tham gia đã rút lui khỏi kèo này.",
+                is_system_message=True
+            )
+            self.session.add(sys_msg)
+            
+        await self.session.commit()
+        return True

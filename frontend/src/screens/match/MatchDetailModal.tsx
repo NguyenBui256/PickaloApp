@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Linking,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
@@ -22,6 +23,7 @@ interface MatchDetailModalProps {
   match: any;
   matches?: any[];
   onClose: () => void;
+  onActionSuccess?: () => void;
 }
 
 export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
@@ -29,6 +31,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   match,
   matches,
   onClose,
+  onActionSuccess,
 }) => {
   const navigation = useNavigation<any>();
   const [memberCount, setMemberCount] = useState(1);
@@ -56,12 +59,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         member_count: memberCount,
       }, message);
 
-      Toast.show({
-        type: 'success',
-        text1: 'Gửi yêu cầu thành công',
-        text2: 'Vui lòng chờ chủ kèo chấp nhận.',
-      });
+      Alert.alert('Thành công', 'Yêu cầu của bạn đã được gửi. Vui lòng chờ chủ kèo chấp nhận.');
       
+      onActionSuccess?.();
       handleClose();
       // Navigate to chat room immediately
       navigation.navigate('Chat', { 
@@ -70,14 +70,68 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         partnerName: activeMatch.host_name || 'Chủ kèo'
       });
     } catch (err: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Lỗi',
-        text2: err.response?.data?.detail || 'Không thể gửi yêu cầu lúc này.',
-      });
+      Alert.alert('Lỗi', err.detail || 'Không thể gửi yêu cầu lúc này.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!activeMatch?.my_request_id) return;
+    
+    Alert.alert(
+      'Hủy yêu cầu',
+      'Bạn có chắc chắn muốn hủy yêu cầu tham gia kèo này không?',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Có, hủy ngay', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+              await matchService.cancelJoinRequest(activeMatch.my_request_id);
+              Alert.alert('Thành công', 'Đã hủy yêu cầu tham gia.');
+              onActionSuccess?.();
+              handleClose();
+            } catch (err: any) {
+              Alert.alert('Lỗi', err.detail || 'Không thể hủy yêu cầu lúc này.');
+            } finally {
+              setSubmitting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleHostCancelMatch = () => {
+    if (!activeMatch) return;
+
+    Alert.alert(
+      'Hủy ghép kèo',
+      'Bạn có chắc chắn muốn hủy ghép kèo này không?\n\n- Các thành viên đã duyệt sẽ bị loại khỏi nhóm chat và nhận thông báo hủy.\n- Lịch đặt sân của bạn VẪN GIỮ NGUYÊN.',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Vẫn hủy ghép', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+              await matchService.cancelMatch(activeMatch.id);
+              Alert.alert('Thành công', 'Đã hủy ghép thêm người cho kèo này.');
+              onActionSuccess?.();
+              handleClose();
+            } catch (err: any) {
+              Alert.alert('Lỗi', err.detail || 'Không thể hủy kèo lúc này.');
+            } finally {
+              setSubmitting(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const openDirections = () => {
@@ -223,54 +277,77 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
                 <View style={styles.divider} />
 
-                {/* JOIN FORM */}
-                <Text style={styles.sectionTitle}>Đăng ký tham gia</Text>
-                <View style={styles.slotsInfo}>
-                    <Text style={styles.slotsLeft}>{`Còn trống ${activeMatch.available_slots} chỗ`}</Text>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Số lượng người tham gia cùng bạn</Text>
-                  <View style={styles.stepperContainer}>
-                    <TouchableOpacity 
-                      style={[styles.stepperBtn, memberCount <= 1 && styles.stepperBtnDisabled]} 
-                      onPress={decrementMembers}
-                      disabled={memberCount <= 1}
-                    >
-                      <MaterialCommunityIcons name="minus" size={24} color={memberCount <= 1 ? COLORS.GRAY_MEDIUM : COLORS.TEXT_PRIMARY} />
-                    </TouchableOpacity>
-                    <View style={styles.stepperValue}>
-                      <Text style={styles.stepperValueText}>{memberCount}</Text>
+                {!activeMatch.is_host && (
+                  <>
+                    {/* JOIN FORM */}
+                    <Text style={styles.sectionTitle}>Đăng ký tham gia</Text>
+                    <View style={styles.slotsInfo}>
+                        <Text style={styles.slotsLeft}>{`Còn trống ${activeMatch.available_slots} chỗ`}</Text>
                     </View>
-                    <TouchableOpacity 
-                      style={[styles.stepperBtn, memberCount >= activeMatch.available_slots && styles.stepperBtnDisabled]} 
-                      onPress={incrementMembers}
-                      disabled={memberCount >= activeMatch.available_slots}
-                    >
-                      <MaterialCommunityIcons name="plus" size={24} color={memberCount >= activeMatch.available_slots ? COLORS.GRAY_MEDIUM : COLORS.TEXT_PRIMARY} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Lời nhắn (tùy chọn)</Text>
-                  <TextInput
-                    style={styles.messageInput}
-                    placeholder="Chào bạn, mình muốn tham gia kèo này..."
-                    multiline
-                    numberOfLines={3}
-                    value={message}
-                    onChangeText={setMessage}
-                  />
-                </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Số lượng người tham gia cùng bạn</Text>
+                      <View style={styles.stepperContainer}>
+                        <TouchableOpacity 
+                          style={[styles.stepperBtn, memberCount <= 1 && styles.stepperBtnDisabled]} 
+                          onPress={decrementMembers}
+                          disabled={memberCount <= 1}
+                        >
+                          <MaterialCommunityIcons name="minus" size={24} color={memberCount <= 1 ? COLORS.GRAY_MEDIUM : COLORS.TEXT_PRIMARY} />
+                        </TouchableOpacity>
+                        <View style={styles.stepperValue}>
+                          <Text style={styles.stepperValueText}>{memberCount}</Text>
+                        </View>
+                        <TouchableOpacity 
+                          style={[styles.stepperBtn, memberCount >= activeMatch.available_slots && styles.stepperBtnDisabled]} 
+                          onPress={incrementMembers}
+                          disabled={memberCount >= activeMatch.available_slots}
+                        >
+                          <MaterialCommunityIcons name="plus" size={24} color={memberCount >= activeMatch.available_slots ? COLORS.GRAY_MEDIUM : COLORS.TEXT_PRIMARY} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Lời nhắn (tùy chọn)</Text>
+                      <TextInput
+                        style={styles.messageInput}
+                        placeholder="Chào bạn, mình muốn tham gia kèo này..."
+                        multiline
+                        numberOfLines={3}
+                        value={message}
+                        onChangeText={setMessage}
+                      />
+                    </View>
+                  </>
+                )}
 
                 <TouchableOpacity 
-                  style={[styles.requestBtn, submitting && styles.requestBtnDisabled]} 
-                  onPress={handleRequest}
-                  disabled={submitting}
+                  style={[
+                    styles.requestBtn, 
+                    (submitting || activeMatch?.my_request_status === 'REJECTED') && styles.requestBtnDisabled,
+                    activeMatch?.my_request_status === 'REJECTED' && styles.rejectedBtn,
+                    (activeMatch?.my_request_status === 'PENDING' || activeMatch?.my_request_status === 'ACCEPTED') && styles.cancelableBtn,
+                    activeMatch?.is_host && styles.cancelableBtn
+                  ]} 
+                  onPress={() => {
+                    if (activeMatch?.is_host) {
+                       handleHostCancelMatch();
+                    } else if (activeMatch?.my_request_status === 'PENDING' || activeMatch?.my_request_status === 'ACCEPTED') {
+                      handleCancelRequest();
+                    } else if (!activeMatch?.my_request_status) {
+                      handleRequest();
+                    }
+                  }}
+                  disabled={submitting || activeMatch?.my_request_status === 'REJECTED'}
                 >
                   <Text style={styles.requestBtnText}>
-                    {submitting ? 'Đang gửi...' : 'Xin tham gia ngay'}
+                    {submitting ? 'Đang xử lý...' : 
+                     activeMatch?.is_host ? 'Hủy ghép người (Kèo của bạn)' :
+                     activeMatch?.my_request_status === 'PENDING' ? 'Hủy yêu cầu (Đang chờ)' :
+                     activeMatch?.my_request_status === 'REJECTED' ? 'Yêu cầu bị từ chối' :
+                     activeMatch?.my_request_status === 'ACCEPTED' ? 'Hủy yêu cầu (Đã tham gia)' :
+                     'Xin tham gia ngay'}
                   </Text>
                 </TouchableOpacity>
                </View>
@@ -469,6 +546,9 @@ const styles = StyleSheet.create({
   requestBtnDisabled: {
     backgroundColor: COLORS.GRAY_MEDIUM,
   },
+  rejectedBtn: {
+    backgroundColor: '#EF4444', // Red for rejected
+  },
   requestBtnText: {
     color: COLORS.WHITE,
     fontSize: 18,
@@ -539,5 +619,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 12,
     bottom: 12,
+  },
+  hostButton: {
+    backgroundColor: '#16A34A', // Green-600
+  },
+  cancelableBtn: {
+    backgroundColor: '#DC2626', // Red-600
+    opacity: 0.8,
+  },
+  rejectedBtn: {
+    backgroundColor: '#9CA3AF', // Gray-400
   },
 });

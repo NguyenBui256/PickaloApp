@@ -26,13 +26,13 @@ import type { ChatMessageResponse, UserResponse } from '../../types/api-types';
 export const ChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { roomId, requestId, initialStatus, venueName, matchTime, partnerName } = route.params;
+  const { roomId, requestId, initialStatus, venueName, matchTime, partnerName, isHost } = route.params;
 
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [inputText, setInputText] = useState('');
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isLocked, setIsLocked] = useState(initialStatus === 'REJECTED');
+  const [isLocked, setIsLocked] = useState(initialStatus === 'REJECTED' || initialStatus === 'CANCELLED');
   const [localStatus, setLocalStatus] = useState<string | null>(initialStatus || 'PENDING');
   
   const ws = useRef<WebSocket | null>(null);
@@ -108,6 +108,56 @@ export const ChatScreen: React.FC = () => {
     );
   };
 
+  const handleKick = () => {
+    if (!requestId) return;
+    Alert.alert(
+      'Đuổi khỏi nhóm',
+      'Bạn có chắc chắn muốn đuổi người này ra khỏi kèo? Họ sẽ bị xóa khỏi danh sách tham gia.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Đồng ý', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const data = await matchService.kickMember(requestId);
+              setLocalStatus('REJECTED');
+              setIsLocked(true);
+              Alert.alert('Thành công', 'Đã đổi người dùng khỏi nhóm.');
+            } catch (err: any) {
+              Alert.alert('Lỗi', err.detail || 'Không thể thao tác lúc này.');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+  const handleHideRoom = async () => {
+    Alert.alert(
+      'Xóa cuộc trò chuyện',
+      'Bạn có muốn xóa cuộc trò chuyện này khỏi danh sách của mình không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await chatService.hideChatRoom(roomId);
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể xóa cuộc trò chuyện.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderMessage = ({ item }: { item: ChatMessageResponse }) => {
     const isMe = item.sender_id === currentUser?.id;
     if (item.is_system_message) {
@@ -144,7 +194,7 @@ export const ChatScreen: React.FC = () => {
           <Text style={styles.headerSubTitle}>Giao lưu vui vẻ, văn minh</Text>
         </View>
         
-        {requestId && localStatus === 'PENDING' && !isLocked && (
+        {requestId && isHost && localStatus === 'PENDING' && !isLocked && (
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => handleRespond(false)} style={styles.rejectBtn}>
               <MaterialCommunityIcons name="close-circle" size={24} color="#EF4444" />
@@ -153,6 +203,16 @@ export const ChatScreen: React.FC = () => {
               <MaterialCommunityIcons name="check-circle" size={24} color="#10B981" />
             </TouchableOpacity>
           </View>
+        )}
+
+        {requestId && isHost && localStatus === 'ACCEPTED' && !isLocked && (
+           <TouchableOpacity 
+             onPress={handleKick} 
+             style={[styles.rejectBtn, { paddingHorizontal: 12, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+           >
+              <MaterialCommunityIcons name="account-remove" size={18} color="#EF4444" />
+              <Text style={{color: '#EF4444', fontSize: 12, fontWeight: '600'}}>Đuổi</Text>
+           </TouchableOpacity>
         )}
       </View>
       
@@ -191,8 +251,12 @@ export const ChatScreen: React.FC = () => {
 
           <View style={styles.inputArea}>
             {isLocked ? (
-              <View style={styles.lockedNote}>
+              <View style={styles.lockedArea}>
                 <Text style={styles.lockedText}>Đoạn chat này đã bị đóng.</Text>
+                <TouchableOpacity onPress={handleHideRoom} style={styles.deleteChatBtn}>
+                  <MaterialCommunityIcons name="delete-outline" size={16} color={COLORS.PRIMARY} />
+                  <Text style={styles.deleteChatText}>Xóa cuộc trò chuyện</Text>
+                </TouchableOpacity>
               </View>
             ) : (
               <>
@@ -267,6 +331,8 @@ const styles = StyleSheet.create({
   input: { flex: 1, backgroundColor: '#F3F4F6', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, maxHeight: 100, fontSize: 15 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.PRIMARY, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
   sendBtnDisabled: { backgroundColor: '#D1D5DB' },
-  lockedNote: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  lockedText: { color: '#EF4444', fontStyle: 'italic', fontSize: 14 },
+  lockedArea: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
+  lockedText: { color: COLORS.GRAY_MEDIUM, fontStyle: 'italic', fontSize: 13, marginBottom: 4 },
+  deleteChatBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1, borderColor: COLORS.PRIMARY },
+  deleteChatText: { color: COLORS.PRIMARY, fontSize: 13, fontWeight: '600' },
 });

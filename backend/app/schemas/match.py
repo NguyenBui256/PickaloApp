@@ -46,6 +46,8 @@ class MatchResponse(MatchBase):
     # We can't eagerly load a full BookingResponse because it might be heavy, but it helps frontend.
     booking: BookingResponse | None = None
     available_slots: int
+    my_request_status: MatchRequestStatus | None = None
+    my_request_id: uuid.UUID | None = None
 
 
 # --- Match Requests ---

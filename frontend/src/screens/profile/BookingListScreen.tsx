@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import type { BookingListItem } from '../../types/api-types';
 import { fetchMyBookings } from '../../services/booking-service';
+import { matchService } from '../../services/match-service';
 import { CreateMatchModal } from '../match/CreateMatchModal';
 
 // Helpers
@@ -40,9 +42,11 @@ const Ribbon = ({ text }: { text: string }) => (
 const BookingCard = ({
   item,
   onPublishMatch,
+  onDeleteMatch,
 }: {
   item: BookingListItem;
   onPublishMatch: (item: BookingListItem) => void;
+  onDeleteMatch: (item: BookingListItem) => void;
 }) => {
   const isCanceled = item.status === 'CANCELLED';
   const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
@@ -103,13 +107,22 @@ const BookingCard = ({
       <View style={styles.cardFooter}>
         <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
         <View style={styles.footerActions}>
-          {item.status === 'CONFIRMED' && !item.has_match && (
-            <TouchableOpacity
-              style={[styles.detailBtn, styles.publishBtn]}
-              onPress={() => onPublishMatch(item)}
-            >
-              <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở ghép kèo</Text>
-            </TouchableOpacity>
+          {item.status === 'CONFIRMED' && (
+            item.has_match ? (
+              <TouchableOpacity
+                style={[styles.detailBtn, styles.deleteMatchBtn]}
+                onPress={() => onDeleteMatch(item)}
+              >
+                <Text style={[styles.detailBtnText, styles.deleteMatchBtnText]}>Xóa kèo</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.detailBtn, styles.publishBtn]}
+                onPress={() => onPublishMatch(item)}
+              >
+                <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở ghép kèo</Text>
+              </TouchableOpacity>
+            )
           )}
           {item.status === 'COMPLETED' && (
             <TouchableOpacity
@@ -160,6 +173,31 @@ export const BookingListScreen: React.FC = () => {
     }
   }, []);
 
+  const handleDeleteMatch = async (booking: BookingListItem) => {
+    if (!booking.match_id) return;
+    
+    Alert.alert(
+      'Xóa kèo ghép',
+      'Bạn có chắc chắn muốn gỡ bỏ kèo ghép này không? Toàn bộ yêu cầu tham gia và phòng chat sẽ bị xóa.',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await matchService.deleteMatch(booking.match_id as string);
+              loadBookings();
+            } catch (error) {
+              console.error('Delete match error:', error);
+              Alert.alert('Lỗi', 'Không thể xóa kèo ghép vào lúc này.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   useFocusEffect(
     useCallback(() => {
       loadBookings();
@@ -200,7 +238,11 @@ export const BookingListScreen: React.FC = () => {
         data={bookings}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <BookingCard item={item} onPublishMatch={(b) => setCreateMatchTarget(b)} />
+          <BookingCard 
+            item={item} 
+            onPublishMatch={(b) => setCreateMatchTarget(b)} 
+            onDeleteMatch={handleDeleteMatch}
+          />
         )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -407,5 +449,12 @@ const styles = StyleSheet.create({
   },
   publishBtnText: {
     color: '#F97316',
+  },
+  deleteMatchBtn: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
+  },
+  deleteMatchBtnText: {
+    color: '#EF4444',
   },
 });

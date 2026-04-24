@@ -52,7 +52,7 @@ export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
 // ==========================================
 export type MatchStatus = 'OPEN' | 'FULL' | 'CANCELLED' | 'CLOSED';
 export type MatchSkillLevel = 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export type MatchRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
 
 // ==========================================
 // COMMON SCHEMAS
@@ -693,6 +693,10 @@ export interface MatchResponse {
   start_time?: string;
   end_time?: string;
   booking_date?: string;
+  my_request_status?: MatchRequestStatus | null;
+  my_request_id?: string;
+  is_host?: boolean;
+  host_id?: string;
 }
 
 export interface MatchRequestCreateRequest {

@@ -161,11 +161,13 @@ export const MapScreen = () => {
   }, [routeCoords]);
 
   const groupedMatches = useMemo(() => {
-    const groups: Record<string, any[]> = {};
+    const groups: Record<string, { key: string, items: MatchResponse[] }> = {};
     matches.forEach(m => {
-      const key = m.venue_id || (m.location ? `${m.location.lat},${m.location.lng}` : 'unknown');
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(m);
+      const groupKey = m.venue_id || (m.location ? `${m.location.lat.toFixed(6)},${m.location.lng.toFixed(6)}` : 'unknown');
+      if (!groups[groupKey]) {
+        groups[groupKey] = { key: groupKey, items: [] };
+      }
+      groups[groupKey].items.push(m);
     });
     return Object.values(groups);
   }, [matches]);
@@ -174,9 +176,9 @@ export const MapScreen = () => {
   const filteredGroupedMatches = useMemo(() => {
     if (!filters.radiusKm || !userLocation) return groupedMatches;
     const radiusM = filters.radiusKm * 1000;
-    return groupedMatches.filter(group => {
-      const m = group[0];
-      if (!m.location) return false;
+    return groupedMatches.filter(groupData => {
+      const m = groupData.items[0];
+      if (!m || !m.location) return false;
       // Haversine distance in meters
       const R = 6371000;
       const lat1 = userLocation.latitude * Math.PI / 180;
@@ -208,6 +210,8 @@ export const MapScreen = () => {
         ref={mapRef}
         style={styles.map}
         initialRegion={INITIAL_REGION}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
       >
         {mapMode === 'venue' ? (
           venues.map((venue) => {
@@ -226,7 +230,8 @@ export const MapScreen = () => {
             );
           })
         ) : (
-          filteredGroupedMatches.map((group) => {
+          filteredGroupedMatches.map((groupData) => {
+            const group = groupData.items;
             const firstMatch = group[0];
             const isGroup = group.length > 1;
             
@@ -235,7 +240,7 @@ export const MapScreen = () => {
             }
             return (
               <Marker
-                key={isGroup ? `group-${firstMatch.venue_id}` : firstMatch.id}
+                key={isGroup ? `group-${groupData.key}` : firstMatch.id}
                 coordinate={{ latitude: firstMatch.location.lat, longitude: firstMatch.location.lng }}
                 onPress={() => {
                   if (isGroup) {
@@ -426,6 +431,7 @@ export const MapScreen = () => {
           setSelectedMatch(null);
           setSelectedMatchGroup(null);
         }}
+        onActionSuccess={fetchNearbyMatches}
       />
 
       <MatchFilterModal 

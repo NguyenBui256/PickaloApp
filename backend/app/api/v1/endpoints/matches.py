@@ -4,6 +4,7 @@ from datetime import time, date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
 
 from app.api import deps
 from app.core.database import get_db
@@ -56,6 +57,7 @@ async def search_nearby_matches(
     end_time: time | None = Query(None, description="Filter by end time (HH:MM:SS)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    current_user: User | None = Depends(deps.get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -108,7 +110,25 @@ async def search_nearby_matches(
             "start_time": start_t,
             "end_time": end_t,
             "booking_date": booking.booking_date.isoformat() if booking else None,
+            "host_id": str(booking.user_id) if booking and booking.user_id else None,
+            "is_host": (current_user and booking and booking.user_id == current_user.id) if current_user else False,
+            "my_request_status": None,
+            "my_request_id": None
         }
+
+        # If user is logged in, check their request status for this match
+        if current_user:
+            from app.models.match import MatchRequest
+            req_res = await db.execute(
+                select(MatchRequest.status, MatchRequest.id).where(
+                    and_(MatchRequest.match_id == match.id, MatchRequest.requester_id == current_user.id)
+                )
+            )
+            row = req_res.first()
+            if row:
+                match_dict["my_request_status"] = row[0]
+                match_dict["my_request_id"] = str(row[1])
+
         items.append(match_dict)
         
     return items
@@ -117,6 +137,7 @@ async def search_nearby_matches(
 @router.get("/{match_id}", response_model=MatchResponse)
 async def get_match_details(
     match_id: uuid.UUID,
+    current_user: User | None = Depends(deps.get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     """Get match details."""
@@ -124,6 +145,27 @@ async def get_match_details(
     match = await match_service.get_match(match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+    
+    # If user is logged in, populate my_request_status
+    if current_user:
+        from app.models.match import MatchRequest
+        req_res = await db.execute(
+            select(MatchRequest.status, MatchRequest.id).where(
+                and_(MatchRequest.match_id == match.id, MatchRequest.requester_id == current_user.id)
+            )
+        )
+        row = req_res.first()
+        if row:
+            match.my_request_status = row[0]
+            match.my_request_id = row[1]
+        
+    # Populate is_host
+    if current_user and hasattr(match, 'booking') and match.booking:
+        match.is_host = match.booking.user_id == current_user.id
+        match.host_id = match.booking.user_id
+    else:
+        match.is_host = False
+        
     return match
 
 
@@ -169,5 +211,73 @@ async def respond_to_request(
             accept=accept
         )
         return req
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/requests/{req_id}/kick", response_model=MatchRequestResponse)
+async def kick_member(
+    req_id: uuid.UUID,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Host kicks an already accepted member.
+    """
+    match_service = MatchService(db)
+    try:
+        req = await match_service.kick_member(
+            request_id=req_id,
+            owner_id=current_user.id
+        )
+        return req
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/requests/{req_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_match_request(
+    req_id: uuid.UUID,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Player cancels their own join request.
+    """
+    match_service = MatchService(db)
+    try:
+        await match_service.cancel_request(request_id=req_id, requester_id=current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_match(
+    match_id: uuid.UUID,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Delete a public match created by the current user.
+    """
+    match_service = MatchService(db)
+    try:
+        await match_service.delete_match(match_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{match_id}/cancel", response_model=MatchResponse)
+async def cancel_match(
+    match_id: uuid.UUID,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Host cancels a match actively, shutting it down but keeping the booking.
+    """
+    match_service = MatchService(db)
+    try:
+        match = await match_service.cancel_match(match_id=match_id, owner_id=current_user.id)
+        return match
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

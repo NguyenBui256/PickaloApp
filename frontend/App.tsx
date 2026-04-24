@@ -7,6 +7,7 @@ import React from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
 function App(): React.JSX.Element {
@@ -15,6 +16,7 @@ function App(): React.JSX.Element {
       <SafeAreaProvider>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <AppNavigator />
+        <Toast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

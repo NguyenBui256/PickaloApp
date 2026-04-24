@@ -51,7 +51,7 @@ async def list_my_rooms(
     from app.models.venue import Venue 
     from app.models.user import User as UserTable
     from sqlalchemy.orm import aliased
-    from sqlalchemy import or_, func
+    from sqlalchemy import or_, and_, func
 
     HostUser = aliased(UserTable, name="host_user")
     ReqUser = aliased(UserTable, name="req_user")
@@ -82,8 +82,8 @@ async def list_my_rooms(
         .join(HostUser, HostUser.id == Booking.user_id)
         .where(
             or_(
-                MatchRequest.requester_id == current_user.id,
-                Booking.user_id == current_user.id
+                and_(MatchRequest.requester_id == current_user.id, ChatRoom.hidden_for_requester == False),
+                and_(Booking.user_id == current_user.id, ChatRoom.hidden_for_host == False)
             )
         )
         .group_by(
@@ -212,3 +212,46 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, room_id)
+
+
+@router.post("/rooms/{room_id}/hide")
+async def hide_chat_room(
+    room_id: uuid.UUID,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Hide a chat room for the current user. 
+    This is used for 'Delete Chat' functionality without affecting the other party.
+    """
+    from app.models.match import Match, MatchRequest
+    from app.models.booking import Booking
+    
+    # Get room with context to check ownership
+    from sqlalchemy.orm import selectinload
+    query = (
+        select(ChatRoom)
+        .options(
+            selectinload(ChatRoom.match_request)
+            .selectinload(MatchRequest.match)
+            .selectinload(Match.booking)
+        )
+        .where(ChatRoom.id == room_id)
+    )
+    
+    result = await db.execute(query)
+    room = result.scalar_one_or_none()
+    
+    if not room:
+        raise HTTPException(status_code=404, detail="Phòng chat không tồn tại")
+        
+    # Check if host or requester
+    if room.match_request.requester_id == current_user.id:
+        room.hidden_for_requester = True
+    elif room.match_request.match.booking.user_id == current_user.id:
+        room.hidden_for_host = True
+    else:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền ẩn phòng chat này")
+        
+    await db.commit()
+    return {"message": "Đã ẩn cuộc trò chuyện"}

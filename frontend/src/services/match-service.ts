@@ -65,4 +65,33 @@ export const matchService = {
       { params: { accept } }
     );
   },
+
+  /**
+   * Host kicks an already accepted member
+   */
+  kickMember: async (requestId: string): Promise<MatchRequestResponse> => {
+    return apiClient.post<MatchRequestResponse>(`/matches/requests/${requestId}/kick`);
+  },
+  
+  /**
+   * Cancel a join request
+   */
+  cancelJoinRequest: async (requestId: string): Promise<void> => {
+    return apiClient.delete(`/matches/requests/${requestId}`);
+  },
+
+  /**
+   * Cancel a match (stop matchmaking, case 6)
+   */
+  cancelMatch: async (matchId: string): Promise<MatchResponse> => {
+    return apiClient.post<MatchResponse>(`/matches/${matchId}/cancel`);
+  },
+
+  /**
+   * Delete a match (for host)
+   */
+  deleteMatch: async (matchId: string): Promise<void> => {
+    return apiClient.delete(`/matches/${matchId}`);
+  },
 };
+
