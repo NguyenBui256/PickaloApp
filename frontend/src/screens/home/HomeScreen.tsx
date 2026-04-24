@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
+  Image,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,15 +19,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import COLORS from '@theme/colors';
-import { CategoryItem } from '../../components/CategoryItem';
 import { VenueCard } from '../../components/VenueCard';
 import { BookingModal } from '../../components/BookingModal';
-import { CATEGORIES, QUICK_FILTERS } from '../../constants/mock-data';
+import { QUICK_FILTERS } from '../../constants/mock-data';
 import { fetchVenues } from '../../services/venue-service';
 import { toggleFavorite } from '../../services/favorite-service';
 import { useAuthStore } from '../../store/auth-store';
 import { locationService, Coordinates } from '../../services/location-service';
-import { Alert } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -35,12 +35,22 @@ export const HomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isBookingModalVisible, setBookingModalVisible] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
-  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Gần đây');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>('Tất cả');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadVenues();
+  }, [activeQuickFilter]);
 
   const loadVenues = async (currentLoc?: Coordinates | null) => {
+    setLoading(true);
     try {
-      const res = await fetchVenues();
+      const params: any = {};
+
+      if (activeQuickFilter === 'Bãi đỗ xe') params.has_parking = true;
+      if (activeQuickFilter === 'Có đèn') params.has_lights = true;
+
+      const res = await fetchVenues(params);
       if (res?.items) {
         setVenues(res.items);
         // If we already have location, calculate distances immediately
@@ -164,15 +174,28 @@ export const HomeScreen: React.FC = () => {
         <LinearGradient colors={COLORS.GRADIENT_GREEN} style={styles.header}>
           <SafeAreaView>
             <View style={styles.headerTop}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.userInfo}
                 onPress={() => navigation.navigate('Profile')}
               >
                 <View style={styles.logoContainer}>
-                  <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
+                  {user?.avatar_url ? (
+                    <Image
+                      source={{ uri: user.avatar_url }}
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <MaterialCommunityIcons name="alpha-a-box" size={32} color={COLORS.WHITE} />
+                  )}
                 </View>
                 <View style={styles.textInfo}>
-                  <Text style={styles.dateText}>Thứ hai, 06/04/2026</Text>
+                  <Text style={styles.dateText}>
+                    {(() => {
+                      const d = new Date();
+                      const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+                      return `${days[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                    })()}
+                  </Text>
                   <Text style={styles.userName}>{user?.full_name || 'Người dùng'}</Text>
                 </View>
               </TouchableOpacity>
@@ -210,7 +233,7 @@ export const HomeScreen: React.FC = () => {
                 <MaterialCommunityIcons name="qrcode-scan" size={22} color={COLORS.GRAY_MEDIUM} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.favFloatingBtn}
               onPress={() => navigation.navigate('Favorites')}
             >
@@ -224,8 +247,8 @@ export const HomeScreen: React.FC = () => {
             contentContainerStyle={styles.quickFilters}
           >
             {QUICK_FILTERS.map((filter, index) => (
-              <TouchableOpacity 
-                key={index} 
+              <TouchableOpacity
+                key={index}
                 style={[
                   styles.filterPill,
                   activeQuickFilter === filter && { backgroundColor: COLORS.PRIMARY }
@@ -243,45 +266,12 @@ export const HomeScreen: React.FC = () => {
 
         {/* Main Content Area */}
         <View style={styles.content}>
-          {/* Sports Categories */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}
-          >
-            {CATEGORIES.map((cat) => (
-              <CategoryItem
-                key={cat.id}
-                name={cat.name}
-                iconName={cat.icon}
-                isActive={selectedCategory === cat.name}
-                onPress={() => setSelectedCategory(prev => prev === cat.name ? 'Tất cả' : cat.name)}
-              />
-            ))}
-          </ScrollView>
-
-          {/* Filter Banner */}
-          <TouchableOpacity 
-            style={styles.filterBanner} 
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('Search')}
-          >
-            <View style={styles.bannerContent}>
-              <Text style={styles.bannerText}>
-                Tìm sân trống, sự kiện xé vé, ghép đội
-              </Text>
-              <MaterialCommunityIcons name="tune-variant" size={24} color={COLORS.WHITE} />
-            </View>
-          </TouchableOpacity>
+          {/* Categories Section */}
+          {/* Categories Section removed */}
 
           {/* Venue List */}
           <View style={styles.venueList}>
-            {venues.filter(venue => {
-              const matchesCategory = selectedCategory === 'Tất cả' || venue.category.toLowerCase().includes(selectedCategory.toLowerCase());
-              // For simplicity, just filtering by category for now. 
-              // Quick filters like "Gần đây" would normally involve location calc.
-              return matchesCategory;
-            }).map((venue) => (
+            {venues.map((venue) => (
               <VenueCard
                 key={venue.id}
                 {...venue}
@@ -332,6 +322,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
   },
   textInfo: {
     marginLeft: 12,
@@ -434,9 +429,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-  },
-  categoriesContainer: {
-    paddingBottom: 20,
   },
   filterBanner: {
     backgroundColor: COLORS.PRIMARY,

@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import type { AdminNavigationProp } from '@navigation/admin-navigator';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
 interface AdminContentScreenProps {
   navigation: AdminNavigationProp;

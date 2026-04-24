@@ -15,6 +15,7 @@ from app.models.review import VenueReview
 from app.models.favorite import UserFavorite
 from app.models.match import Match, MatchRequest
 from app.models.chat import ChatRoom, ChatMessage
+from app.models.pricing_profile import PricingProfile, PricingProfileSlot
 
 __all__ = [
     # Base
@@ -31,6 +32,9 @@ __all__ = [
     "PricingTimeSlot",
     "VenueService",
     "DayType",
+    # Pricing Profile
+    "PricingProfile",
+    "PricingProfileSlot",
     # Booking
     "Booking",
     "BookingService",

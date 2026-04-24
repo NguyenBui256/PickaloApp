@@ -7,6 +7,7 @@ import {
   Text,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -28,14 +29,7 @@ const INITIAL_REGION = {
   longitudeDelta: 0.1,
 };
 
-const MAP_CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: 'apps' as const },
-  { id: 'pickleball', name: 'Sân Pickleball', icon: 'tennis-ball' as const },
-  { id: 'badminton', name: 'Sân Cầu lông', icon: 'badminton' as const },
-  { id: 'football', name: 'Sân Bóng đá', icon: 'soccer-field' as const },
-];
-
-export const MapScreen: React.FC = () => {
+export const MapScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { destination, showRoute, targetVenueId } = route.params || {};
@@ -195,15 +189,16 @@ export const MapScreen: React.FC = () => {
     return COLORS.ERROR;
   };
 
+  const onMarkerPress = (venueId: string) => {
+    navigation.navigate('MapVenueDetailOverlay', { venueId });
+  };
+
   return (
     <View style={styles.container}>
-      {/* Map Background */}
       <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={INITIAL_REGION}
-        showsUserLocation
-        showsMyLocationButton={false}
       >
         {mapMode === 'venue' ? (
           venues.map((venue) => {

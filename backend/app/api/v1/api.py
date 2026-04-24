@@ -8,9 +8,8 @@ from fastapi import APIRouter
 
 # Import route modules
 from app.api.v1.endpoints import (
-    auth, users, venues, bookings, 
-    merchant_bookings, merchant_venues, 
-    reviews, favorites, matches, chat
+    auth, users, venues, bookings, merchant_bookings, 
+    merchant_venues, reviews, images, pricing_profiles, favorites, matches, chat
 )
 
 api_router = APIRouter()
@@ -35,3 +34,5 @@ api_router.include_router(reviews.router, tags=["reviews"])
 api_router.include_router(favorites.router, prefix="/favorites", tags=["favorites"])
 api_router.include_router(matches.router, prefix="/matches", tags=["matches"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
+api_router.include_router(images.router, tags=["images"])
+api_router.include_router(pricing_profiles.router)

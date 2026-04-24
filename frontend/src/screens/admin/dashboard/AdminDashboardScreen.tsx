@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { getAdminStats } from '../../../services/admin-service';
 import type { AdminStatsResponse } from '../../../types/api-types';
+import { formatCurrency } from '../../../utils/format';
 
 const { width } = Dimensions.get('window');
 
@@ -84,7 +85,7 @@ export const AdminDashboardScreen = () => {
             <Text style={styles.revenueLabel}>Tổng doanh thu hệ thống</Text>
           </View>
           <Text style={styles.revenueValue}>
-            {stats?.revenue_total.toLocaleString('vi-VN')} <Text style={styles.currency}>VND</Text>
+            {formatCurrency(stats?.revenue_total || 0)}
           </Text>
           <View style={styles.revenueTrend}>
             <MaterialCommunityIcons name="trending-up" size={16} color="#4CAF50" />

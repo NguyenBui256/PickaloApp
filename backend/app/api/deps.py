@@ -17,6 +17,7 @@ from app.core.database import get_db
 from app.core.security import verify_token
 from app.models.user import User, UserRole
 from app.models.venue import Venue
+from app.services.storage import StorageService
 
 # HTTP Bearer token scheme for authentication
 security = HTTPBearer(auto_error=False)
@@ -52,6 +53,13 @@ async def get_current_user_from_token(token: str, session: AsyncSession) -> User
         )
         
     return user
+async def get_storage_service() -> StorageService:
+    """Get storage service instance."""
+    return StorageService()
+
+
+# Type alias for storage service dependency
+StorageServiceDep = Annotated[StorageService, Depends(get_storage_service)]
 
 
 async def get_current_user(

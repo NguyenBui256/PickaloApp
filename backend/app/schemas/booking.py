@@ -61,6 +61,10 @@ class BookingCreate(BaseModel):
         str | None,
         Field(max_length=1000, description="Special requests or notes"),
     ] = None
+    payment_proof: Annotated[
+        str | None,
+        Field(max_length=500, description="URL to payment proof image"),
+    ] = None
 
 
     @field_validator("booking_date")
@@ -91,9 +95,7 @@ class BookingPricePreview(BaseModel):
 class PriceBreakdown(BaseModel):
     """Price breakdown component."""
 
-    base_price: Decimal
     duration_hours: Decimal
-    price_factor: Decimal
     hourly_price: Decimal
     subtotal: Decimal
     service_fee: Decimal
@@ -164,7 +166,8 @@ class BookingResponse(BaseModel):
     # Payment
     payment_method: str | None
     payment_id: str | None
-    paid_at: datetime | None
+    paid_at: str | None
+    payment_proof: str | None
 
     # Additional info
     notes: str | None
@@ -178,6 +181,8 @@ class BookingResponse(BaseModel):
     # Relations
     venue_name: str | None = None
     venue_address: str | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
     slots: list[BookingSlotResponse] = []
     services: list[BookingServiceItem] = []
 
@@ -200,6 +205,10 @@ class BookingListItem(BaseModel):
     created_at: datetime
     customer_name: str | None = None
     customer_phone: str | None = None
+    payment_proof: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    court_name: str | None = None
 
 
 class BookingCancel(BaseModel):
@@ -256,4 +265,18 @@ class MerchantStatsResponse(BaseModel):
     """Response containing a list of venue statistics."""
 
     venues: list[MerchantVenueStats]
+    currency: str = "VND"
+
+class RevenueTrendItem(BaseModel):
+    """Daily revenue item."""
+    date: str
+    revenue: Decimal
+    booking_count: int
+
+
+class RevenueTrendResponse(BaseModel):
+    """Response containing revenue trend data."""
+    items: list[RevenueTrendItem]
+    total_revenue: Decimal
+    total_bookings: int
     currency: str = "VND"

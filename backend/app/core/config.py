@@ -94,6 +94,14 @@ class Settings(BaseSettings):
         default="redis://localhost:6379/0", description="Redis URL"
     )
 
+    # MinIO Object Storage (for images)
+    minio_endpoint: str = Field(default="minio:9000", description="MinIO server endpoint")
+    minio_access_key: str = Field(default="minioadmin", description="MinIO access key")
+    minio_secret_key: str = Field(default="minioadmin", description="MinIO secret key")
+    minio_secure: bool = Field(default=False, description="Use HTTPS for MinIO")
+    minio_bucket_name: str = Field(default="pickalo-images", description="MinIO bucket name")
+    minio_public_url: str = Field(default="http://localhost:9000", description="Public MinIO URL")
+
     # Timezone (fixed for Hanoi)
     timezone: str = Field(default="Asia/Ho_Chi_Minh", description="Application timezone")
 

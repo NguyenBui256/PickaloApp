@@ -8,7 +8,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Linking, Platform } from 'react-native';
 import COLORS from '@theme/colors';
+import { getImageUrl } from '../utils/image-upload-helper';
 
 const { width } = Dimensions.get('window');
 
@@ -17,13 +19,14 @@ interface VenueCardProps {
   name?: string | null;
   address?: string | null;
   distance?: string;           // FE-only: tự tính từ location + user GPS. BE không trả.
-  images?: string[] | null;            // BE: VenueListItem.images
-  image?: string | null;               // FE-only fallback: derive từ images[0]
-  logo?: string | null;                // BE: VenueListItem.logo (nullable)
-  hours?: string | null;               // FE-only: derive từ operating_hours
-  operating_hours?: { open: string; close: string } | null; // BE: OperatingHours
-  badges?: string[] | null;            // FE-only: không có trong BE
-  is_favorite?: boolean;         // BE: is_favorite column
+  images?: string[];            // BE: VenueListItem.images
+  cover_image?: string;         // BE: VenueListItem.cover_image
+  image?: string;               // FE-only fallback: derive từ images[0]
+  logo?: string;                // BE: VenueListItem.logo (nullable)
+  hours?: string;               // FE-only: derive từ operating_hours
+  operating_hours?: { open: string; close: string }; // BE: OperatingHours
+  badges?: string[];            // FE-only: không có trong BE
+  isFavorite?: boolean;         // FE-only: cần API favorites hoặc AsyncStorage
   onPress: () => void;
   onFavoriteToggle: () => void;
   onBook: () => void;
@@ -35,6 +38,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   address,
   distance = '',
   images,
+  cover_image,
   image,
   logo,
   hours,
@@ -46,15 +50,28 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   onBook,
 }) => {
   // Derive display values từ BE fields
-  const displayImage = images?.[0] || image || '';
-  const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '06:00 - 22:00');
+  const displayImage = cover_image || images?.[0] || image || '';
+  const displayHours = operating_hours ? `${operating_hours.open} - ${operating_hours.close}` : (hours || '');
   const displayLogo = logo || 'https://via.placeholder.com/100';
+
+  const openMap = () => {
+    const query = encodeURIComponent(`${name}, ${address}`);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        console.error("Don't know how to open URI: " + url);
+      }
+    }).catch(err => console.error("Error opening maps", err));
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       {/* Top Section with Image and Badges */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: displayImage }} style={styles.image} />
+        <Image source={{ uri: getImageUrl(displayImage) }} style={styles.image} />
 
         {/* <View style={styles.badgeContainer}>
           {badges.map((badge, index) => (
@@ -86,7 +103,6 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       {/* Bottom Content */}
       <View style={styles.content}>
         <View style={styles.infoSection}>
-          <Image source={{ uri: displayLogo }} style={styles.logo} />
           <View style={styles.details}>
             <Text style={styles.name} numberOfLines={1}>{name || 'Tên sân'}</Text>
             {distance ? <Text style={styles.distance}>{distance}</Text> : null}
@@ -98,9 +114,19 @@ export const VenueCard: React.FC<VenueCardProps> = ({
           </View>
         </View>
 
-        <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
-          <Text style={styles.bookText}>ĐẶT LỊCH</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity 
+            style={styles.mapButton} 
+            onPress={openMap} 
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="map-marker-outline" size={20} color={COLORS.PRIMARY} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.bookButton} onPress={onBook} activeOpacity={0.8}>
+            <Text style={styles.bookText}>ĐẶT LỊCH</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -170,15 +196,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.GRAY_LIGHT,
-  },
   details: {
     flex: 1,
-    marginLeft: 10,
   },
   name: {
     fontSize: 15,
@@ -205,12 +224,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.GRAY_MEDIUM,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 10,
+  },
+  mapButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.GRAY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bookButton: {
     backgroundColor: COLORS.YELLOW,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginLeft: 10,
   },
   bookText: {
     color: COLORS.TEXT_PRIMARY,
