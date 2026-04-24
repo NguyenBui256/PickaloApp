@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import {
   fetchMerchantBookings,
@@ -24,18 +24,26 @@ export const ScheduleManagementScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'maintenance'>('pending');
   const [_loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadBookings = () => {
+    setLoading(true);
     fetchMerchantBookings()
       .then((res) => {
         setBookings(res.items);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadBookings();
+    }, [])
+  );
 
   const filteredRequests = bookings.filter((b) => {
-    if (activeTab === 'pending') return b.status === 'PENDING';
-    if (activeTab === 'approved') return b.status === 'CONFIRMED';
+    const status = b.status.toUpperCase();
+    if (activeTab === 'pending') return status === 'PENDING';
+    if (activeTab === 'approved') return status === 'CONFIRMED' || status === 'COMPLETED';
     return false;
   });
 
@@ -52,9 +60,8 @@ export const ScheduleManagementScreen: React.FC = () => {
             } else {
               await approveBooking(id);
             }
-            // Refresh list
-            const res = await fetchMerchantBookings();
-            setBookings(res.items);
+            // Refresh list immediately from the source
+            loadBookings();
           } catch (err) {
             Alert.alert('Lỗi', 'Không thể thực hiện thao tác.');
           }
@@ -63,15 +70,36 @@ export const ScheduleManagementScreen: React.FC = () => {
     ]);
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'Chờ duyệt';
+      case 'CONFIRMED': return 'Đã duyệt';
+      case 'CANCELLED': return 'Đã hủy';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'EXPIRED': return 'Hết hạn';
+      default: return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING': return '#F57C00';
+      case 'CONFIRMED': return '#388E3C';
+      case 'CANCELLED': return '#D32F2F';
+      case 'COMPLETED': return '#1976D2';
+      default: return '#666';
+    }
+  };
+
   const renderItem = ({ item }: { item: BookingListItem }) => (
     <View style={styles.requestCard}>
       <View style={styles.cardHeader}>
         <View style={styles.customerInfo}>
-          <Text style={styles.customerName}>{item.venue_name || 'N/A'}</Text>
-          <Text style={styles.customerPhone}>{item.booking_date}</Text>
+          <Text style={styles.customerName}>{item.customer_name || 'Khách hàng'}</Text>
+          <Text style={styles.customerPhone}>{item.customer_phone || 'Chưa cập nhật SĐT'}</Text>
         </View>
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{item.status}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '15' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{getStatusLabel(item.status)}</Text>
         </View>
       </View>
 
@@ -92,8 +120,8 @@ export const ScheduleManagementScreen: React.FC = () => {
 
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
-          <MaterialCommunityIcons name="map-marker" size={18} color="#666" />
-          <Text style={styles.detailText}>{item.venue_address || 'N/A'}</Text>
+          <MaterialCommunityIcons name="tennis" size={18} color="#666" />
+          <Text style={styles.detailText}>{item.court_name || 'N/A'}</Text>
         </View>
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="cash" size={18} color="#666" />

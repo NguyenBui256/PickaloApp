@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 
@@ -30,6 +30,11 @@ class Court(BaseModel):
         Boolean,
         default=True,
         nullable=False,
+    )
+
+    images: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
     )
 
     # Relationships

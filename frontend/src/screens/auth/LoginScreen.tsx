@@ -46,12 +46,12 @@ export const LoginScreen: React.FC = () => {
     const login = useAuthStore.getState().login;
     setIsLoading(true);
 
-    // Chuẩn hóa số điện thoại để khớp với backend format (+84...)
-    let normalizedPhone = phoneNumber.trim();
+    // Chuẩn hóa số điện thoại thông minh hơn
+    let normalizedPhone = phoneNumber.replace(/\s+/g, ''); // Xóa khoảng trắng
     if (normalizedPhone.startsWith('0')) {
       normalizedPhone = '+84' + normalizedPhone.slice(1);
-    } else if (normalizedPhone.startsWith('84')) {
-      normalizedPhone = '+84' + normalizedPhone.slice(2);
+    } else if (normalizedPhone.startsWith('84') && !normalizedPhone.startsWith('+84')) {
+      normalizedPhone = '+' + normalizedPhone;
     } else if (normalizedPhone.length > 0 && !normalizedPhone.startsWith('+')) {
       normalizedPhone = '+84' + normalizedPhone;
     }

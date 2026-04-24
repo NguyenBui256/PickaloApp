@@ -306,8 +306,8 @@ class MapService:
         return VenueMarkerResponse(
             id=str(venue.id),
             name=venue.name,
-            lat=0.0,  # Extract from PostGIS location
-            lng=0.0,  # Extract from PostGIS location
+            lat=venue.latitude or 0.0,
+            lng=venue.longitude or 0.0,
             venue_type=venue.venue_type.value if hasattr(venue.venue_type, "value") else str(venue.venue_type),
             base_price_per_hour=venue.base_price_per_hour,
             is_verified=venue.is_verified,
@@ -330,7 +330,7 @@ class MapService:
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [0.0, 0.0]  # [lng, lat] from PostGIS
+                "coordinates": [venue.longitude or 0.0, venue.latitude or 0.0]  # [lng, lat] from PostGIS
             },
             "properties": {
                 "id": str(venue.id),

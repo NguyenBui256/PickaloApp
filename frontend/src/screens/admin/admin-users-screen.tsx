@@ -10,6 +10,9 @@ import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 import { getAdminUsers, banUser, unbanUser } from '@services/admin-service';
 import type { AdminUserListItem, UserRole } from '@api-types/api-types';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
 interface AdminUsersScreenProps {
   navigation: AdminNavigationProp;

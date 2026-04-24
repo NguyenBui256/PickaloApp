@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import type { BookingListItem } from '../../types/api-types';
 import { fetchMyBookings } from '../../services/booking-service';
+import { CreateMatchModal } from '../match/CreateMatchModal';
 
 // Helpers
-const formatBookingTime = (b: BookingListItem) => `${b.start_time} - ${b.end_time}`;
+const formatBookingTime = (b: BookingListItem) => {
+  if (b.start_time && b.end_time) return `${b.start_time} - ${b.end_time}`;
+  return 'N/A';
+};
+
 const formatBookingDate = (b: BookingListItem) =>
   new Date(b.booking_date).toLocaleDateString('vi-VN');
 const formatBookingPrice = (b: BookingListItem) =>
@@ -32,14 +37,31 @@ const Ribbon = ({ text }: { text: string }) => (
   </View>
 );
 
-const BookingCard = ({ item }: { item: BookingListItem }) => {
+const BookingCard = ({
+  item,
+  onPublishMatch,
+}: {
+  item: BookingListItem;
+  onPublishMatch: (item: BookingListItem) => void;
+}) => {
   const isCanceled = item.status === 'CANCELLED';
   const isSuccess = item.status === 'CONFIRMED' || item.status === 'COMPLETED';
 
   const getStatusConfig = () => {
-    if (isCanceled) return { label: 'Đã hủy', color: '#EA580C', icon: 'close-circle' };
-    if (isSuccess) return { label: 'Thành công', color: '#16A34A', icon: 'check-circle' };
-    return { label: 'Chờ thanh toán', color: '#CA8A04', icon: 'clock' };
+    switch (item.status) {
+      case 'CANCELLED':
+        return { label: 'Đã hủy', color: '#EA580C', icon: 'close-circle' };
+      case 'CONFIRMED':
+        return { label: 'Đã xác nhận', color: '#16A34A', icon: 'check-circle' };
+      case 'COMPLETED':
+        return { label: 'Hoàn thành', color: '#16A34A', icon: 'check-circle' };
+      case 'PENDING':
+        return item.payment_proof || item.is_paid 
+          ? { label: 'Chờ chủ sân duyệt', color: '#1976D2', icon: 'clock-check' }
+          : { label: 'Chờ thanh toán', color: '#CA8A04', icon: 'clock-outline' };
+      default:
+        return { label: item.status, color: COLORS.GRAY_MEDIUM, icon: 'help-circle' };
+    }
   };
 
   const status = getStatusConfig();
@@ -67,7 +89,7 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
         <View style={styles.infoLine}>
           <Text style={styles.infoLabel}>Chi tiết:</Text>
           <Text style={styles.infoValue}>
-            {formatBookingTime(item)} | {formatBookingDate(item)}
+            {`${item.court_name ? `${item.court_name} | ` : ''}${formatBookingTime(item)} | ${formatBookingDate(item)}`}
           </Text>
         </View>
         <View style={styles.infoLine}>
@@ -81,6 +103,14 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
       <View style={styles.cardFooter}>
         <Text style={styles.priceText}>{formatBookingPrice(item)}</Text>
         <View style={styles.footerActions}>
+          {item.status === 'CONFIRMED' && !item.has_match && (
+            <TouchableOpacity
+              style={[styles.detailBtn, styles.publishBtn]}
+              onPress={() => onPublishMatch(item)}
+            >
+              <Text style={[styles.detailBtnText, styles.publishBtnText]}>Mở ghép kèo</Text>
+            </TouchableOpacity>
+          )}
           {item.status === 'COMPLETED' && (
             <TouchableOpacity
               style={[styles.detailBtn, styles.reviewBtn]}
@@ -94,7 +124,7 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
               }
             >
               <Text style={[styles.detailBtnText, styles.reviewBtnText]}>
-                {item.review_id ? 'Xem đánh giá' : 'Đánh giá'}
+                {`${item.review_id ? 'Xem đánh giá' : 'Đánh giá'}`}
               </Text>
             </TouchableOpacity>
           )}
@@ -113,14 +143,28 @@ const BookingCard = ({ item }: { item: BookingListItem }) => {
 export const BookingListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
+  const [createMatchTarget, setCreateMatchTarget] = useState<BookingListItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMyBookings().then((res) => {
+  const loadBookings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetchMyBookings();
       if (res?.items) {
         setBookings(res.items as any);
       }
-    });
+    } catch (error) {
+      console.error('Fetch bookings error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadBookings();
+    }, [loadBookings])
+  );
 
   return (
     <View style={styles.container}>
@@ -155,9 +199,26 @@ export const BookingListScreen: React.FC = () => {
       <FlatList
         data={bookings}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BookingCard item={item} />}
+        renderItem={({ item }) => (
+          <BookingCard item={item} onPublishMatch={(b) => setCreateMatchTarget(b)} />
+        )}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <CreateMatchModal
+        visible={!!createMatchTarget}
+        booking={createMatchTarget}
+        onClose={() => setCreateMatchTarget(null)}
+        onSuccess={() => {
+          setCreateMatchTarget(null);
+          // Refresh list to hide the "Mở ghép kèo" button
+          fetchMyBookings().then((res) => {
+            if (res?.items) {
+              setBookings(res.items as any);
+            }
+          });
+        }}
       />
     </View>
   );
@@ -339,5 +400,12 @@ const styles = StyleSheet.create({
   },
   reviewBtnText: {
     color: COLORS.WHITE,
+  },
+  publishBtn: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#F97316',
+  },
+  publishBtnText: {
+    color: '#F97316',
   },
 });

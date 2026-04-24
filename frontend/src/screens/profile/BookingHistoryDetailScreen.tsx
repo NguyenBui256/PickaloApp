@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import type { BookingListItem } from '../../types/api-types';
+import type { BookingListItem, BookingResponse } from '../../types/api-types';
 import { useAuthStore } from '../../store/auth-store';
+import { fetchBookingById } from '../../services/booking-service';
+import { formatCurrency } from '../../utils/format';
 
 // Helpers
-const formatBookingTime = (b: BookingListItem) => `${b.start_time} - ${b.end_time}`;
-const formatBookingDate = (b: BookingListItem) =>
+const formatBookingTime = (b: any) => {
+  if (b.slots && b.slots.length > 0) {
+    return b.slots.map((s: any) => `${s.start_time}-${s.end_time}`).join(', ');
+  }
+  if (b.start_time && b.end_time) return `${b.start_time} - ${b.end_time}`;
+  return 'N/A';
+};
+
+const formatBookingDate = (b: any) =>
   new Date(b.booking_date).toLocaleDateString('vi-VN');
+
 
 // Color constants from user specs
 const PRIMARY_GREEN = '#064e3b';
@@ -55,38 +66,50 @@ export const BookingHistoryDetailScreen: React.FC = () => {
   const user = useAuthStore(state => state.user);
   const { booking } = route.params as { booking: BookingListItem };
 
+  const [bookingDetail, setBookingDetail] = useState<BookingResponse | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(true);
+
+  useEffect(() => {
+    fetchBookingById(booking.id)
+      .then(setBookingDetail)
+      .catch(console.error)
+      .finally(() => setIsLoadingDetail(false));
+  }, [booking.id]);
+
   const [activeTab, setActiveTab] = useState('Thông tin');
 
   const tabs = ['Thông tin', 'Dịch vụ', 'Đội nhóm'];
 
-  const getButtonConfig = () => {
+  const getStatusDisplay = () => {
     switch (booking.status) {
       case 'CANCELLED':
-        return { text: 'BẠN ĐÃ HỦY ĐƠN', color: CANCELLED_ORANGE };
+        return { text: 'ĐÃ HỦY', color: CANCELLED_ORANGE };
       case 'CONFIRMED':
         return { text: 'ĐÃ XÁC NHẬN', color: '#16A34A' };
       case 'COMPLETED':
-        return {
-          text: booking.review_id ? 'XEM ĐÁNH GIÁ' : 'ĐÁNH GIÁ NGAY',
-          color: COLORS.PRIMARY,
-        };
+        return { text: 'HOÀN THÀNH', color: COLORS.PRIMARY };
+      case 'PENDING':
+        return booking.payment_proof || booking.is_paid
+          ? { text: 'CHỜ CHỦ SÂN DUYỆT', color: '#1976D2' }
+          : { text: 'CHỜ THANH TOÁN', color: '#CA8A04' };
       default:
-        return { text: 'CHỜ XÁC NHẬN', color: '#CA8A04' };
+        return { text: booking.status, color: COLORS.GRAY_MEDIUM };
     }
   };
 
   const handleActionPress = () => {
-    if (booking.status === 'COMPLETED') {
+    const currentBooking = bookingDetail || booking;
+    if (currentBooking.status === 'COMPLETED') {
       navigation.navigate('ReviewSubmission', {
-        venueId: booking.venue_id,
-        venueName: booking.venue_name,
-        bookingId: booking.id,
-        reviewId: booking.review_id,
+        venueId: currentBooking.venue_id,
+        venueName: currentBooking.venue_name,
+        bookingId: currentBooking.id,
+        reviewId: (currentBooking as any).review_id,
       });
     }
   };
 
-  const buttonConfig = getButtonConfig();
+  const statusConfig = getStatusDisplay();
 
   return (
     <View style={styles.container}>
@@ -117,6 +140,14 @@ export const BookingHistoryDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Loading Indicator */}
+        {isLoadingDetail && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={HIGHLIGHT_YELLOW} size="large" />
+            <Text style={styles.loadingText}>Đang tải chi tiết...</Text>
+          </View>
+        )}
+
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
@@ -145,31 +176,55 @@ export const BookingHistoryDetailScreen: React.FC = () => {
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
               <InfoItem label="Câu lạc bộ" value={booking.venue_name ?? ''} />
+              <InfoItem label="Sân" value={bookingDetail?.slots[0]?.court_name || booking.court_name || 'N/A'} />
               <InfoItem
                 label="Trạng thái"
-                value={booking.status === 'CANCELLED' ? 'Bạn đã hủy đơn' : 'Đã thanh toán'}
+                value={statusConfig.text}
                 isYellow
               />
-              <InfoItem label="Thời gian" value={formatBookingTime(booking)} />
-              <InfoItem label="Ngày tháng" value={formatBookingDate(booking)} />
-              <InfoItem label="Thanh phí" value="Chưa thanh toán" isYellow />
-              <InfoItem label="Số điện thoại" value="0333333333" isClickable />
+              <InfoItem label="Thời gian" value={formatBookingTime(bookingDetail || booking)} />
+              <InfoItem label="Ngày tháng" value={formatBookingDate(bookingDetail || booking)} />
+              <InfoItem label="Tổng tiền" value={formatCurrency(bookingDetail?.total_price || booking.total_price)} isYellow />
+              <InfoItem label="Số điện thoại" value={user?.phone || 'N/A'} isClickable />
               <InfoItem label="Địa chỉ" value={booking.venue_address ?? ''} />
-              <View style={styles.noteBox}>
-                <Text style={styles.noteText}>SÂN NGOÀI TRỜI</Text>
-              </View>
             </View>
 
             <View style={styles.customerNote}>
               <Text style={styles.noteLabel}>Khách hàng ghi chú:</Text>
               <View style={styles.noteContent}>
-                <Text style={styles.noteValue}>Lấy thêm 2 chai nước suối lạnh.</Text>
+                <Text style={styles.noteValue}>{bookingDetail?.notes || 'Không có ghi chú'}</Text>
               </View>
             </View>
           </View>
         )}
 
-        {activeTab !== 'Thông tin' && (
+        {activeTab === 'Dịch vụ' && (
+          <View style={styles.infoSection}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="room-service-outline"
+                size={24}
+                color={COLORS.WHITE}
+              />
+              <Text style={styles.sectionTitle}>Dịch vụ</Text>
+            </View>
+            <View style={styles.infoList}>
+              {bookingDetail?.services && bookingDetail.services.length > 0 ? (
+                bookingDetail.services.map((s, idx) => (
+                  <InfoItem 
+                    key={idx} 
+                    label={s.name} 
+                    value={`x${s.quantity} (${formatCurrency(s.total)})`} 
+                  />
+                ))
+              ) : (
+                <Text style={styles.emptyText}>Không có dịch vụ đi kèm</Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {activeTab !== 'Thông tin' && activeTab !== 'Dịch vụ' && (
           <View style={styles.emptyTab}>
             <MaterialCommunityIcons
               name="dots-horizontal"
@@ -186,10 +241,10 @@ export const BookingHistoryDetailScreen: React.FC = () => {
       {/* Action Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: buttonConfig.color }]}
+          style={[styles.actionBtn, { backgroundColor: statusConfig.color }]}
           onPress={handleActionPress}
         >
-          <Text style={styles.actionBtnText}>{buttonConfig.text}</Text>
+          <Text style={styles.actionBtnText}>{statusConfig.text}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -366,6 +421,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: 'rgba(255,255,255,0.3)',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  loadingText: {
+    color: COLORS.WHITE,
+    fontSize: 14,
   },
   footer: {
     position: 'absolute',

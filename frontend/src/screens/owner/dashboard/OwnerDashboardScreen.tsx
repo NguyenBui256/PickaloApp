@@ -15,13 +15,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import COLORS from '@theme/colors';
-import { fetchMerchantStats, OwnerVenueItem } from '../../../services/merchant-service';
+import { fetchMerchantStats, fetchRevenueTrend, OwnerVenueItem } from '../../../services/merchant-service';
+import { useAuthStore } from '../../../store/auth-store';
+import { formatCurrency } from '../../../utils/format';
 
 export const OwnerDashboardScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore(state => state.user);
   const [ownerVenue, setOwnerVenue] = useState<OwnerVenueItem>({
     id: '', name: 'Đang tải...', status: 'ACTIVE', total_bookings: 0, revenue_mtd: 0, rating: 0,
   });
+  const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
 
   useEffect(() => {
     fetchMerchantStats().then(res => {
@@ -33,11 +37,14 @@ export const OwnerDashboardScreen: React.FC = () => {
         });
       }
     });
+
+    fetchRevenueTrend(7).then(res => {
+      if (res?.items) {
+        setRevenueTrend(res.items);
+      }
+    });
   }, []);
 
-  const formatCurrency = (amount: number) => {
-    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
-  };
 
   return (
     <View style={styles.container}>
@@ -47,7 +54,7 @@ export const OwnerDashboardScreen: React.FC = () => {
           <View style={styles.headerTop}>
             <View>
               <Text style={styles.welcomeText}>Chào buổi tối,</Text>
-              <Text style={styles.ownerName}>Chủ sân ALOBO</Text>
+              <Text style={styles.ownerName}>{user?.full_name || 'Chủ sân ALOBO'}</Text>
             </View>
             <TouchableOpacity style={styles.notificationBtn}>
               <MaterialCommunityIcons name="bell-outline" size={26} color={COLORS.WHITE} />
@@ -77,18 +84,14 @@ export const OwnerDashboardScreen: React.FC = () => {
           <Text style={styles.chartTitle}>Biểu đồ doanh thu 7 ngày qua</Text>
           <LineChart
             data={{
-              labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+              labels: revenueTrend.length > 0 ? revenueTrend.map(item => {
+                const d = new Date(item.date);
+                const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+                return days[d.getDay()];
+              }) : ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
               datasets: [
                 {
-                  data: [
-                    Math.random() * 1000000,
-                    Math.random() * 1000000,
-                    Math.random() * 1000000,
-                    Math.random() * 1000000,
-                    Math.random() * 1000000,
-                    Math.random() * 1000000,
-                    ownerVenue.revenue_mtd * 0.1
-                  ]
+                  data: revenueTrend.length > 0 ? revenueTrend.map(item => item.revenue) : [0, 0, 0, 0, 0, 0, 0]
                 }
               ]
             }}

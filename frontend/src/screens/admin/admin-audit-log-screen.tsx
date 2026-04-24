@@ -13,6 +13,9 @@ export function AdminAuditLogScreen(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionTypeFilter, setActionTypeFilter] = useState<string | undefined>(undefined);
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
   const fetchLogs = async () => {
     try {

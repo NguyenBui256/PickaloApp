@@ -61,6 +61,10 @@ class BookingCreate(BaseModel):
         str | None,
         Field(max_length=1000, description="Special requests or notes"),
     ] = None
+    payment_proof: Annotated[
+        str | None,
+        Field(max_length=500, description="URL to payment proof image"),
+    ] = None
 
 
     @field_validator("booking_date")
@@ -91,9 +95,7 @@ class BookingPricePreview(BaseModel):
 class PriceBreakdown(BaseModel):
     """Price breakdown component."""
 
-    base_price: Decimal
     duration_hours: Decimal
-    price_factor: Decimal
     hourly_price: Decimal
     subtotal: Decimal
     service_fee: Decimal
@@ -134,11 +136,11 @@ class BookingPriceResponse(BaseModel):
 class BookingSlotResponse(BaseModel):
     """Schema for a specific slot in a booking."""
 
-    id: str
-    court_id: str
+    id: uuid.UUID
+    court_id: uuid.UUID
     court_name: str | None = None
-    start_time: str
-    end_time: str
+    start_time: time
+    end_time: time
     price: Decimal
 
     model_config = {"from_attributes": True}
@@ -147,10 +149,10 @@ class BookingSlotResponse(BaseModel):
 class BookingResponse(BaseModel):
     """Full booking response."""
 
-    id: str
-    user_id: str
-    venue_id: str
-    booking_date: str
+    id: uuid.UUID
+    user_id: uuid.UUID
+    venue_id: uuid.UUID
+    booking_date: date
 
     # Pricing
     total_price: Decimal
@@ -164,20 +166,23 @@ class BookingResponse(BaseModel):
     # Payment
     payment_method: str | None
     payment_id: str | None
-    paid_at: str | None
+    paid_at: datetime | None
+    payment_proof: str | None
 
     # Additional info
     notes: str | None
-    cancelled_at: str | None
+    cancelled_at: datetime | None
     cancelled_by: str | None
 
     # Timestamps
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     # Relations
     venue_name: str | None = None
     venue_address: str | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
     slots: list[BookingSlotResponse] = []
     services: list[BookingServiceItem] = []
 
@@ -187,18 +192,23 @@ class BookingResponse(BaseModel):
 class BookingListItem(BaseModel):
     """Simplified booking for list views."""
 
-    id: str
-    venue_id: str
+    id: uuid.UUID
+    venue_id: uuid.UUID
     venue_name: str | None
     venue_address: str | None
-    booking_date: str
+    booking_date: date
     total_price: Decimal
     status: BookingStatus
     is_paid: bool
     is_cancelable: bool
-    created_at: str
+    has_match: bool = False
+    created_at: datetime
     customer_name: str | None = None
     customer_phone: str | None = None
+    payment_proof: str | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    court_name: str | None = None
 
 
 class BookingCancel(BaseModel):
@@ -255,4 +265,18 @@ class MerchantStatsResponse(BaseModel):
     """Response containing a list of venue statistics."""
 
     venues: list[MerchantVenueStats]
+    currency: str = "VND"
+
+class RevenueTrendItem(BaseModel):
+    """Daily revenue item."""
+    date: str
+    revenue: Decimal
+    booking_count: int
+
+
+class RevenueTrendResponse(BaseModel):
+    """Response containing revenue trend data."""
+    items: list[RevenueTrendItem]
+    total_revenue: Decimal
+    total_bookings: int
     currency: str = "VND"

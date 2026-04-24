@@ -7,12 +7,17 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import COLORS from '@theme/colors';
 import { BANK_DETAILS } from '../../constants/mock-data';
+import { useAuthStore } from '../../store/auth-store';
+import { createBooking } from '../../services/booking-service';
+import { uploadPaymentProof } from '../../services/image-service';
 
 // Internal Helper Component
 const InfoRow = ({ label, value, iconName }: { label: string, value: string, iconName: any }) => (
@@ -30,9 +35,20 @@ const InfoRow = ({ label, value, iconName }: { label: string, value: string, ico
 export const FinalPaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { totalPrice = '190.000', bookingId = 'ALOBO12345' } = route.params || {};
+  const { 
+    totalPrice = '190.000', 
+    bookingId = 'ALOBO12345',
+    venueId,
+    bookingDate,
+    slots = [],
+    services = [],
+    totalAmount,
+    note
+  } = route.params || {};
 
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [proofImage, setProofImage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (timeLeft === 0) {
@@ -51,6 +67,73 @@ export const FinalPaymentScreen: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProofImage(result.assets[0].uri);
+    }
+  };
+
+  const { user } = useAuthStore();
+  
+  const handleConfirmPayment = async () => {
+    if (!proofImage) {
+      Alert.alert('Thiếu minh chứng', 'Vui lòng tải ảnh minh chứng chuyển khoản để tiếp tục.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Upload proof image
+      const formData = new FormData();
+      const uriParts = proofImage.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      formData.append('file', {
+        uri: proofImage,
+        name: `payment_proof_${bookingId}.${fileType}`,
+        type: `image/${fileType}`,
+      } as any);
+
+      const uploadRes = await uploadPaymentProof(formData);
+      
+      // 2. Create booking
+      await createBooking({
+        venue_id: venueId,
+        booking_date: bookingDate,
+        slots: slots,
+        services: services,
+        notes: note,
+        payment_proof: uploadRes.url,
+      });
+
+      Alert.alert(
+        'Thành công', 
+        'Đơn đặt sân đã được gửi. Vui lòng chờ chủ sân xác nhận.',
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            const initialScreen = user?.role === 'MERCHANT' ? 'Dashboard' : 'Home';
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Main', params: { screen: initialScreen } }],
+            });
+          } 
+        }]
+      );
+    } catch (error: any) {
+      console.error('Payment confirmation error:', error);
+      Alert.alert('Lỗi', error.response?.data?.detail || 'Không thể xác nhận thanh toán. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -84,18 +167,6 @@ export const FinalPaymentScreen: React.FC = () => {
           <InfoRow label="Tổng tiền" value={`${totalPrice} đ`} iconName="cash-multiple" />
         </View>
 
-        {/* Payment Gateway Selector */}
-        <Text style={styles.sectionTitle}>Chọn cổng thanh toán</Text>
-        <TouchableOpacity style={styles.gatewayBox}>
-          <View style={styles.gatewayContent}>
-            <View style={styles.bankLogoSmall}>
-              <MaterialCommunityIcons name="bank" size={20} color="#15803d" />
-            </View>
-            <Text style={styles.gatewayText}>Do dang du</Text>
-          </View>
-          <MaterialCommunityIcons name="check-circle" size={24} color="#15803d" />
-        </TouchableOpacity>
-
         {/* Bank Account Details */}
         <View style={styles.bankDetailsBox}>
           <View style={styles.logosRow}>
@@ -125,16 +196,43 @@ export const FinalPaymentScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: 100 }} />
+        {/* Payment Proof Section */}
+        <View style={styles.proofSection}>
+          <Text style={styles.sectionTitle}>Minh chứng thanh toán</Text>
+          <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+            {proofImage ? (
+              <View style={styles.previewContainer}>
+                <Image source={{ uri: proofImage }} style={styles.proofPreview} />
+                <View style={styles.changeOverlay}>
+                  <MaterialCommunityIcons name="camera-flip" size={24} color={COLORS.WHITE} />
+                  <Text style={styles.changeText}>Thay đổi ảnh</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.uploadPlaceholder}>
+                <MaterialCommunityIcons name="cloud-upload-outline" size={48} color={COLORS.PRIMARY} />
+                <Text style={styles.uploadTitle}>Tải ảnh chuyển khoản</Text>
+                <Text style={styles.uploadDesc}>Chụp màn hình giao dịch thành công</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.verifyBtn}
-          onPress={() => Alert.alert('Thông báo', 'Hệ thống đang kiểm tra giao dịch của bạn.')}
+          style={[styles.verifyBtn, (!proofImage || isSubmitting) && styles.disabledBtn]}
+          onPress={handleConfirmPayment}
+          disabled={!proofImage || isSubmitting}
         >
-          <Text style={styles.verifyBtnText}>KIỂM TRA THANH TOÁN</Text>
+          {isSubmitting ? (
+            <ActivityIndicator color={COLORS.WHITE} />
+          ) : (
+            <Text style={styles.verifyBtnText}>XÁC NHẬN ĐÃ THANH TOÁN</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -343,6 +441,65 @@ const styles = StyleSheet.create({
   verifyBtnText: {
     color: COLORS.WHITE,
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  disabledBtn: {
+    backgroundColor: '#9CA3AF',
+  },
+  proofSection: {
+    marginTop: 25,
+    paddingHorizontal: 20,
+  },
+  uploadBox: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: COLORS.BORDER,
+    borderStyle: 'dashed',
+    height: 180,
+    overflow: 'hidden',
+  },
+  uploadPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  uploadTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginTop: 10,
+  },
+  uploadDesc: {
+    fontSize: 12,
+    color: COLORS.GRAY_MEDIUM,
+    marginTop: 4,
+  },
+  previewContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  proofPreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  changeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 8,
+  },
+  changeText: {
+    color: COLORS.WHITE,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });

@@ -11,6 +11,9 @@ import { getAdminBookings } from '@services/admin-service';
 import type { BookingListItem } from '@types/api-types';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 
 interface AdminBookingsScreenProps {
   navigation: AdminNavigationProp;
