@@ -1,23 +1,14 @@
-/**
- * Admin Audit Log Screen - View admin action history.
- * Phase 3: Placeholder implementation.
- * Full implementation in Phase 5.
- */
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import type { AdminNavigationProp } from '@navigation/AdminNavigator';
-import { getAuditLog } from '@services/admin-service';
-import type { AuditLogItem } from '@types/api-types';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { getAuditLog } from '../../services/admin-service';
+import type { AuditLogItem } from '../../types/api-types';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 import { format } from 'date-fns';
 
-interface AdminAuditLogScreenProps {
-  navigation: AdminNavigationProp;
-}
-
-export function AdminAuditLogScreen({ navigation }: AdminAuditLogScreenProps): React.JSX.Element {
+export function AdminAuditLogScreen(): React.JSX.Element {
+  const navigation = useNavigation();
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,64 +30,87 @@ export function AdminAuditLogScreen({ navigation }: AdminAuditLogScreenProps): R
     fetchLogs();
   }, [actionTypeFilter]);
 
-  const renderLogItem = ({ item }: { item: AuditLogItem }) => (
-    <View style={styles.logCard}>
-      <View style={styles.logHeader}>
-        <View style={[styles.actionIcon, { backgroundColor: getActionColor(item.action_type) + '20' }]}>
-          <Ionicons name={getActionIcon(item.action_type) as any} size={18} color={getActionColor(item.action_type)} />
+  const getActionInfo = (type: string) => {
+    if (type.includes('BAN')) return { icon: 'lock-outline', color: '#F44336', label: 'Khóa/Mở khóa' };
+    if (type.includes('VERIFY')) return { icon: 'shield-check-outline', color: '#4CAF50', label: 'Duyệt sân' };
+    if (type.includes('STATUS')) return { icon: 'list-status', color: '#FF9800', label: 'Trạng thái' };
+    if (type.includes('CREATE')) return { icon: 'account-plus-outline', color: '#2196F3', label: 'Tạo mới' };
+    if (type.includes('ROLE')) return { icon: 'account-cog-outline', color: '#9C27B0', label: 'Vai trò' };
+    return { icon: 'information-outline', color: COLORS.PRIMARY, label: 'Hệ thống' };
+  };
+
+  const renderLogItem = ({ item }: { item: AuditLogItem }) => {
+    const info = getActionInfo(item.action_type);
+    return (
+      <View style={styles.logCard}>
+        <View style={styles.logHeader}>
+          <View style={[styles.actionIcon, { backgroundColor: info.color + '15' }]}>
+            <MaterialCommunityIcons name={info.icon as any} size={20} color={info.color} />
+          </View>
+          <View style={styles.logMeta}>
+            <Text style={styles.adminName}>{item.admin_name}</Text>
+            <Text style={styles.logDate}>{format(new Date(item.created_at), 'HH:mm - dd/MM/yyyy')}</Text>
+          </View>
+          <View style={[styles.typeBadge, { backgroundColor: info.color + '10' }]}>
+            <Text style={[styles.typeBadgeText, { color: info.color }]}>{info.label}</Text>
+          </View>
         </View>
-        <View style={styles.logMeta}>
-          <Text style={styles.adminName}>{item.admin_name}</Text>
-          <Text style={styles.logDate}>{format(new Date(item.created_at), 'HH:mm - dd/MM/yyyy')}</Text>
+        
+        <View style={styles.contentSection}>
+          <Text style={styles.actionText}>
+            <Text style={styles.boldText}>{item.action_type}</Text>
+            {item.target_type && (
+              <Text style={styles.targetText}> • {item.target_type}</Text>
+            )}
+          </Text>
+          
+          {item.reason && (
+            <View style={styles.reasonBox}>
+              <Text style={styles.reasonText} numberOfLines={2}>{item.reason}</Text>
+            </View>
+          )}
         </View>
       </View>
-      
-      <Text style={styles.actionText}>
-        <Text style={styles.bold}>{item.action_type}</Text> 
-        {item.target_type ? ` trên ${item.target_type}` : ''}
-      </Text>
-      
-      {item.reason && (
-        <View style={styles.reasonContainer}>
-          <Text style={styles.reasonText}>Lý do: {item.reason}</Text>
-        </View>
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Audit Log</Text>
-        <Text style={styles.subtitle}>Complete history of admin actions</Text>
-      </View>
-
-      <View style={styles.filterContainer}>
+      <View style={styles.filterArea}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterList}>
           <FilterChip label="Tất cả" active={actionTypeFilter === undefined} onPress={() => setActionTypeFilter(undefined)} />
-          <FilterChip label="Khóa người dùng" active={actionTypeFilter === 'BAN_USER'} onPress={() => setActionTypeFilter('BAN_USER')} />
+          <FilterChip label="Người dùng" active={actionTypeFilter === 'BAN_USER'} onPress={() => setActionTypeFilter('BAN_USER')} />
           <FilterChip label="Duyệt sân" active={actionTypeFilter === 'VERIFY_VENUE'} onPress={() => setActionTypeFilter('VERIFY_VENUE')} />
-          <FilterChip label="Trạng thái sân" active={actionTypeFilter === 'UPDATE_VENUE_STATUS'} onPress={() => setActionTypeFilter('UPDATE_VENUE_STATUS')} />
+          <FilterChip label="Trạng thái" active={actionTypeFilter === 'UPDATE_VENUE_STATUS'} onPress={() => setActionTypeFilter('UPDATE_VENUE_STATUS')} />
         </ScrollView>
       </View>
 
       {loading && !refreshing ? (
-        <ActivityIndicator style={styles.loader} size="large" color="#0066CC" />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+          <Text style={styles.loadingText}>Đang tải nhật ký...</Text>
+        </View>
       ) : (
         <FlatList
           data={logs}
           renderItem={renderLogItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          onRefresh={() => {
-            setRefreshing(true);
-            fetchLogs();
-          }}
-          refreshing={refreshing}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchLogs();
+              }}
+              colors={[COLORS.PRIMARY]}
+            />
+          }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="list-outline" size={64} color="#DEE2E6" />
-              <Text style={styles.emptyText}>Chưa có dữ liệu nhật ký</Text>
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons name="clipboard-text-outline" size={80} color={COLORS.GRAY_LIGHT} />
+              <Text style={styles.emptyTitle}>Chưa có hoạt động nào</Text>
+              <Text style={styles.emptySubtitle}>Mọi thao tác của quản trị viên sẽ được lưu lại tại đây.</Text>
             </View>
           }
         />
@@ -105,50 +119,36 @@ export function AdminAuditLogScreen({ navigation }: AdminAuditLogScreenProps): R
   );
 }
 
-const FilterChip = ({ label, active, onPress }: { label: string, active: boolean, onPress: () => void }) => (
-  <TouchableOpacity style={[styles.filterChip, active && styles.filterChipActive]} onPress={onPress}>
+const FilterChip = ({ label, active, onPress }: any) => (
+  <TouchableOpacity 
+    style={[styles.filterChip, active && styles.filterChipActive]} 
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
     <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{label}</Text>
   </TouchableOpacity>
 );
 
-const getActionIcon = (type: string) => {
-  if (type.includes('BAN')) return 'lock-closed';
-  if (type.includes('VERIFY')) return 'checkmark-circle';
-  if (type.includes('STATUS')) return 'sync';
-  return 'information-circle';
-};
-
-const getActionColor = (type: string) => {
-  if (type.includes('BAN')) return '#DC3545';
-  if (type.includes('VERIFY')) return '#28A745';
-  if (type.includes('STATUS')) return '#FD7E14';
-  return '#0066CC';
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F0F2F5',
   },
-  header: {
-    padding: 16,
-    backgroundColor: '#FFF',
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#212529',
-  },
-  subtitle: {
+  loadingText: {
+    marginTop: 12,
+    color: COLORS.GRAY_MEDIUM,
     fontSize: 14,
-    color: '#6C757D',
-    marginTop: 4,
   },
-  filterContainer: {
-    backgroundColor: '#FFF',
+  filterArea: {
+    backgroundColor: COLORS.WHITE,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
-    paddingBottom: 12,
+    borderBottomColor: '#E0E4E9',
   },
   filterList: {
     paddingHorizontal: 16,
@@ -158,33 +158,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#E9ECEF',
-    marginRight: 8,
+    backgroundColor: '#F0F2F5',
+    borderWidth: 1,
+    borderColor: '#E0E4E9',
   },
   filterChipActive: {
-    backgroundColor: '#0066CC',
+    backgroundColor: COLORS.PRIMARY,
+    borderColor: COLORS.PRIMARY,
   },
   filterChipText: {
     fontSize: 13,
-    color: '#495057',
-    fontWeight: '500',
+    color: COLORS.GRAY_MEDIUM,
+    fontWeight: '600',
   },
   filterChipTextActive: {
-    color: '#FFF',
+    color: COLORS.WHITE,
   },
   listContent: {
     padding: 16,
+    paddingBottom: 40,
   },
   logCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    marginBottom: 16,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 3,
   },
   logHeader: {
     flexDirection: 'row',
@@ -192,9 +195,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   actionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -203,47 +206,74 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   adminName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#212529',
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
   },
   logDate: {
-    fontSize: 12,
-    color: '#6C757D',
+    fontSize: 11,
+    color: COLORS.GRAY_MEDIUM,
     marginTop: 2,
+  },
+  typeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  contentSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2F5',
+    paddingTop: 12,
   },
   actionText: {
     fontSize: 14,
-    color: '#495057',
+    color: COLORS.TEXT_PRIMARY,
     lineHeight: 20,
   },
-  bold: {
-    fontWeight: '700',
-    color: '#212529',
+  boldText: {
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
   },
-  reasonContainer: {
+  targetText: {
+    color: COLORS.GRAY_MEDIUM,
+    fontSize: 13,
+  },
+  reasonBox: {
     backgroundColor: '#F8F9FA',
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 12,
     marginTop: 10,
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#DEE2E6',
   },
   reasonText: {
     fontSize: 13,
-    color: '#6C757D',
+    color: COLORS.TEXT_SECONDARY,
     fontStyle: 'italic',
+    lineHeight: 18,
   },
-  loader: {
-    marginTop: 40,
-  },
-  emptyContainer: {
+  emptyState: {
     alignItems: 'center',
-    marginTop: 60,
+    justifyContent: 'center',
+    marginTop: 80,
+    paddingHorizontal: 40,
   },
-  emptyText: {
-    color: '#ADB5BD',
-    fontSize: 16,
-    marginTop: 12,
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.GRAY_MEDIUM,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
   },
 });

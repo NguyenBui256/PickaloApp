@@ -5,10 +5,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import type { AdminNavigationProp } from '@navigation/AdminNavigator';
 import { getAdminUsers, banUser, unbanUser } from '@services/admin-service';
-import type { AdminUserListItem, UserRole } from '@types/api-types';
+import type { AdminUserListItem, UserRole } from '@api-types/api-types';
 import { Ionicons } from '@expo/vector-icons';
 
 interface AdminUsersScreenProps {

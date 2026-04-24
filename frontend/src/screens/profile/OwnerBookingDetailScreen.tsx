@@ -142,7 +142,7 @@ export const OwnerBookingDetailScreen: React.FC = () => {
               <InfoItem label="Trạng thái" value={booking.status === 'Đang xếp lịch' || booking.status === 'PENDING' ? 'Mới' : booking.status} isYellow />
               <InfoItem label="Thời gian" value={booking.time} />
               <InfoItem label="Ngày tháng" value={booking.date} />
-              <InfoItem label="Tổng phí" value={`${booking.totalPrice.toLocaleString('vi-VN')} đ`} isYellow />
+              <InfoItem label="Tổng phí" value={`${(booking.totalPrice || (booking as any).total_price || 0).toLocaleString('vi-VN')} đ`} isYellow />
               <InfoItem label="Số điện thoại" value={booking.phone} isClickable />
               <View style={styles.noteBox}>
                 <Text style={styles.noteText}>YÊU CẦU DUYỆT</Text>

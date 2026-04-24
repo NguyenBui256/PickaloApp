@@ -605,3 +605,9 @@ export interface AuditLogItem {
   reason?: string | null;
   created_at: string;
 }
+export interface AuditLogResponse {
+  actions: AuditLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+}

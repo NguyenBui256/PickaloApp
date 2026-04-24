@@ -19,8 +19,9 @@ import type {
   AdminUserListItem,
   AdminVenueListItem,
   AdminReportedPostItem,
-  UserRole
-} from '../types/api-types';
+  UserRole,
+  AuditLogItem
+} from '@api-types/api-types';
 
 // ==========================================
 // STATISTICS
@@ -31,8 +32,7 @@ import type {
  * BE: GET /admin/dashboard
  */
 export const getAdminStats = async (): Promise<AdminStatsResponse> => {
-  const response = await apiClient.get('/admin/dashboard');
-  return response.data;
+  return await apiClient.get('/admin/dashboard');
 };
 
 // ==========================================
@@ -44,8 +44,15 @@ export const getAdminStats = async (): Promise<AdminStatsResponse> => {
  * BE: GET /admin/users
  */
 export const getAdminUsers = async (role?: UserRole): Promise<AdminUserListItem[]> => {
-  const response = await apiClient.get('/admin/users', { params: { role } });
-  return response.data.users;
+  const data = await apiClient.get<any>('/admin/users', { params: { role } });
+  return data.users;
+};
+
+/**
+ * Tạo người dùng mới.
+ */
+export const createUser = async (userData: any): Promise<AdminUserListItem> => {
+  return await apiClient.post('/admin/users', userData);
 };
 
 /**
@@ -62,6 +69,17 @@ export const unbanUser = async (userId: string, reason: string): Promise<void> =
   await apiClient.patch(`/admin/users/${userId}/unban`, { reason });
 };
 
+/**
+ * Bật/Tắt trạng thái hoạt động của người dùng.
+ */
+export const toggleUserStatus = async (userId: string, isActive: boolean): Promise<void> => {
+  if (isActive) {
+    return await unbanUser(userId, 'Mở khóa bởi Admin');
+  } else {
+    return await banUser(userId, 'Khóa bởi Admin');
+  }
+};
+
 // ==========================================
 // VENUE MANAGEMENT
 // ==========================================
@@ -71,8 +89,8 @@ export const unbanUser = async (userId: string, reason: string): Promise<void> =
  * BE: GET /admin/venues
  */
 export const getAdminVenues = async (is_verified?: boolean): Promise<AdminVenueListItem[]> => {
-  const response = await apiClient.get('/admin/venues', { params: { is_verified } });
-  return response.data.venues;
+  const data = await apiClient.get<any>('/admin/venues', { params: { is_verified } });
+  return data.venues;
 };
 
 /**
@@ -96,9 +114,9 @@ export const updateVenueStatus = async (venueId: string, is_active: boolean, rea
 /**
  * Danh sách bài đăng quản trị.
  */
-export const getAdminPosts = async (): Promise<AdminReportedPostItem[]> => {
-  const response = await apiClient.get('/admin/posts');
-  return response.data.posts;
+export const getReportedPosts = async (): Promise<AdminReportedPostItem[]> => {
+  const data = await apiClient.get<any>('/admin/posts');
+  return data.posts;
 };
 
 /**
@@ -112,22 +130,27 @@ export const deletePost = async (postId: string): Promise<void> => {
  * Lấy nhật ký hệ thống.
  */
 export const getAuditLog = async (params?: any): Promise<AuditLogItem[]> => {
-  const response = await apiClient.get('/admin/audit-log', { params });
-  return response.data.actions;
+  const data = await apiClient.get<any>('/admin/audit-log', { params });
+  return data.actions;
 };
 
 /**
  * Danh sách đặt sân quản trị.
  */
 export const getAdminBookings = async (params?: any): Promise<any> => {
-  const response = await apiClient.get('/admin/bookings', { params });
-  return response.data;
+  return await apiClient.get('/admin/bookings', { params });
 };
 
 /**
  * Chi tiết đặt sân.
  */
-export const getAdminBookingDetail = async (id: string): Promise<BookingAdminDetail> => {
-  const response = await apiClient.get(`/admin/bookings/${id}`);
-  return response.data;
+export const getAdminBookingDetail = async (id: string): Promise<any> => {
+  return await apiClient.get(`/admin/bookings/${id}`);
+};
+
+/**
+ * Khóa người dùng thông qua bài đăng bị báo cáo.
+ */
+export const banUserByPost = async (userId: string): Promise<void> => {
+  return await banUser(userId, 'Vi phạm chính sách nội dung qua bài đăng bị báo cáo');
 };

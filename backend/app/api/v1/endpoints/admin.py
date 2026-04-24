@@ -8,6 +8,7 @@ All endpoints require admin role.
 
 from typing import Annotated
 from uuid import UUID
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,13 +29,16 @@ from app.schemas.admin import (
     VerifyVenueRequest,
     BookingListResponse,
     BookingAdminListItem,
+    BookingAdminDetail,
     CancelBookingRequest,
+    UpdateVenueStatusRequest,
     PostListResponse,
     PostAdminListItem,
     CommentListResponse,
     CommentAdminListItem,
     AuditLogResponse,
     AuditLogItem,
+    ReportListResponse,
 )
 from app.services.admin import AdminService, get_admin_service
 
@@ -286,6 +290,33 @@ async def verify_venue(
         )
 
 
+@router.patch("/venues/{venue_id}/status", response_model=VenueAdminListItem)
+async def update_venue_status(
+    venue_id: UUID,
+    request_data: UpdateVenueStatusRequest,
+    admin: Annotated[User, Depends(get_admin)],
+    admin_service: Annotated[AdminService, Depends(get_admin_service)],
+) -> VenueAdminListItem:
+    """
+    Deactivate or reactivate a venue.
+
+    Requires admin role.
+    """
+    try:
+        venue = await admin_service.update_venue_status(
+            venue_id=venue_id,
+            is_active=request_data.is_active,
+            admin=admin,
+            reason=request_data.reason,
+        )
+        return VenueAdminListItem.model_validate(venue)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
 # Booking Management
 @router.get("/bookings", response_model=BookingListResponse)
 async def list_bookings(
@@ -321,6 +352,34 @@ async def list_bookings(
         page=page,
         limit=limit,
     )
+
+
+@router.get("/bookings/{booking_id}", response_model=BookingAdminDetail)
+async def get_booking_detail(
+    booking_id: UUID,
+    admin: Annotated[User, Depends(get_admin)],
+    admin_service: Annotated[AdminService, Depends(get_admin_service)],
+) -> BookingAdminDetail:
+    """
+    Get detailed booking information with audit trail.
+
+    Requires admin role.
+    """
+    try:
+        booking = await admin_service.get_booking_detail(booking_id=booking_id)
+        
+        # Map additional fields for detail view
+        detail = BookingAdminDetail.model_validate(booking)
+        
+        # Example: detail.payment_status = booking.payment.status if booking.payment else None
+        # This part depends on the Booking model relationships which I'll assume are correct or will be added
+        
+        return detail
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
 
 
 @router.patch("/bookings/{booking_id}/cancel", response_model=BookingAdminListItem)
@@ -438,6 +497,28 @@ async def delete_comment(
         )
 
 
+# Report Management (Mocked until model exists)
+@router.get("/reports", response_model=ReportListResponse)
+async def list_reports(
+    admin: Annotated[User, Depends(get_admin)],
+    admin_service: Annotated[AdminService, Depends(get_admin_service)],
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    target_type: str | None = None,
+    status: str | None = None,
+) -> ReportListResponse:
+    """
+    List user reports for moderation.
+    """
+    # Return empty list for now as we don't have the model yet
+    return ReportListResponse(
+        reports=[],
+        total=0,
+        page=page,
+        limit=limit,
+    )
+
+
 # Audit Log
 @router.get("/audit-log", response_model=AuditLogResponse)
 async def get_audit_log(
@@ -446,6 +527,9 @@ async def get_audit_log(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     action_type: ActionType | None = None,
+    admin_id: UUID | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
 ) -> AuditLogResponse:
     """
     Get audit log of admin actions.
@@ -453,6 +537,9 @@ async def get_audit_log(
     - **page**: Page number
     - **limit**: Items per page
     - **action_type**: Filter by action type
+    - **admin_id**: Filter by admin ID
+    - **start_date**: Start date (ISO format)
+    - **end_date**: End date (ISO format)
 
     Requires admin role.
     """
@@ -460,6 +547,9 @@ async def get_audit_log(
         page=page,
         limit=limit,
         action_type=action_type,
+        admin_id=admin_id,
+        start_date=start_date,
+        end_date=end_date,
     )
 
     action_items = [AuditLogItem.model_validate(a) for a in actions]

@@ -42,7 +42,7 @@ export const OwnerVenueListScreen: React.FC = () => {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Doanh thu / tháng</Text>
-          <Text style={styles.statValue}>{(item.revenue_mtd).toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.statValue}>{(item.revenue_mtd || 0).toLocaleString('vi-VN')} đ</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Lượt đặt</Text>

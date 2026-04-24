@@ -73,8 +73,16 @@ export const LoginScreen: React.FC = () => {
       // Update auth store with real user data and tokens
       login(response.user as any, response.access_token, response.refresh_token);
 
-      // Navigate to main app
-      navigation.navigate('Main');
+      // Navigate based on role
+      if (response.user.role === 'ADMIN') {
+        // @ts-ignore
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      } else {
+        navigation.navigate('Main');
+      }
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Đăng nhập thất bại', 'Số điện thoại hoặc mật khẩu không chính xác.');

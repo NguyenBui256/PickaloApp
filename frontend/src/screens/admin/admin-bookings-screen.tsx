@@ -62,7 +62,7 @@ export function AdminBookingsScreen({ navigation }: AdminBookingsScreenProps): R
       </View>
 
       <View style={styles.bookingFooter}>
-        <Text style={styles.priceText}>{item.total_price.toLocaleString()} VND</Text>
+        <Text style={styles.priceText}>{(item.total_price || 0).toLocaleString()} VND</Text>
         <Ionicons name="chevron-forward" size={16} color="#ADB5BD" />
       </View>
     </TouchableOpacity>

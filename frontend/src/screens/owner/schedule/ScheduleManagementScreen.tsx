@@ -98,7 +98,7 @@ export const ScheduleManagementScreen: React.FC = () => {
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="cash" size={18} color="#666" />
           <Text style={styles.detailText}>
-            {Number(item.total_price).toLocaleString('vi-VN')} đ
+            {Number(item.total_price || 0).toLocaleString('vi-VN')} đ
           </Text>
         </View>
       </View>

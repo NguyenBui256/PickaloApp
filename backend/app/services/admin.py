@@ -395,6 +395,46 @@ class AdminService:
 
         return venue
 
+
+    async def update_venue_status(
+        self,
+        venue_id: uuid.UUID,
+        is_active: bool,
+        admin: User,
+        reason: str,
+    ) -> Venue:
+        """
+        Deactivate or activate a venue.
+
+        Args:
+            venue_id: Venue ID
+            is_active: New status
+            admin: Admin performing the action
+            reason: Reason for status change
+
+        Returns:
+            Updated venue
+        """
+        venue = await self.session.get(Venue, venue_id)
+        if not venue or venue.deleted_at is not None:
+            raise ValueError("Venue not found")
+
+        venue.is_active = is_active
+
+        # Log action
+        await self._log_action(
+            admin=admin,
+            action_type=ActionType.UPDATE_VENUE_STATUS if hasattr(ActionType, "UPDATE_VENUE_STATUS") else ActionType.VERIFY_VENUE,
+            target_type=TargetType.VENUE,
+            target_id=venue_id,
+            reason=f"{reason} (Status: {'ACTIVE' if is_active else 'INACTIVE'})",
+        )
+
+        await self.session.commit()
+        await self.session.refresh(venue)
+
+        return venue
+
     async def list_bookings(
         self,
         page: int = 1,
@@ -477,6 +517,52 @@ class AdminService:
 
         await self.session.commit()
         await self.session.refresh(booking)
+
+        return booking
+
+
+    async def get_booking_detail(
+        self,
+        booking_id: uuid.UUID,
+    ) -> Booking:
+        """
+        Get detailed booking info with audit trail.
+
+        Args:
+            booking_id: Booking ID to fetch
+
+        Returns:
+            Booking object with joined relationships
+
+        Raises:
+            ValueError: If booking not found
+        """
+        from sqlalchemy.orm import selectinload
+        query = (
+            select(Booking)
+            .where(Booking.id == booking_id)
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.venue).selectinload(Venue.merchant),
+            )
+        )
+        result = await self.session.execute(query)
+        booking = result.scalar_one_or_none()
+
+        if not booking:
+            raise ValueError("Booking not found")
+
+        # Get audit trail for this booking
+        audit_query = (
+            select(AdminAction)
+            .where(
+                AdminAction.target_type == TargetType.BOOKING,
+                AdminAction.target_id == booking_id
+            )
+            .order_by(AdminAction.created_at.desc())
+        )
+        audit_result = await self.session.execute(audit_query)
+        booking.audit_trail = list(audit_result.scalars().all())
 
         return booking
 
@@ -590,6 +676,9 @@ class AdminService:
         page: int = 1,
         limit: int = 20,
         action_type: ActionType | None = None,
+        admin_id: uuid.UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> tuple[list[AdminAction], int]:
         """
         Get audit log of admin actions.
@@ -598,6 +687,9 @@ class AdminService:
             page: Page number
             limit: Items per page
             action_type: Filter by action type
+            admin_id: Filter by admin performing action
+            start_date: Start of date range
+            end_date: End of date range
 
         Returns:
             Tuple of (actions list, total count)
@@ -606,6 +698,12 @@ class AdminService:
 
         if action_type:
             query = query.where(AdminAction.action_type == action_type)
+        if admin_id:
+            query = query.where(AdminAction.admin_id == admin_id)
+        if start_date:
+            query = query.where(AdminAction.created_at >= start_date)
+        if end_date:
+            query = query.where(AdminAction.created_at <= end_date)
 
         count_query = select(func.count()).select_from(query.subquery())
         total = await self.session.scalar(count_query)

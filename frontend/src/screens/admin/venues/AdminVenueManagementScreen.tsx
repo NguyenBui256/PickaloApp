@@ -30,6 +30,7 @@ export const AdminVenueManagementScreen = () => {
       if (activeTab === 'PENDING') is_verified = false;
       
       const data = await getAdminVenues(is_verified);
+      console.log(`[DEBUG] Loaded venues for tab ${activeTab} (is_verified=${is_verified}):`, data?.length);
       
       // If filtering for deleted (inactive) venues
       if (activeTab === 'DELETED') {
@@ -56,8 +57,10 @@ export const AdminVenueManagementScreen = () => {
             try {
               await verifyVenue(venue.id, true, 'Duyệt sân hợp lệ');
               loadVenues();
-            } catch (error) {
-              Alert.alert('Lỗi', 'Không thể duyệt sân');
+            } catch (error: any) {
+              console.error('[DEBUG] Verify Venue Error:', error);
+              const errorMsg = error.detail || error.message || 'Không thể duyệt sân';
+              Alert.alert('Lỗi', errorMsg);
             }
           } 
         }
@@ -78,8 +81,10 @@ export const AdminVenueManagementScreen = () => {
             try {
               await updateVenueStatus(venue.id, false, 'Vi phạm chính sách hệ thống');
               loadVenues();
-            } catch (error) {
-              Alert.alert('Lỗi', 'Không thể ngừng hoạt động sân');
+            } catch (error: any) {
+              console.error('[DEBUG] Deactivate Venue Error:', error);
+              const errorMsg = error.detail || error.message || 'Không thể ngừng hoạt động sân';
+              Alert.alert('Lỗi', errorMsg);
             }
           } 
         }
@@ -99,8 +104,10 @@ export const AdminVenueManagementScreen = () => {
             try {
               await updateVenueStatus(venue.id, true, 'Đã khắc phục sự cố');
               loadVenues();
-            } catch (error) {
-              Alert.alert('Lỗi', 'Không thể khôi phục sân');
+            } catch (error: any) {
+              console.error('[DEBUG] Restore Venue Error:', error);
+              const errorMsg = error.detail || error.message || 'Không thể khôi phục sân';
+              Alert.alert('Lỗi', errorMsg);
             }
           } 
         }
