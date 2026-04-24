@@ -1,103 +1,93 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing } from 'react-native';
-import Svg, { Path, Circle as SvgCircle, Line, Defs, RadialGradient, Stop } from 'react-native-svg';
+import React, { useEffect } from 'react';
+import { View } from 'react-native';
+import { Marker } from 'react-native-maps';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  useAnimatedStyle, 
+  useSharedValue, 
+  withRepeat, 
+  withTiming, 
+  Easing 
+} from 'react-native-reanimated';
 
-interface Props {
-  center: { x: number; y: number };
-  radiusPx: number;
+interface RadarOverlayProps {
+  coordinate: { latitude: number, longitude: number };
+  radiusInPixels: number;
 }
 
-export const RadarOverlay: React.FC<Props> = ({ center, radiusPx }) => {
-  const angle = useRef(new Animated.Value(0)).current;
-  const [sweepDeg, setSweepDeg] = useState(0);
+const RadarOverlay: React.FC<RadarOverlayProps> = ({ coordinate, radiusInPixels }) => {
+  const rotation = useSharedValue(0);
 
   useEffect(() => {
-    angle.setValue(0);
-    const anim = Animated.loop(
-      Animated.timing(angle, {
-        toValue: 360,
+    rotation.value = withRepeat(
+      withTiming(360, {
         duration: 3000,
-        useNativeDriver: false,
         easing: Easing.linear,
-      })
+      }),
+      -1,
+      false
     );
-    anim.start();
-    const listenerId = angle.addListener(({ value }) => setSweepDeg(value));
-    return () => {
-      anim.stop();
-      angle.removeListener(listenerId);
-    };
   }, []);
 
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-
-  const getPoint = (deg: number, r: number = radiusPx - 2) => ({
-    x: Math.sin(toRad(deg)) * r,
-    y: -Math.cos(toRad(deg)) * r,
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    };
   });
 
-  // Tip of the sweep hand
-  const tip = getPoint(sweepDeg);
+  if (!radiusInPixels || radiusInPixels <= 0) return null;
 
-  // Trailing sector: 90 degrees behind the hand
-  const TRAIL_DEG = 90;
-  const trailStart = getPoint(sweepDeg - TRAIL_DEG);
-  const largeArc = TRAIL_DEG > 180 ? 1 : 0;
-  const r = radiusPx - 2;
-  const sectorPath = `M 0 0 L ${trailStart.x} ${trailStart.y} A ${r} ${r} 0 ${largeArc} 1 ${tip.x} ${tip.y} Z`;
-
-  const size = radiusPx * 2;
-  const viewBox = `${-radiusPx} ${-radiusPx} ${size} ${size}`;
+  const size = radiusInPixels * 2;
 
   return (
-    <View
+    <Marker
+      coordinate={coordinate}
+      anchor={{ x: 0.5, y: 0.5 }}
       pointerEvents="none"
-      style={{
-        position: 'absolute',
-        left: center.x - radiusPx,
-        top: center.y - radiusPx,
-        width: size,
-        height: size,
-        overflow: 'hidden',
-        borderRadius: radiusPx,
-      }}
+      flat={true}
+      zIndex={10} // Ensure it's above the circle
+      tracksViewChanges={true} // FORCE re-render for animation on Android
     >
-      <Svg width={size} height={size} viewBox={viewBox}>
-        <Defs>
-          <RadialGradient id="radarFill" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="rgba(59,130,246,0.0)" />
-            <Stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
-          </RadialGradient>
-        </Defs>
-
-        {/* Background fill */}
-        <SvgCircle
-          cx={0} cy={0} r={r}
-          fill="url(#radarFill)"
-          stroke="rgba(59,130,246,0.7)"
-          strokeWidth={2}
-          strokeDasharray="6 4"
-        />
-
-        {/* Cross-hair guides (optional subtle reference lines) */}
-        <Line x1={-r} y1={0} x2={r} y2={0} stroke="rgba(59,130,246,0.12)" strokeWidth={1} />
-        <Line x1={0} y1={-r} x2={0} y2={r} stroke="rgba(59,130,246,0.12)" strokeWidth={1} />
-
-        {/* Trailing glow sector */}
-        <Path d={sectorPath} fill="rgba(59,130,246,0.15)" />
-
-        {/* Sweep hand line */}
-        <Line
-          x1={0} y1={0}
-          x2={tip.x} y2={tip.y}
-          stroke="rgba(99,179,255,1)"
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-
-        {/* Center dot */}
-        <SvgCircle cx={0} cy={0} r={4} fill="rgba(59,130,246,0.9)" />
-      </Svg>
-    </View>
+      <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.View style={[animatedStyle, { width: size, height: size, justifyContent: 'center', alignItems: 'center' }]}>
+          <View style={{ 
+            position: 'absolute', 
+            bottom: radiusInPixels, 
+            width: 120, // Increased width for better visibility
+            height: radiusInPixels,
+            alignItems: 'center',
+          }}>
+            {/* Wider neon fan effect */}
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 255, 255, 0.05)', 'rgba(0, 150, 255, 0.4)']}
+              style={{
+                position: 'absolute',
+                top: 0,
+                width: 100,
+                height: radiusInPixels,
+                borderTopLeftRadius: 50,
+                borderTopRightRadius: 50,
+              }}
+            />
+            {/* Ultra-bright neon needle */}
+            <LinearGradient
+              colors={['transparent', '#00FFFF', '#007BFF']}
+              style={{
+                width: 4,
+                height: radiusInPixels,
+                borderRadius: 2,
+                shadowColor: '#00FFFF',
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 1,
+                shadowRadius: 10,
+                elevation: 10,
+              }}
+            />
+          </View>
+        </Animated.View>
+      </View>
+    </Marker>
   );
 };
+
+export default RadarOverlay;

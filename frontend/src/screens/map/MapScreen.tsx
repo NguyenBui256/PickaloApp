@@ -18,7 +18,6 @@ import { matchService } from '../../services/match-service';
 import { MatchResponse } from '../../types/api-types';
 import { MatchDetailModal } from '../match/MatchDetailModal';
 import { MatchFilterModal } from '../match/MatchFilterModal';
-import { RadarOverlay } from './RadarOverlay';
 
 const { height } = Dimensions.get('window');
 
@@ -60,36 +59,11 @@ export const MapScreen: React.FC = () => {
     endTime: null,
     radiusKm: null as number | null,
   });
-  const [radarInfo, setRadarInfo] = useState<{ center: {x:number;y:number}; radiusPx: number } | null>(null);
 
   const clearRoute = () => {
     setRouteCoords([]);
     setRouteInfo(null);
     navigation.setParams({ showRoute: false, destination: null });
-  };
-
-  const updateRadarPosition = async (radiusKm: number | null) => {
-    if (!mapRef.current || !userLocation || !radiusKm) {
-      setRadarInfo(null);
-      return;
-    }
-    try {
-      const centerPx = await (mapRef.current as any).pointForCoordinate({
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-      });
-      // Compute a point radiusKm to the east to get pixel radius
-      const dLng = (radiusKm / 6371) * (180 / Math.PI) /
-        Math.max(Math.cos(userLocation.latitude * Math.PI / 180), 0.001);
-      const edgePx = await (mapRef.current as any).pointForCoordinate({
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude + dLng,
-      });
-      const radiusPx = Math.abs(edgePx.x - centerPx.x);
-      if (radiusPx > 20) setRadarInfo({ center: centerPx, radiusPx });
-    } catch (_) {
-      setRadarInfo(null);
-    }
   };
 
   const fetchNearbyMatches = async () => {
@@ -294,14 +268,17 @@ export const MapScreen: React.FC = () => {
           />
         )}
 
-        {/* Radius Circle */}
+        {/* Radius Circle (Search Area) */}
+        {filters.radiusKm && userLocation && (
+          <Circle
+            center={{ latitude: userLocation.latitude, longitude: userLocation.longitude }}
+            radius={filters.radiusKm * 1000}
+            strokeColor="rgba(59,130,246,0.9)"
+            strokeWidth={3}
+            fillColor="rgba(59,130,246,0.08)"
+          />
         )}
       </MapView>
-
-      {/* Radar Sweep Overlay - outside MapView, positioned absolutely */}
-      {filters.radiusKm && radarInfo && (
-        <RadarOverlay center={radarInfo.center} radiusPx={radarInfo.radiusPx} />
-      )}
 
       {/* Header Area with Search & Mode Toggle */}
       <View style={styles.headerArea}>
