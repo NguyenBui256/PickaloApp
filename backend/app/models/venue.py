@@ -142,6 +142,16 @@ class Venue(BaseModel):
     rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0.0)
     review_count: Mapped[int] = mapped_column(Integer, default=0)
 
+    @property
+    def merchant_name(self) -> str:
+        """Get merchant's full name."""
+        return self.merchant.full_name if self.merchant else "Unknown"
+
+    @property
+    def bookings_count(self) -> int:
+        """Count of bookings for this venue."""
+        return len(self.bookings) if self.bookings else 0
+
     # Relationships
     merchant: Mapped["User"] = relationship(
         "User",

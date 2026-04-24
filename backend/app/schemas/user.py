@@ -54,6 +54,13 @@ class UserUpdate(BaseModel):
     email: Annotated[EmailStr | None, None] = None
     avatar_url: Annotated[str | None, None] = None
     date_of_birth: Annotated[date | None, None] = None
+    expo_push_token: Annotated[str | None, None] = None
+
+
+class UpdatePushTokenRequest(BaseModel):
+    """Schema for updating only the push token."""
+
+    token: Annotated[str, Field(min_length=1, max_length=255)]
 
 
 class UserResponse(UserBase):

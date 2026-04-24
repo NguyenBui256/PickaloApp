@@ -13,7 +13,7 @@ from pydantic import EmailStr
 
 from app.api.deps import get_current_user, require_role, DBSession
 from app.models.user import User, UserRole
-from app.schemas.user import UserResponse, UserProfileResponse
+from app.schemas.user import UserResponse, UserProfileResponse, UpdatePushTokenRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -89,3 +89,17 @@ async def list_merchants(
 
     users = result.scalars().all()
     return [UserResponse.model_validate(u) for u in users]
+
+
+@router.post("/me/push-token", status_code=status.HTTP_200_OK)
+async def update_push_token(
+    request: UpdatePushTokenRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: DBSession,
+) -> dict[str, str]:
+    """
+    Update the Expo push token for the current user.
+    """
+    current_user.expo_push_token = request.token
+    await session.commit()
+    return {"message": "Push token updated successfully"}

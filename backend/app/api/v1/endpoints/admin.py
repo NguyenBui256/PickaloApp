@@ -23,6 +23,7 @@ from app.schemas.admin import (
     BanUserRequest,
     UnbanUserRequest,
     UpdateUserRoleRequest,
+    CreateUserRequest,
     MessageResponse,
     VenueListResponse,
     VenueAdminListItem,
@@ -98,6 +99,30 @@ async def list_users(
         page=page,
         limit=limit,
     )
+
+
+@router.post("/users", response_model=UserListItem)
+async def create_user(
+    request_data: CreateUserRequest,
+    admin: Annotated[User, Depends(get_admin)],
+    admin_service: Annotated[AdminService, Depends(get_admin_service)],
+) -> UserListItem:
+    """
+    Create a new user account as an admin.
+
+    Requires admin role.
+    """
+    try:
+        user = await admin_service.create_user(
+            user_data=request_data.model_dump(),
+            admin=admin,
+        )
+        return UserListItem.model_validate(user)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.patch("/users/{user_id}/ban", response_model=UserListItem)

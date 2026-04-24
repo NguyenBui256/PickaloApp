@@ -99,6 +99,20 @@ class User(BaseModel):
         default=False,
         nullable=False,
     )
+    expo_push_token: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    @property
+    def venues_count(self) -> int:
+        """Count of venues owned by this user."""
+        return len(self.venues) if self.venues else 0
+
+    @property
+    def bookings_count(self) -> int:
+        """Count of bookings made by this user."""
+        return len(self.bookings) if self.bookings else 0
 
     # Relationships
     venues: Mapped[list["Venue"]] = relationship(

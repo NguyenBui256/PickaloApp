@@ -112,6 +112,16 @@ class UpdateUserRoleRequest(BaseModel):
     ]
 
 
+class CreateUserRequest(BaseModel):
+    """Request to create a new user by admin."""
+
+    full_name: str = Field(..., min_length=2, max_length=100)
+    phone: str = Field(..., pattern=r"^\+?[0-9]{10,15}$")
+    email: str | None = None
+    password: str = Field(..., min_length=1)
+    role: UserRole = UserRole.USER
+
+
 # Venue Management
 class VenueListResponse(BaseModel):
     """Response for paginated venue list."""

@@ -146,6 +146,16 @@ class Booking(BaseModel):
     )
 
     @property
+    def user_name(self) -> str:
+        """Get user's full name."""
+        return self.user.full_name if self.user else "Guest"
+
+    @property
+    def venue_name(self) -> str:
+        """Get venue's name."""
+        return self.venue.name if self.venue else "N/A"
+
+    @property
     def is_paid(self) -> bool:
         """Check if booking has been paid."""
         return self.paid_at is not None

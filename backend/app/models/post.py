@@ -160,6 +160,11 @@ class Post(BaseModel):
     )
 
     @property
+    def author_name(self) -> str:
+        """Get author's full name."""
+        return self.author.full_name if self.author else "Unknown"
+
+    @property
     def is_active(self) -> bool:
         """Check if post is currently active."""
         return self.status == PostStatus.ACTIVE
@@ -230,6 +235,11 @@ class Comment(BaseModel):
         back_populates="comments",
         lazy="selectin",
     )
+
+    @property
+    def author_name(self) -> str:
+        """Get author's full name."""
+        return self.author.full_name if self.author else "Unknown"
 
     def __repr__(self) -> str:
         """String representation for debugging."""

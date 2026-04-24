@@ -32,6 +32,8 @@ class ActionType(str, Enum):
     CANCEL_BOOKING = "CANCEL_BOOKING"
     REFUND_PAYMENT = "REFUND_PAYMENT"
     UPDATE_USER_ROLE = "UPDATE_USER_ROLE"
+    UPDATE_VENUE_STATUS = "UPDATE_VENUE_STATUS"
+    CREATE_USER = "CREATE_USER"
 
 
 class TargetType(str, Enum):
@@ -78,7 +80,6 @@ class AdminAction(BaseModel):
         nullable=True,
     )
     target_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
 
@@ -95,6 +96,11 @@ class AdminAction(BaseModel):
         lazy="selectin",
         foreign_keys=[admin_id],
     )
+
+    @property
+    def admin_name(self) -> str:
+        """Get admin's full name."""
+        return self.admin.full_name if self.admin else "System"
 
     @property
     def is_ban_action(self) -> bool:

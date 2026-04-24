@@ -9,6 +9,7 @@ import uuid
 from typing import Annotated
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 from fastapi import Depends
 
 from app.models.user import User, UserRole
@@ -17,6 +18,7 @@ from app.models.booking import Booking
 from app.models.post import Post, Comment
 from app.models.admin import AdminAction, ActionType, TargetType
 from app.core.database import get_db
+from app.services.notification import notification_service
 
 
 class AdminService:
@@ -133,13 +135,87 @@ class AdminService:
         total = await self.session.scalar(count_query)
 
         # Apply pagination
+        from sqlalchemy.orm import selectinload
         offset = (page - 1) * limit
-        query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
+        query = query.options(
+            selectinload(User.venues),
+            selectinload(User.bookings)
+        ).order_by(User.created_at.desc()).offset(offset).limit(limit)
 
         result = await self.session.execute(query)
         users = list(result.scalars().all())
-
+        
+        # Verify and log for debugging
+        if users:
+            try:
+                # Access a computed property to ensure it works
+                _ = users[0].venues_count
+            except Exception as e:
+                print(f"Warning: Computed property access failed in list_users: {str(e)}")
         return users, total or 0
+
+    async def create_user(
+        self,
+        user_data: dict,
+        admin: User,
+    ) -> User:
+        """
+        Create a new user account as an admin.
+        
+        Args:
+            user_data: Dictionary with user info (full_name, phone, email, password, role)
+            admin: Admin performing the action
+            
+        Returns:
+            Created user
+            
+        Raises:
+            ValueError: If phone or email already exists
+        """
+        from app.core.security import hash_password
+        
+        # Check if phone exists
+        existing_phone = await self.session.scalar(
+            select(User).where(User.phone == user_data['phone'], User.deleted_at.is_(None))
+        )
+        if existing_phone:
+            raise ValueError("Số điện thoại này đã được sử dụng")
+            
+        # Check if email exists (if provided)
+        if user_data.get('email'):
+            existing_email = await self.session.scalar(
+                select(User).where(User.email == user_data['email'], User.deleted_at.is_(None))
+            )
+            if existing_email:
+                raise ValueError("Email này đã được sử dụng")
+
+        # Create user object
+        user = User(
+            full_name=user_data['full_name'],
+            phone=user_data['phone'],
+            email=user_data.get('email'),
+            password_hash=hash_password(user_data['password']),
+            role=user_data.get('role', UserRole.USER),
+            is_active=True,
+            is_verified=True, # Admin created users are verified by default
+        )
+        
+        self.session.add(user)
+        await self.session.flush()
+        
+        # Log admin action
+        await self._log_action(
+            admin=admin,
+            action_type=ActionType.CREATE_USER,
+            target_type=TargetType.USER,
+            target_id=user.id,
+            reason=f"Admin created new {user.role.value}",
+        )
+        
+        await self.session.commit()
+        await self.session.refresh(user)
+        
+        return user
 
     async def ban_user(
         self,
@@ -303,8 +379,12 @@ class AdminService:
         count_query = select(func.count()).select_from(query.subquery())
         total = await self.session.scalar(count_query)
 
+        from sqlalchemy.orm import selectinload
         offset = (page - 1) * limit
-        query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
+        query = query.options(
+            selectinload(User.venues),
+            selectinload(User.bookings)
+        ).order_by(User.created_at.desc()).offset(offset).limit(limit)
 
         result = await self.session.execute(query)
         merchants = list(result.scalars().all())
@@ -344,8 +424,13 @@ class AdminService:
         count_query = select(func.count()).select_from(query.subquery())
         total = await self.session.scalar(count_query)
 
+        # Apply pagination
+        from sqlalchemy.orm import selectinload
         offset = (page - 1) * limit
-        query = query.order_by(Venue.created_at.desc()).offset(offset).limit(limit)
+        query = query.options(
+            selectinload(Venue.merchant),
+            selectinload(Venue.bookings)
+        ).order_by(Venue.created_at.desc()).offset(offset).limit(limit)
 
         result = await self.session.execute(query)
         venues = list(result.scalars().all())
@@ -374,7 +459,12 @@ class AdminService:
         Raises:
             ValueError: If venue not found
         """
-        venue = await self.session.get(Venue, venue_id)
+        from sqlalchemy.orm import selectinload
+        print(f"[DEBUG] AdminService: Verifying venue {venue_id} by admin {admin.id}")
+        query = select(Venue).where(Venue.id == venue_id).options(selectinload(Venue.merchant))
+        result = await self.session.execute(query)
+        venue = result.scalar_one_or_none()
+        
         if not venue or venue.deleted_at is not None:
             raise ValueError("Venue not found")
 
@@ -391,9 +481,13 @@ class AdminService:
         )
 
         await self.session.commit()
-        await self.session.refresh(venue)
-
-        return venue
+        
+        # Refresh with relationships for the schema
+        from sqlalchemy.orm import selectinload
+        result = await self.session.execute(
+            select(Venue).where(Venue.id == venue_id).options(selectinload(Venue.merchant))
+        )
+        return result.scalar_one()
 
 
     async def update_venue_status(
@@ -415,7 +509,11 @@ class AdminService:
         Returns:
             Updated venue
         """
-        venue = await self.session.get(Venue, venue_id)
+        from sqlalchemy.orm import selectinload
+        query = select(Venue).where(Venue.id == venue_id).options(selectinload(Venue.merchant))
+        result = await self.session.execute(query)
+        venue = result.scalar_one_or_none()
+        
         if not venue or venue.deleted_at is not None:
             raise ValueError("Venue not found")
 
@@ -424,16 +522,30 @@ class AdminService:
         # Log action
         await self._log_action(
             admin=admin,
-            action_type=ActionType.UPDATE_VENUE_STATUS if hasattr(ActionType, "UPDATE_VENUE_STATUS") else ActionType.VERIFY_VENUE,
+            action_type=ActionType.UPDATE_VENUE_STATUS,
             target_type=TargetType.VENUE,
             target_id=venue_id,
             reason=f"{reason} (Status: {'ACTIVE' if is_active else 'INACTIVE'})",
         )
 
         await self.session.commit()
-        await self.session.refresh(venue)
-
-        return venue
+        
+        # Send notification to merchant when venue status is updated
+        if venue.merchant and venue.merchant.expo_push_token:
+            status_text = "kích hoạt" if is_active else "tạm khóa"
+            from app.services.notification import notification_service
+            await notification_service.send_push_notification(
+                expo_push_token=venue.merchant.expo_push_token,
+                title="Cập nhật trạng thái sân",
+                body=f"Sân '{venue.name}' của bạn đã được {status_text} bởi Ban quản trị.",
+            )
+        
+        # Refresh with relationships for the schema
+        from sqlalchemy.orm import selectinload
+        result = await self.session.execute(
+            select(Venue).where(Venue.id == venue_id).options(selectinload(Venue.merchant))
+        )
+        return result.scalar_one()
 
     async def list_bookings(
         self,
@@ -727,21 +839,25 @@ class AdminService:
         """
         Log an admin action to the audit trail.
 
-        Args:
-            admin: Admin performing the action
-            action_type: Type of action
-            target_type: Type of target entity
-            target_id: ID of target entity
-            reason: Reason for the action
+        Internal helper to log administrative actions.
+        Uses a nested transaction (savepoint) to ensure logging failures 
+        don't block the primary business action.
         """
-        action = AdminAction(
-            admin_id=admin.id,
-            action_type=action_type,
-            target_type=target_type,
-            target_id=target_id,
-            reason=reason,
-        )
-        self.session.add(action)
+        try:
+            async with self.session.begin_nested():
+                action = AdminAction(
+                    admin_id=admin.id,
+                    action_type=action_type,
+                    target_type=target_type,
+                    target_id=target_id,
+                    reason=reason,
+                )
+                self.session.add(action)
+                await self.session.flush()
+        except Exception as e:
+            # Nested transaction will automatically rollback on exception
+            # Don't block the main action if logging fails
+            print(f"Warning: Failed to log admin action: {str(e)}")
 
 
 # Dependency injection
