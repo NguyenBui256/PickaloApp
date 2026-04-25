@@ -161,6 +161,14 @@ export const VenueDetailScreen: React.FC = () => {
       case 'Thông tin':
         return (
           <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Giới thiệu</Text>
+            {venue.description ? (
+              <Text style={styles.descriptionText}>{venue.description}</Text>
+            ) : (
+              <Text style={styles.emptyText}>Sân này chưa cập nhật thông tin mô tả chi tiết.</Text>
+            )}
+            <View style={[styles.divider, { marginVertical: 20 }]} />
+            
             <Text style={styles.sectionTitle}>Link đặt sân online</Text>
             <View style={styles.linkRow}>
               <Text style={styles.linkText} numberOfLines={1}>
@@ -679,6 +687,11 @@ const styles = StyleSheet.create({
   },
   copyBtn: {
     padding: 4,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: COLORS.TEXT_SECONDARY,
+    lineHeight: 22,
   },
   emptyText: {
     fontSize: 14,
