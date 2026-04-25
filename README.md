@@ -1,6 +1,6 @@
 # PickaloApp - Pickleball Venue Booking System
 
-PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực quan, hỗ trợ người chơi tìm kiếm sân, đặt lịch và thanh toán nhanh chóng, đồng thời giúp chủ sân quản lý doanh thu và lịch đặt hiệu quả.
+PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực quan, hỗ trợ người chơi tìm kiếm sân, đặt lịch và ghép sân nhanh chóng, đồng thời giúp chủ sân quản lý doanh thu và lịch đặt hiệu quả.
 
 ## 🚀 Tính năng chính
 
@@ -12,11 +12,12 @@ PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực q
 - **Lịch sử đặt sân**: Quản lý các đơn đặt, trạng thái và đánh giá sân sau khi chơi.
 - **Tạo kèo ghép trận**: Tạo kèo ghép trận public đối với booking, tìm kiếm kèo, liên hệ qua chat.
 
-### Dành cho Chủ sân (Merchant/Owner)
+### Dành cho Chủ sân (Merchant)
 - **Dashboard quản lý**: Xem biểu đồ doanh thu, lượt đặt sân và thống kê theo tháng.
 - **Quản lý sân con (Courts)**: Thêm, sửa, xóa các sân con trong cơ sở.
 - **Cấu hình giá linh hoạt**: Thiết lập giá khác nhau theo khung giờ và ngày (thứ 7, CN, ngày lễ).
 - **Phê duyệt đặt sân**: Duyệt hoặc từ chối các yêu cầu đặt sân dựa trên minh chứng thanh toán.
+
 
 ## 🛠 Công nghệ sử dụng
 
