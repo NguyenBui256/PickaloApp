@@ -12,7 +12,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, Text, Numeric, Boolean, Time, ForeignKey, JSON, Integer
+from sqlalchemy import String, Text, Numeric, Boolean, Time, ForeignKey, JSON, Integer, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from geoalchemy2 import Geography  # PostGIS support
 
@@ -97,7 +97,7 @@ class Venue(BaseModel):
 
     # Venue details
     venue_type: Mapped[VenueType] = mapped_column(
-        String(50),
+        sqlalchemyEnum(VenueType, native_enum=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         index=True,
     )
@@ -270,7 +270,7 @@ class PricingTimeSlot(BaseModel):
 
     # Slot definition
     day_type: Mapped[DayType] = mapped_column(
-        String(20),
+        sqlalchemyEnum(DayType, native_enum=False),
         nullable=False,
     )
     # New: days of week (0=Mon, ..., 6=Sun)

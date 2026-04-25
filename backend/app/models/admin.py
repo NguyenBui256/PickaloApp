@@ -11,7 +11,7 @@ import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Text, ForeignKey
+from sqlalchemy import String, Text, ForeignKey, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -68,13 +68,13 @@ class AdminAction(BaseModel):
 
     # What was done
     action_type: Mapped[ActionType] = mapped_column(
-        String(50),
+        sqlalchemyEnum(ActionType, native_enum=False),
         nullable=False,
     )
 
     # What was affected
     target_type: Mapped[TargetType | None] = mapped_column(
-        String(50),
+        sqlalchemyEnum(TargetType, native_enum=False),
         nullable=True,
     )
     target_id: Mapped[uuid.UUID | None] = mapped_column(

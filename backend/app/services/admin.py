@@ -264,7 +264,7 @@ class AdminService:
             action_type=ActionType.UPDATE_USER_ROLE,
             target_type=TargetType.USER,
             target_id=user_id,
-            reason=f"{reason} (Role: {old_role.value} -> {new_role.value})",
+            reason=f"{reason} (Role: {getattr(old_role, 'value', old_role)} -> {getattr(new_role, 'value', new_role)})",
         )
 
         await self.session.commit()

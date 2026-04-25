@@ -178,8 +178,10 @@ class AuthService:
                 return None
 
             # Generate new access token
+            role_value = user.role.value if hasattr(user.role, "value") else user.role
             return create_access_token(
-                {"sub": str(user.id), "role": user.role.value}
+                subject=str(user.id),
+                extra_claims={"role": role_value}
             )
 
         except JWTError:

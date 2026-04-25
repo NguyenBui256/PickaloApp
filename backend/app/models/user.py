@@ -12,7 +12,7 @@ from datetime import date
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, Text, Boolean, Date
+from sqlalchemy import String, Text, Boolean, Date, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -84,7 +84,7 @@ class User(BaseModel):
 
     # Role and status
     role: Mapped[UserRole] = mapped_column(
-        String(20),
+        sqlalchemyEnum(UserRole, native_enum=False),
         default=UserRole.USER,
         nullable=False,
         index=True,

@@ -138,12 +138,14 @@ const BookingCard = ({
             <TouchableOpacity
               style={[styles.detailBtn, styles.reviewBtn]}
               onPress={() =>
-                navigation.navigate('ReviewSubmission', {
-                  venueId: item.venue_id,
-                  venueName: item.venue_name,
-                  bookingId: item.id,
-                  reviewId: item.review_id,
-                })
+                  navigation.navigate('ReviewSubmission', {
+                    venueId: item.venue_id,
+                    venueName: item.venue_name,
+                    bookingId: item.id,
+                    bookingDate: formatBookingDate(item),
+                    courtName: item.court_name,
+                    reviewId: item.review_id,
+                  })
               }
             >
               <Text style={[styles.detailBtnText, styles.reviewBtnText]}>

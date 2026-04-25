@@ -18,6 +18,12 @@ PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực q
 - **Cấu hình giá linh hoạt**: Thiết lập giá khác nhau theo khung giờ và ngày (thứ 7, CN, ngày lễ).
 - **Phê duyệt đặt sân**: Duyệt hoặc từ chối các yêu cầu đặt sân dựa trên minh chứng thanh toán.
 
+### Dành cho Quản trị viên (Admin)
+- **Dashboard tổng quan**: Theo dõi toàn bộ chỉ số nền tảng (tổng người dùng, chủ sân, sân bãi và lượt đặt).
+- **Duyệt cơ sở sân**: Kiểm duyệt và xác minh các cơ sở sân mới đăng ký trước khi hiển thị công khai.
+- **Quản lý người dùng**: Danh sách và phân quyền người dùng, quản trị viên.
+- **Audit Logging**: Hệ thống lưu vết mọi thao tác quản trị nhằm đảm bảo an ninh và minh bạch.
+
 
 ## 🛠 Công nghệ sử dụng
 

@@ -17,13 +17,18 @@ from app.core.config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def create_access_token(subject: str | Any, expires_delta: timedelta | None = None) -> str:
+def create_access_token(
+    subject: str | Any, 
+    expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None
+) -> str:
     """
     Create JWT access token.
 
     Args:
         subject: Token subject (typically user ID)
         expires_delta: Custom expiration time
+        extra_claims: Additional claims to include in the token
 
     Returns:
         Encoded JWT token string
@@ -36,6 +41,9 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
         )
 
     to_encode = {"exp": expire, "sub": str(subject)}
+    if extra_claims:
+        to_encode.update(extra_claims)
+        
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 

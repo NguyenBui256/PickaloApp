@@ -11,7 +11,7 @@ from datetime import date, time
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Text, Integer, Date, Time, ForeignKey, JSON
+from sqlalchemy import String, Text, Integer, Date, Time, ForeignKey, JSON, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -78,13 +78,12 @@ class Post(BaseModel):
         index=True,
     )
 
-    # Post categorization
     post_type: Mapped[PostType] = mapped_column(
-        String(50),
+        sqlalchemyEnum(PostType, native_enum=False),
         nullable=False,
     )
     sport_type: Mapped[SportType | None] = mapped_column(
-        String(50),
+        sqlalchemyEnum(SportType, native_enum=False, values_callable=lambda x: [e.value for e in x]),
         nullable=True,
         index=True,
     )
@@ -134,9 +133,8 @@ class Post(BaseModel):
         nullable=True,
     )
 
-    # Status
     status: Mapped[PostStatus] = mapped_column(
-        String(20),
+        sqlalchemyEnum(PostStatus, native_enum=False),
         default=PostStatus.ACTIVE,
         nullable=False,
         index=True,

@@ -11,7 +11,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, Text, Numeric, Integer, ForeignKey
+from sqlalchemy import String, Text, Numeric, Integer, ForeignKey, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -67,10 +67,15 @@ class Match(BaseModel):
     price_per_slot: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     
     skill_level: Mapped[MatchSkillLevel] = mapped_column(
-        String(20), default=MatchSkillLevel.ALL, nullable=False
+        sqlalchemyEnum(MatchSkillLevel, native_enum=False),
+        default=MatchSkillLevel.ALL,
+        nullable=False
     )
     status: Mapped[MatchStatus] = mapped_column(
-        String(20), default=MatchStatus.OPEN, nullable=False, index=True
+        sqlalchemyEnum(MatchStatus, native_enum=False),
+        default=MatchStatus.OPEN,
+        nullable=False,
+        index=True
     )
     
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -112,7 +117,10 @@ class MatchRequest(BaseModel):
     
     member_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     status: Mapped[MatchRequestStatus] = mapped_column(
-        String(20), default=MatchRequestStatus.PENDING, nullable=False, index=True
+        sqlalchemyEnum(MatchRequestStatus, native_enum=False),
+        default=MatchRequestStatus.PENDING,
+        nullable=False,
+        index=True
     )
 
     # Relationships

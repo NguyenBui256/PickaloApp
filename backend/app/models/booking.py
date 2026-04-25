@@ -12,7 +12,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, Text, Numeric, Integer, Date, Time, DateTime, ForeignKey
+from sqlalchemy import String, Text, Numeric, Integer, Date, Time, DateTime, ForeignKey, Enum as sqlalchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -81,7 +81,7 @@ class Booking(BaseModel):
 
     # Status
     status: Mapped[BookingStatus] = mapped_column(
-        String(20),
+        sqlalchemyEnum(BookingStatus, native_enum=False),
         default=BookingStatus.PENDING,
         nullable=False,
         index=True,
