@@ -5,11 +5,12 @@ PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực q
 ## 🚀 Tính năng chính
 
 ### Dành cho Người chơi (User)
-- **Tìm kiếm sân thông minh**: Tìm sân theo khu vực, giá cả, và đánh giá.
+- **Tìm kiếm sân thông minh**: Tìm sân theo khu vực, trực tiếp trên map.
 - **Đặt sân trực quan**: Chọn khung giờ trống trên lưới thời gian thực.
 - **Giữ chỗ tạm thời**: Tự động khóa sân trong 10 phút khi đang tiến hành thanh toán.
-- **Thanh toán linh hoạt**: Hỗ trợ chuyển khoản ngân hàng và tải minh chứng thanh toán.
+- **Thanh toán linh hoạt**: Tải minh chứng thanh toán.
 - **Lịch sử đặt sân**: Quản lý các đơn đặt, trạng thái và đánh giá sân sau khi chơi.
+- **Tạo kèo ghép trận**: Tạo kèo ghép trận public đối với booking, tìm kiếm kèo, liên hệ qua chat.
 
 ### Dành cho Chủ sân (Merchant/Owner)
 - **Dashboard quản lý**: Xem biểu đồ doanh thu, lượt đặt sân và thống kê theo tháng.
@@ -70,6 +71,8 @@ PickaloApp là một nền tảng quản lý và đặt sân Pickleball trực q
 - **Bùi Thế Vĩnh Nguyên** - B22DCCN588
 - **Vũ Trọng Khôi** - B22DCCN468
 - **Phạm Ngọc Long** - B22DCCN504
+  
+[TaskSheet]()
 
 **Lớp 08 - Môn Lập Trình Thiết Bị Di Động (PTIT)**
 
