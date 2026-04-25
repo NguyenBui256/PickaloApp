@@ -10,6 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +19,7 @@ import { fetchVenueById } from '../../services/venue-service';
 import { InfoCard } from '../../components/InfoCard';
 import { useAuthStore } from '../../store/auth-store';
 import { formatCurrency } from '../../utils/format';
+import { cancelBooking } from '../../services/booking-service';
 
 
 export const PaymentScreen: React.FC = () => {
@@ -42,6 +44,32 @@ export const PaymentScreen: React.FC = () => {
 
   const isFormValid = user?.full_name && user?.phone;
   const totalPrice = totalAmount;
+  const bookingId = route.params.bookingId;
+
+  const handleCancel = () => {
+    Alert.alert(
+      'Hủy đặt sân',
+      'Bạn có chắc chắn muốn hủy đơn đặt sân này không? Các ô giờ đã chọn sẽ được nhả ra cho người khác.',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Đồng ý hủy', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (bookingId) {
+                await cancelBooking(bookingId);
+                navigation.navigate('Main', { screen: 'Home' });
+              }
+            } catch (error) {
+              console.error('Cancel booking error:', error);
+              Alert.alert('Lỗi', 'Không thể hủy đơn đặt sân. Vui lòng thử lại.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
 
   return (
@@ -51,8 +79,10 @@ export const PaymentScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.WHITE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Đặt lịch ngày trực quan</Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.headerTitle}>Thông tin đặt sân</Text>
+          <TouchableOpacity onPress={handleCancel} style={styles.cancelHeaderBtn}>
+            <Text style={styles.cancelText}>Hủy</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
 
@@ -178,10 +208,10 @@ export const PaymentScreen: React.FC = () => {
               start_time: s.time.split(' - ')[0],
               end_time: s.time.split(' - ')[1],
             })),
-            services: [], // Add services if implemented
+            services: [], 
             totalPrice: formatCurrency(totalPrice),
             totalAmount: totalPrice,
-            bookingId: 'ALOBO' + Math.floor(Math.random() * 100000),
+            bookingId: route.params.bookingId, // Use the real bookingId
             customerName: user?.full_name || '',
             customerPhone: user?.phone || '',
             note: note.trim(),
@@ -217,6 +247,16 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 18,
     fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  cancelHeaderBtn: {
+    padding: 8,
+  },
+  cancelText: {
+    color: '#FECACA', // Light red
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   scrollContent: {
     padding: 20,

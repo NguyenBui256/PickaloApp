@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
 import { fetchVenueServices, createVenueService, deleteVenueService } from '../../../services/venue-service';
 import { PrimaryButton } from '../../../components/PrimaryButton';
+import { formatCurrency } from '../../../utils/format';
 
 export const ServiceManagementScreen: React.FC = () => {
   const [services, setServices] = useState<any[]>([]);
@@ -42,7 +43,7 @@ export const ServiceManagementScreen: React.FC = () => {
       <View style={styles.serviceInfo}>
         <Text style={styles.serviceName}>{item.name}</Text>
         <Text style={styles.servicePrice}>
-          {(item.price || 0).toLocaleString('vi-VN')} đ / {item.unit}
+          {formatCurrency(item.price)} / {item.unit}
         </Text>
       </View>
       <View style={styles.serviceActions}>

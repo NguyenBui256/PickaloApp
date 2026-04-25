@@ -18,7 +18,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { expoSelectMultipleImages, validateImageAsset, expoLaunchImageLibrary } from '../../../utils/image-picker-expo';
 import { uploadVenueImages } from '../../../services/image-service';
 import { getImageUrl } from '../../../utils/image-upload-helper';
-import { createVenue } from '../../../services/venue-service';
+import { createVenue, updateVenue } from '../../../services/venue-service';
 import type { Coordinates } from '../../../types/api-types';
 
 type VenueRegistrationRouteProp = RouteProp<

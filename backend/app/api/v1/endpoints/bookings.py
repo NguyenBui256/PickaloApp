@@ -148,6 +148,17 @@ async def create_booking(
     return _booking_to_response(booking)
 
 
+@router.post("/expire-pending", status_code=status.HTTP_200_OK)
+async def expire_pending_bookings(
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+    timeout_minutes: int = 15,
+) -> int:
+    """
+    Expire pending bookings that exceed the timeout.
+    """
+    return await booking_service.expire_pending_bookings(timeout_minutes=timeout_minutes)
+
+
 @router.get("", response_model=BookingListResponse)
 async def list_my_bookings(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -236,6 +247,41 @@ async def get_booking(
         .where(Booking.id == booking.id)
     )
     booking = result.scalar_one()
+
+    return _booking_to_response(booking)
+
+
+@router.post("/{booking_id}/payment-proof", response_model=BookingResponse)
+async def upload_payment_proof(
+    booking_id: str,
+    proof_data: dict,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: DBSession,
+    booking_service: Annotated[BookingService, Depends(get_booking_service)],
+) -> BookingResponse:
+    """
+    Update payment proof for an existing booking.
+    """
+    payment_proof = proof_data.get("payment_proof")
+    if not payment_proof:
+        raise HTTPException(status_code=400, detail="payment_proof is required")
+
+    from datetime import datetime
+    import uuid as uuid_pkg
+
+    booking = await booking_service.get_booking_by_id(
+        uuid_pkg.UUID(booking_id),
+        user_id=current_user.id,
+    )
+
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    booking.payment_proof = payment_proof
+    booking.paid_at = datetime.now()
+    
+    await session.commit()
+    await session.refresh(booking)
 
     return _booking_to_response(booking)
 

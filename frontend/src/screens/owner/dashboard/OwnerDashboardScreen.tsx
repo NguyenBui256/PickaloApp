@@ -13,7 +13,7 @@ import {
 import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import COLORS from '@theme/colors';
 import { fetchMerchantStats, fetchRevenueTrend, OwnerVenueItem } from '../../../services/merchant-service';
 import { useAuthStore } from '../../../store/auth-store';
@@ -27,13 +27,22 @@ export const OwnerDashboardScreen: React.FC = () => {
   });
   const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
 
-  useEffect(() => {
+  const loadData = React.useCallback(() => {
     fetchMerchantStats().then(res => {
       if (res?.venues?.length > 0) {
-        const v = res.venues[0];
+        // Aggregate stats across all venues
+        const totalBookings = res.venues.reduce((acc: number, v: any) => acc + (v.total_bookings || 0), 0);
+        const totalRevenue = res.venues.reduce((acc: number, v: any) => acc + Number(v.revenue_mtd || 0), 0);
+        const avgRating = res.venues.reduce((acc: number, v: any) => acc + Number(v.rating || 0), 0) / res.venues.length;
+        
+        const firstVenue = res.venues[0];
         setOwnerVenue({
-          id: v.id, name: v.name, status: v.status as 'ACTIVE' | 'PENDING',
-          total_bookings: v.total_bookings, revenue_mtd: v.revenue_mtd, rating: v.rating,
+          id: firstVenue.id, 
+          name: res.venues.length > 1 ? `${res.venues.length} sân đang quản lý` : firstVenue.name, 
+          status: firstVenue.status as 'ACTIVE' | 'PENDING',
+          total_bookings: totalBookings, 
+          revenue_mtd: totalRevenue, 
+          rating: avgRating,
         });
       }
     });
@@ -44,6 +53,12 @@ export const OwnerDashboardScreen: React.FC = () => {
       }
     });
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
 
   return (
@@ -91,7 +106,7 @@ export const OwnerDashboardScreen: React.FC = () => {
               }) : ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
               datasets: [
                 {
-                  data: revenueTrend.length > 0 ? revenueTrend.map(item => item.revenue) : [0, 0, 0, 0, 0, 0, 0]
+                  data: revenueTrend.length > 0 ? revenueTrend.map(item => Number(item.revenue || 0)) : [0, 0, 0, 0, 0, 0, 0]
                 }
               ]
             }}
@@ -162,7 +177,7 @@ export const OwnerDashboardScreen: React.FC = () => {
               <Text style={styles.venueName}>{ownerVenue.name}</Text>
               <View style={styles.ratingRow}>
                 <MaterialCommunityIcons name="star" size={16} color="#FFC107" />
-                <Text style={styles.ratingText}>{ownerVenue.rating}</Text>
+                <Text style={styles.ratingText}>{ownerVenue.rating.toFixed(1)}</Text>
                 <Text style={styles.statusBadge}>{ownerVenue.status}</Text>
               </View>
             </View>

@@ -4,6 +4,7 @@ Authentication API endpoints.
 Handles user registration, login, token refresh, and logout.
 """
 
+import logging
 from typing import Annotated
 from uuid import UUID
 
@@ -26,6 +27,7 @@ from app.schemas.user import UserResponse, UserUpdate
 from app.services.auth import AuthService, get_auth_service
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -88,11 +90,14 @@ async def login(
     )
 
     if user is None:
+        logger.warning(f"Login failed for phone: {credentials.phone}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid phone or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    logger.info(f"Login successful for phone: {credentials.phone}")
 
     # Generate tokens
     tokens = auth_service.create_tokens(user)

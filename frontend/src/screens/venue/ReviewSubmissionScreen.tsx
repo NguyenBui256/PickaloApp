@@ -21,6 +21,8 @@ type RootStackParamList = {
     venueId: string;
     venueName: string;
     bookingId: string;
+    bookingDate?: string;
+    courtName?: string;
     reviewId?: string | null;
   };
 };
@@ -30,7 +32,7 @@ type ReviewSubmissionRouteProp = RouteProp<RootStackParamList, 'ReviewSubmission
 export const ReviewSubmissionScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<ReviewSubmissionRouteProp>();
-  const { venueId, venueName, bookingId, reviewId } = route.params;
+  const { venueId, venueName, bookingId, bookingDate, courtName, reviewId } = route.params;
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -121,6 +123,14 @@ export const ReviewSubmissionScreen: React.FC = () => {
         <View style={styles.venueInfo}>
           <Text style={styles.venueLabel}>{reviewId ? 'Đánh giá của bạn về' : 'Bạn nghĩ gì về'}</Text>
           <Text style={styles.venueName}>{venueName}</Text>
+          {(bookingDate || courtName) && (
+            <View style={styles.bookingSummary}>
+              <MaterialCommunityIcons name="calendar-check" size={16} color={COLORS.GRAY_MEDIUM} />
+              <Text style={styles.summaryText}>
+                {courtName ? `${courtName} • ` : ''}{bookingDate || ''}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.ratingSection}>
@@ -214,6 +224,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.TEXT_PRIMARY,
     textAlign: 'center',
+  },
+  bookingSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    backgroundColor: '#F1F3F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  summaryText: {
+    fontSize: 13,
+    color: COLORS.GRAY_MEDIUM,
+    fontWeight: '500',
   },
   ratingSection: {
     alignItems: 'center',

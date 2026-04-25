@@ -672,7 +672,10 @@ class BookingService:
                     Booking.venue_id.in_(venue_ids),
                     Booking.booking_date >= start_date,
                     Booking.booking_date <= end_date,
-                    Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+                    or_(
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+                        and_(Booking.status == BookingStatus.PENDING, Booking.paid_at.is_not(None))
+                    )
                 )
             )
             .group_by(Booking.booking_date)
@@ -732,7 +735,8 @@ class BookingService:
                 select(func.count(Booking.id)).where(
                     and_(
                         Booking.venue_id == venue.id,
-                        Booking.booking_date >= start_of_month
+                        Booking.booking_date >= start_of_month,
+                        Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
                     )
                 )
             )
@@ -744,7 +748,10 @@ class BookingService:
                     and_(
                         Booking.venue_id == venue.id,
                         Booking.booking_date >= start_of_month,
-                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                        or_(
+                            Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]),
+                            and_(Booking.status == BookingStatus.PENDING, Booking.paid_at.is_not(None))
+                        )
                     )
                 )
             )
@@ -764,7 +771,7 @@ class BookingService:
             "currency": "VND",
         }
 
-    async def expire_pending_bookings(self, timeout_minutes: int = 15) -> int:
+    async def expire_pending_bookings(self, timeout_minutes: int = 10) -> int:
         """
         Mark pending bookings as expired if unpaid beyond timeout.
 

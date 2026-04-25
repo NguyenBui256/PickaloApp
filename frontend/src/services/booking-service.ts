@@ -44,6 +44,14 @@ export const fetchBookingById = async (bookingId: string): Promise<BookingRespon
   return apiClient.get(`/bookings/${bookingId}`);
 };
 
+/** Update payment proof for an existing booking. BE: POST /bookings/{booking_id}/payment-proof */
+export const updateBookingProof = async (
+  bookingId: string,
+  paymentProof: string
+): Promise<BookingResponse> => {
+  return apiClient.post(`/bookings/${bookingId}/payment-proof`, { payment_proof: paymentProof });
+};
+
 /** Cancel a booking. BE: POST /bookings/{booking_id}/cancel */
 export const cancelBooking = async (
   bookingId: string,

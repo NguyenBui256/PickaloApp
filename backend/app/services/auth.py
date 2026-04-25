@@ -4,6 +4,7 @@ Authentication business logic service.
 Handles user authentication, token generation, and session management.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Annotated, Any
@@ -17,6 +18,8 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import verify_password, hash_password, create_access_token, create_refresh_token
 from app.models.user import User, UserRole
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -57,11 +60,14 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user:
+            logger.warning(f"Authentication failed: User with phone {phone} not found")
             return None
 
         if not verify_password(password, user.password_hash):
+            logger.warning(f"Authentication failed: Incorrect password for phone {phone}")
             return None
 
+        logger.info(f"Authentication successful for user {user.id} ({phone})")
         return user
 
     async def create_user(

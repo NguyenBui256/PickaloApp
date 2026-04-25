@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,14 +17,26 @@ import type { BookingListItem, BookingResponse } from '../../types/api-types';
 import { useAuthStore } from '../../store/auth-store';
 import { fetchBookingById } from '../../services/booking-service';
 import { formatCurrency } from '../../utils/format';
+import { getImageUrl } from '../../utils/image-upload-helper';
 
 // Helpers
 const formatBookingTime = (b: any) => {
   if (b.slots && b.slots.length > 0) {
-    return b.slots.map((s: any) => `${s.start_time}-${s.end_time}`).join(', ');
+    // Group slots by time range to avoid redundancy if multiple courts booked at same time
+    const timeRanges = b.slots.map((s: any) => `${s.start_time}-${s.end_time}`);
+    return [...new Set(timeRanges)].join(', ');
   }
   if (b.start_time && b.end_time) return `${b.start_time} - ${b.end_time}`;
   return 'N/A';
+};
+
+const formatCourtNames = (b: any) => {
+  if (b.slots && b.slots.length > 0) {
+    const names = b.slots.map((s: any) => s.court_name).filter(Boolean);
+    const uniqueNames = [...new Set(names)];
+    return uniqueNames.length > 0 ? uniqueNames.join(', ') : 'N/A';
+  }
+  return b.court_name || 'N/A';
 };
 
 const formatBookingDate = (b: any) =>
@@ -78,7 +91,7 @@ export const BookingHistoryDetailScreen: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('Thông tin');
 
-  const tabs = ['Thông tin', 'Dịch vụ', 'Đội nhóm'];
+  const tabs = ['Thông tin', 'Dịch vụ', 'Minh chứng', 'Đội nhóm'];
 
   const getStatusDisplay = () => {
     switch (booking.status) {
@@ -104,6 +117,8 @@ export const BookingHistoryDetailScreen: React.FC = () => {
         venueId: currentBooking.venue_id,
         venueName: currentBooking.venue_name,
         bookingId: currentBooking.id,
+        bookingDate: formatBookingDate(currentBooking),
+        courtName: formatCourtNames(currentBooking),
         reviewId: (currentBooking as any).review_id,
       });
     }
@@ -176,7 +191,7 @@ export const BookingHistoryDetailScreen: React.FC = () => {
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
               <InfoItem label="Câu lạc bộ" value={booking.venue_name ?? ''} />
-              <InfoItem label="Sân" value={bookingDetail?.slots[0]?.court_name || booking.court_name || 'N/A'} />
+              <InfoItem label="Sân" value={formatCourtNames(bookingDetail || booking)} />
               <InfoItem
                 label="Trạng thái"
                 value={statusConfig.text}
@@ -224,7 +239,41 @@ export const BookingHistoryDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {activeTab !== 'Thông tin' && activeTab !== 'Dịch vụ' && (
+        {activeTab === 'Minh chứng' && (
+          <View style={styles.infoSection}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="file-image-outline"
+                size={24}
+                color={COLORS.WHITE}
+              />
+              <Text style={styles.sectionTitle}>Minh chứng thanh toán</Text>
+            </View>
+            <View style={styles.proofContainer}>
+              {(bookingDetail?.payment_proof || booking.payment_proof) ? (
+                <View>
+                   <Text style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 15 }}>
+                     Đây là ảnh xác nhận thanh toán của bạn.
+                   </Text>
+                   <View style={styles.imageWrapper}>
+                      <Image 
+                        source={{ uri: getImageUrl(bookingDetail?.payment_proof || booking.payment_proof) }} 
+                        style={styles.proofImage}
+                        resizeMode="contain"
+                      />
+                   </View>
+                </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                   <MaterialCommunityIcons name="image-off-outline" size={48} color="rgba(255,255,255,0.3)" />
+                   <Text style={styles.emptyText}>Chưa có ảnh minh chứng được tải lên.</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {activeTab === 'Đội nhóm' && (
           <View style={styles.emptyTab}>
             <MaterialCommunityIcons
               name="dots-horizontal"
@@ -421,6 +470,29 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: 'rgba(255,255,255,0.3)',
+  },
+  proofContainer: {
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    minHeight: 200,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: 400,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  proofImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
   loadingContainer: {
     padding: 20,

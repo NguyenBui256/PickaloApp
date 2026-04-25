@@ -117,6 +117,16 @@ export const OwnerBookingDetailScreen: React.FC = () => {
   const slots = booking.slots || [];
   const services = booking.services || [];
 
+  const courtNames = slots.length > 0 
+    ? [...new Set(slots.map((s: any) => s.court_name).filter(Boolean))].join(', ') 
+    : (booking.court_name || booking.court || 'N/A');
+
+  const timeDisplay = slots.length > 0
+    ? [...new Set(slots.map((s: any) => `${s.start_time}-${s.end_time}`))].join(', ')
+    : (booking.time || 'N/A');
+    
+  const dateDisplay = booking.booking_date || booking.date || 'N/A';
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -172,12 +182,12 @@ export const OwnerBookingDetailScreen: React.FC = () => {
             <View style={styles.infoList}>
               <InfoItem label="Mã đơn hàng" value={booking.id} />
               <InfoItem label="Cơ sở sân" value={booking.venueName} />
-              <InfoItem label="Sân" value={booking.court} />
-              <InfoItem label="Trạng thái" value={booking.status === 'Đang xếp lịch' || booking.status === 'PENDING' ? 'Mới' : booking.status} isYellow />
-              <InfoItem label="Thời gian" value={booking.time} />
-              <InfoItem label="Ngày tháng" value={booking.date} />
-              <InfoItem label="Tổng phí" value={`${(booking.totalPrice || (booking as any).total_price || 0).toLocaleString('vi-VN')} đ`} isYellow />
-              <InfoItem label="Số điện thoại" value={booking.phone} isClickable />
+              <InfoItem label="Sân" value={courtNames} />
+              <InfoItem label="Trạng thái" value={booking.status === 'PENDING' ? 'CHỜ DUYỆT' : booking.status} isYellow />
+              <InfoItem label="Thời gian" value={timeDisplay} />
+              <InfoItem label="Ngày tháng" value={dateDisplay} />
+              <InfoItem label="Tổng phí" value={formatCurrency(booking.total_price || booking.totalPrice)} isYellow />
+              <InfoItem label="Số điện thoại" value={customerPhone} isClickable />
               <View style={styles.noteBox}>
                 <Text style={styles.noteText}>YÊU CẦU DUYỆT</Text>
               </View>

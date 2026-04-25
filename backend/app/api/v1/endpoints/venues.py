@@ -263,6 +263,9 @@ async def get_venue_availability(
 
     Returns grid of slots grouped by court.
     """
+    # Auto-expire stale pending bookings before checking availability
+    await booking_service.expire_pending_bookings(timeout_minutes=10)
+
     availability = await booking_service.get_timeline_availability(
         uuid.UUID(venue_id),
         date,

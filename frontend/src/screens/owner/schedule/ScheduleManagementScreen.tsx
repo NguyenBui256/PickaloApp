@@ -17,6 +17,7 @@ import {
   rejectBooking,
 } from '../../../services/merchant-service';
 import type { BookingListItem } from '../../../types/api-types';
+import { formatCurrency } from '../../../utils/format';
 
 export const ScheduleManagementScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -126,7 +127,7 @@ export const ScheduleManagementScreen: React.FC = () => {
         <View style={styles.detailItem}>
           <MaterialCommunityIcons name="cash" size={18} color="#666" />
           <Text style={styles.detailText}>
-            {Number(item.total_price || 0).toLocaleString('vi-VN')} đ
+            {formatCurrency(item.total_price)}
           </Text>
         </View>
       </View>

@@ -177,6 +177,52 @@ class MatchService:
         matches = list(result.all())
         return matches, total
 
+    async def get_matches_by_venue(
+        self,
+        venue_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 20
+    ) -> tuple[list[Any], int]:
+        """
+        Get all OPEN matches for a specific venue.
+        """
+        conditions = [
+            Match.status == MatchStatus.OPEN,
+            Booking.venue_id == venue_id,
+            Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED])
+        ]
+
+        query = select(
+            Match,
+            func.ST_Y(cast(Venue.location, Geometry)).label("lat"),
+            func.ST_X(cast(Venue.location, Geometry)).label("lng"),
+            literal(0.0).label("distance"), # Distance not relevant for specific venue
+            Venue.name.label("venue_name"),
+            Venue.address.label("venue_address")
+        ).join(
+            Booking, Booking.id == Match.booking_id
+        ).join(
+            Venue, Venue.id == Booking.venue_id
+        ).options(
+            selectinload(Match.booking).selectinload(Booking.slots),
+            selectinload(Match.booking).selectinload(Booking.user),
+            selectinload(Match.booking).selectinload(Booking.venue)
+        ).where(and_(*conditions))
+
+        # Count query
+        count_query = select(func.count()).select_from(Match).join(
+            Booking, Booking.id == Match.booking_id
+        ).where(and_(*conditions))
+
+        count_result = await self.session.execute(count_query)
+        total = count_result.scalar() or 0
+
+        result = await self.session.execute(
+            query.order_by(Match.created_at.desc()).offset(skip).limit(limit)
+        )
+        
+        return list(result.all()), total
+
     async def create_request(
         self,
         match_id: uuid.UUID,
@@ -269,7 +315,7 @@ class MatchService:
         match_end = max(s.end_time for s in match_slots)
 
         # 2. Check overlap with user's OWN bookings
-        own_overlap_query = select(exists().where(
+        own_overlap_query = select(Booking.id).join(BookingSlot).where(
             and_(
                 Booking.user_id == requester_id,
                 Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
@@ -277,14 +323,14 @@ class MatchService:
                 BookingSlot.start_time < match_end,
                 BookingSlot.end_time > match_start
             )
-        )).select_from(Booking).join(BookingSlot, BookingSlot.booking_id == Booking.id)
+        ).limit(1)
         
         if (await self.session.execute(own_overlap_query)).scalar():
             print("DEBUG: create_request - FAILED: Overlapping with owned booking")
             raise ValueError("Bạn đã có yêu cầu/lịch thi đấu khác trong khung giờ này")
 
         # 3. Check overlap with user's OTHER match requests (PENDING or ACCEPTED)
-        request_overlap_query = select(exists().where(
+        request_overlap_query = select(MatchRequest.id).join(Match).join(Booking).join(BookingSlot).where(
             and_(
                 MatchRequest.requester_id == requester_id,
                 MatchRequest.status.in_([MatchRequestStatus.PENDING, MatchRequestStatus.ACCEPTED]),
@@ -293,7 +339,7 @@ class MatchService:
                 BookingSlot.start_time < match_end,
                 BookingSlot.end_time > match_start
             )
-        )).select_from(MatchRequest).join(Match, Match.id == MatchRequest.match_id).join(Booking, Booking.id == Match.booking_id).join(BookingSlot, BookingSlot.booking_id == Booking.id)
+        ).limit(1)
 
         if (await self.session.execute(request_overlap_query)).scalar():
             print("DEBUG: create_request - FAILED: Overlapping with other match request")
@@ -539,6 +585,9 @@ class MatchService:
         
         if not req:
             raise ValueError("Yêu cầu không tồn tại hoặc bạn không có quyền hủy")
+            
+        if req.status == MatchRequestStatus.REJECTED:
+            raise ValueError("Không thể hủy yêu cầu đã bị từ chối")
             
         match_result = await self.session.execute(select(Match).where(Match.id == req.match_id))
         match = match_result.scalar_one()

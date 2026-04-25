@@ -700,7 +700,7 @@ export const VenueConfigurationScreen: React.FC = () => {
                         </View>
                         {slot.price ? (
                           <Text style={styles.pricePreview}>
-                            = {parseInt(slot.price || '0').toLocaleString('vi-VN')} đồng/giờ
+                            = {formatCurrencyUtil(parseInt(slot.price || '0'))} / giờ
                           </Text>
                         ) : null}
                       </View>

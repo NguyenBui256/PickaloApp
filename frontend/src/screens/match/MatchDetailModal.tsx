@@ -70,7 +70,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       navigation.navigate('Chat', { 
         roomId: res.chat_room_id,
         matchId: activeMatch.id,
-        partnerName: activeMatch.host_name || 'Chủ kèo'
+        partnerName: activeMatch.host_name || 'Chủ kèo',
+        requestId: res.id
       });
     } catch (err: any) {
       console.error("DEBUG FE: Error in handleRequest!", err);

@@ -134,6 +134,78 @@ async def search_nearby_matches(
     return items
 
 
+@router.get("/venue/{venue_id}", response_model=list[dict])
+async def get_venue_matches(
+    venue_id: uuid.UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: User | None = Depends(deps.get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get all open matches for a specific venue.
+    """
+    match_service = MatchService(db)
+    matches_data, total = await match_service.get_matches_by_venue(
+        venue_id=venue_id,
+        skip=skip,
+        limit=limit
+    )
+    
+    items = []
+    for match, v_lat, v_lng, dist, v_name, v_addr in matches_data:
+        booking = match.booking
+        host_name = booking.user.full_name or booking.user.phone if booking and booking.user else "Unknown"
+        
+        start_t = None
+        end_t = None
+        if booking and booking.slots:
+            start_t = min(s.start_time for s in booking.slots).strftime("%H:%M")
+            end_t = max(s.end_time for s in booking.slots).strftime("%H:%M")
+
+        match_dict = {
+            "id": str(match.id),
+            "booking_id": str(match.booking_id),
+            "slots_needed": match.slots_needed,
+            "slots_filled": match.slots_filled,
+            "available_slots": match.available_slots,
+            "price_per_slot": float(match.price_per_slot),
+            "skill_level": match.skill_level,
+            "note": match.note,
+            "status": match.status,
+            "created_at": match.created_at.isoformat(),
+            "updated_at": match.updated_at.isoformat(),
+            "location": {"lat": v_lat, "lng": v_lng},
+            "distance": dist,
+            "venue_name": v_name,
+            "venue_address": v_addr,
+            "host_name": host_name,
+            "start_time": start_t,
+            "end_time": end_t,
+            "booking_date": booking.booking_date.isoformat() if booking else None,
+            "host_id": str(booking.user_id) if booking and booking.user_id else None,
+            "is_host": (current_user and booking and booking.user_id == current_user.id) if current_user else False,
+            "my_request_status": None,
+            "my_request_id": None
+        }
+
+        if current_user:
+            from app.models.match import MatchRequest
+            req_res = await db.execute(
+                select(MatchRequest.status, MatchRequest.id).where(
+                    and_(MatchRequest.match_id == match.id, MatchRequest.requester_id == current_user.id)
+                )
+            )
+            row = req_res.first()
+            if row:
+                match_dict["my_request_status"] = row[0]
+                match_dict["my_request_id"] = str(row[1])
+
+        items.append(match_dict)
+        
+    return items
+
+
 @router.get("/{match_id}", response_model=MatchResponse)
 async def get_match_details(
     match_id: uuid.UUID,

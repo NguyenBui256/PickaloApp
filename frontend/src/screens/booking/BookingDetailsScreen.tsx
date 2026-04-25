@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -9,6 +9,8 @@ import { BookingSummaryBar } from '../../components/BookingSummaryBar';
 import { fetchVenueAvailability } from '../../services/venue-service';
 import type { AvailabilityResponse } from '../../types/api-types';
 import { formatCurrency } from '../../utils/format';
+import { createBooking } from '../../services/booking-service';
+import { useAuthStore } from '../../store/auth-store';
 
 const COURT_COLUMN_WIDTH = 100;
 const TIME_CELL_WIDTH = 60;
@@ -18,10 +20,12 @@ export const BookingDetailsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { venueId } = route.params || {};
+  const { user } = useAuthStore();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Generate 14 days from today
   const dates = useMemo(() => {
@@ -109,6 +113,42 @@ export const BookingDetailsScreen: React.FC = () => {
       prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
   }, []);
+
+  const handleNext = async () => {
+    if (!user) {
+      Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để tiến hành đặt sân');
+      navigation.navigate('Profile');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const res = await createBooking({
+        venue_id: venueId,
+        booking_date: selectedDate.toISOString().split('T')[0],
+        slots: bookingSummary.selectedSlotsData.map(s => ({
+          court_id: s.courtId,
+          start_time: s.start_time,
+          end_time: s.end_time,
+        })),
+        notes: '',
+      });
+
+      navigation.navigate('Payment', { 
+        venueId, 
+        bookingDate: selectedDate.toISOString().split('T')[0],
+        selectedSlotsData: bookingSummary.selectedSlotsData,
+        totalAmount: bookingSummary.totalAmount,
+        bookingId: res.id,
+      });
+    } catch (error: any) {
+      console.error('Create booking error:', error);
+      const msg = error.response?.data?.detail || 'Không thể khởi tạo đơn đặt sân. Vui lòng thử lại.';
+      Alert.alert('Lỗi', msg);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -209,10 +249,30 @@ export const BookingDetailsScreen: React.FC = () => {
                   {/* Row Cells */}
                   {court.slots.map((slot) => {
                     const slotId = `${court.court_id}|${slot.start_time}`;
+                    
+                    // Check if slot is in the past
+                    const now = new Date();
+                    const isToday = selectedDate.getDate() === now.getDate() && 
+                                   selectedDate.getMonth() === now.getMonth() && 
+                                   selectedDate.getFullYear() === now.getFullYear();
+                    const isPastDate = selectedDate < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    let isPast = false;
+                    if (isPastDate) {
+                      isPast = true;
+                    } else if (isToday) {
+                      const [startH, startM] = slot.start_time.split(':').map(Number);
+                      const currentH = now.getHours();
+                      const currentM = now.getMinutes();
+                      if (startH < currentH || (startH === currentH && startM < currentM)) {
+                        isPast = true;
+                      }
+                    }
+
                     return (
                       <BookingCell
                         key={slotId}
-                        status={slot.available ? 'available' : 'booked'}
+                        status={isPast ? 'locked' : (slot.available ? 'available' : 'booked')}
                         isSelected={selectedSlots.includes(slotId)}
                         onPress={() => toggleSlot(court.court_id, slot.start_time)}
                       />
@@ -231,12 +291,8 @@ export const BookingDetailsScreen: React.FC = () => {
         isVisible={selectedSlots.length > 0}
         totalHours={bookingSummary.timeStr}
         totalPrice={bookingSummary.totalPrice}
-        onNext={() => navigation.navigate('Payment', { 
-          venueId, 
-          bookingDate: selectedDate.toISOString().split('T')[0],
-          selectedSlotsData: bookingSummary.selectedSlotsData,
-          totalAmount: bookingSummary.totalAmount
-        })}
+        onNext={handleNext}
+        isLoading={isCreating}
       />
     </View>
   );

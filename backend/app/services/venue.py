@@ -615,7 +615,7 @@ class VenueManagementService:
             return None
 
         # Verify venue ownership
-        venue = await self.get_venue_by_id(service.venue_id)
+        venue, _, _ = await self.get_venue_by_id(service.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this service")
 
@@ -651,7 +651,7 @@ class VenueManagementService:
             return False
 
         # Verify ownership
-        venue = await self.get_venue_by_id(service.venue_id)
+        venue, _, _ = await self.get_venue_by_id(service.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to delete this service")
 
@@ -1055,7 +1055,7 @@ class VenueManagementService:
         Returns:
             True if verified
         """
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
 
         if not venue:
             return False
@@ -1092,7 +1092,7 @@ class VenueManagementService:
     ) -> Court:
         """Create a new court for a venue."""
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add courts to this venue")
 
@@ -1120,7 +1120,7 @@ class VenueManagementService:
             return None
 
         # Verify ownership
-        venue = await self.get_venue_by_id(court.venue_id)
+        venue, _, _ = await self.get_venue_by_id(court.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to update this court")
 
@@ -1145,7 +1145,7 @@ class VenueManagementService:
             return False
 
         # Verify ownership
-        venue = await self.get_venue_by_id(court.venue_id)
+        venue, _, _ = await self.get_venue_by_id(court.venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to delete this court")
 
@@ -1162,7 +1162,7 @@ class VenueManagementService:
     ) -> list[Court]:
         """Bulk create multiple courts for a venue."""
         # Verify ownership
-        venue = await self.get_venue_by_id(venue_id)
+        venue, _, _ = await self.get_venue_by_id(venue_id)
         if not venue or venue.merchant_id != merchant_id:
             raise ValueError("Not authorized to add courts to this venue")
 

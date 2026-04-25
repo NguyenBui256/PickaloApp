@@ -16,7 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import COLORS from '@theme/colors';
 import { BANK_DETAILS } from '../../constants/mock-data';
 import { useAuthStore } from '../../store/auth-store';
-import { createBooking } from '../../services/booking-service';
+import { updateBookingProof, cancelBooking } from '../../services/booking-service';
 import { uploadPaymentProof } from '../../services/image-service';
 
 // Internal Helper Component
@@ -52,7 +52,9 @@ export const FinalPaymentScreen: React.FC = () => {
 
   useEffect(() => {
     if (timeLeft === 0) {
-      Alert.alert('Hết thời gian', 'Thời gian giữ chỗ của bạn đã hết. Vui lòng thực hiện lại.');
+      Alert.alert('Hết thời gian', 'Thời gian giữ chỗ của bạn đã hết. Vui lòng thực hiện lại.', [
+        { text: 'OK', onPress: () => navigation.popToTop() }
+      ]);
       return;
     }
 
@@ -104,15 +106,8 @@ export const FinalPaymentScreen: React.FC = () => {
 
       const uploadRes = await uploadPaymentProof(formData);
       
-      // 2. Create booking
-      await createBooking({
-        venue_id: venueId,
-        booking_date: bookingDate,
-        slots: slots,
-        services: services,
-        notes: note,
-        payment_proof: uploadRes.url,
-      });
+      // 2. Update booking with proof
+      await updateBookingProof(bookingId, uploadRes.url);
 
       Alert.alert(
         'Thành công', 
@@ -136,6 +131,31 @@ export const FinalPaymentScreen: React.FC = () => {
     }
   };
 
+  const handleCancel = () => {
+    Alert.alert(
+      'Hủy đặt sân',
+      'Bạn có chắc chắn muốn hủy đơn đặt sân này không? Các ô giờ đã chọn sẽ được nhả ra cho người khác.',
+      [
+        { text: 'Không', style: 'cancel' },
+        { 
+          text: 'Đồng ý hủy', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (bookingId) {
+                await cancelBooking(bookingId);
+                navigation.navigate('Main', { screen: 'Home' });
+              }
+            } catch (error) {
+              console.error('Cancel booking error:', error);
+              Alert.alert('Lỗi', 'Không thể hủy đơn đặt sân. Vui lòng thử lại.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -146,7 +166,9 @@ export const FinalPaymentScreen: React.FC = () => {
               <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Thanh toán</Text>
-            <View style={{ width: 40 }} />
+            <TouchableOpacity onPress={handleCancel} style={styles.cancelHeaderBtn}>
+              <Text style={styles.cancelText}>Hủy đơn</Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </View>
@@ -262,6 +284,16 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 18,
     fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  cancelHeaderBtn: {
+    padding: 8,
+  },
+  cancelText: {
+    color: '#FECACA', // Light red
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   scrollContent: {
     paddingBottom: 30,

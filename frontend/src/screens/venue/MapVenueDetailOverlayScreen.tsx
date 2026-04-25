@@ -9,6 +9,7 @@ import {
   Alert,
   Share,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -27,7 +28,9 @@ import { fetchVenueById } from '../../services/venue-service';
 import { fetchVenueReviews } from '../../services/review-service';
 import { BookingModal } from '../../components/BookingModal';
 import { getImageUrl } from '../../utils/image-upload-helper';
-import type { ReviewResponse } from '../../types/api-types';
+import { matchService } from '../../services/match-service';
+import { MatchDetailModal } from '../match/MatchDetailModal';
+import type { ReviewResponse, MatchResponse } from '../../types/api-types';
 import COLORS from '@theme/colors';
 
 const { height } = Dimensions.get('window');
@@ -40,7 +43,7 @@ type RootStackParamList = {
 
 type RouteProps = RouteProp<RootStackParamList, 'MapVenueDetailOverlay'>;
 
-const TABS = ['Thông tin', 'Dịch vụ', 'Hình ảnh', 'Điều khoản & quy định', 'Đánh giá'];
+const TABS = ['Thông tin', 'Dịch vụ', 'Hình ảnh', 'Kèo ghép', 'Điều khoản & quy định', 'Đánh giá'];
 
 export const MapVenueDetailOverlayScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -54,6 +57,9 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   const [selectedBookingType, setSelectedBookingType] = useState<'normal' | 'event' | null>(null);
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [venueMatches, setVenueMatches] = useState<MatchResponse[]>([]);
+  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<MatchResponse | null>(null);
 
   useEffect(() => {
     fetchVenueById(venueId).then(res => {
@@ -66,7 +72,16 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
   }, [venueId]);
 
   useEffect(() => {
-    if (activeTab === 'Đánh giá' && reviews.length === 0) {
+    if (activeTab === 'Kèo ghép' && venueMatches.length === 0) {
+      setIsLoadingMatches(true);
+      matchService.getVenueMatches(venueId).then(res => {
+        setVenueMatches(res);
+        setIsLoadingMatches(false);
+      }).catch(err => {
+        console.error('Error fetching venue matches:', err);
+        setIsLoadingMatches(false);
+      });
+    } else if (activeTab === 'Đánh giá' && reviews.length === 0) {
       setIsLoadingReviews(true);
       fetchVenueReviews(venueId).then(res => {
         setReviews(res.items);
@@ -176,6 +191,59 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
                 </View>
               )}
             </View>
+        </View>
+      );
+    }
+    if (activeTab === 'Kèo ghép') {
+      return (
+        <View style={styles.tabContent}>
+          <Text style={styles.sectionTitle}>Các kèo đang tìm người ({venueMatches.length})</Text>
+          {isLoadingMatches ? (
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} style={{ marginTop: 20 }} />
+          ) : venueMatches.length > 0 ? (
+            venueMatches.map((match) => (
+              <TouchableOpacity 
+                key={match.id} 
+                style={styles.matchItem}
+                onPress={() => setSelectedMatch(match)}
+              >
+                <View style={styles.matchMain}>
+                  <View style={styles.matchInfo}>
+                    <Text style={styles.matchHost}>Chủ kèo: {match.host_name}</Text>
+                    <Text style={styles.matchTime}>
+                      <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.GRAY_MEDIUM} /> {match.start_time} - {match.end_time}
+                    </Text>
+                    <View style={styles.skillBadge}>
+                      <Text style={styles.skillText}>{match.skill_level}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.matchStatus}>
+                    <Text style={styles.slotsText}>
+                      Còn {match.available_slots}/{match.slots_needed} chỗ
+                    </Text>
+                    <Text style={styles.priceText}>{match.price_per_slot.toLocaleString()}đ/người</Text>
+                  </View>
+                </View>
+                {match.my_request_status && (
+                  <View style={[
+                    styles.requestStatusBadge, 
+                    match.my_request_status === 'ACCEPTED' ? styles.statusAccepted : 
+                    match.my_request_status === 'REJECTED' ? styles.statusRejected : styles.statusPending
+                  ]}>
+                    <Text style={styles.statusBadgeText}>
+                      {match.my_request_status === 'ACCEPTED' ? 'Đã tham gia' : 
+                       match.my_request_status === 'REJECTED' ? 'Bị từ chối' : 'Đang chờ'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="account-group-outline" size={48} color={COLORS.GRAY_LIGHT} />
+              <Text style={styles.emptyText}>Hiện chưa có kèo ghép nào tại sân này.</Text>
+            </View>
+          )}
         </View>
       );
     }
@@ -382,6 +450,18 @@ export const MapVenueDetailOverlayScreen: React.FC = () => {
         onClose={() => setBookingModalVisible(false)}
         onSelectOption={handleSelectBookingOption}
       />
+
+      {selectedMatch && (
+        <MatchDetailModal
+          visible={!!selectedMatch}
+          matchId={selectedMatch.id}
+          onClose={() => {
+            setSelectedMatch(null);
+            // Refresh matches when modal closes to update status
+            matchService.getVenueMatches(venueId).then(setVenueMatches);
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -713,5 +793,82 @@ const styles = StyleSheet.create({
   },
   paddingForMap: {
     height: 180,
+  },
+  matchItem: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
+    elevation: 2,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  matchMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  matchInfo: {
+    flex: 1,
+  },
+  matchHost: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: 4,
+  },
+  matchTime: {
+    fontSize: 13,
+    color: COLORS.GRAY_MEDIUM,
+    marginBottom: 6,
+  },
+  skillBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  skillText: {
+    fontSize: 11,
+    color: '#1D4ED8',
+    fontWeight: 'bold',
+  },
+  matchStatus: {
+    alignItems: 'flex-end',
+  },
+  slotsText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: 4,
+  },
+  priceText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#059669',
+  },
+  requestStatusBadge: {
+    marginTop: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  statusPending: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusAccepted: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusRejected: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_PRIMARY,
   },
 });

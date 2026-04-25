@@ -32,6 +32,13 @@ export const matchService = {
   }): Promise<MatchResponse[]> => {
     return apiClient.get<MatchResponse[]>('/matches/nearby', { params });
   },
+  
+  /**
+   * Get all open matches for a specific venue
+   */
+  getVenueMatches: async (venueId: string): Promise<MatchResponse[]> => {
+    return apiClient.get<MatchResponse[]>(`/matches/venue/${venueId}`);
+  },
 
   /**
    * Get match details

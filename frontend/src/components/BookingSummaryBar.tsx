@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '@theme/colors';
+import { ActivityIndicator } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -17,6 +18,7 @@ interface BookingSummaryBarProps {
   totalPrice: string;
   onNext: () => void;
   isVisible: boolean;
+  isLoading?: boolean;
 }
 
 export const BookingSummaryBar: React.FC<BookingSummaryBarProps> = ({
@@ -24,6 +26,7 @@ export const BookingSummaryBar: React.FC<BookingSummaryBarProps> = ({
   totalPrice,
   onNext,
   isVisible,
+  isLoading = false,
 }) => {
   const slideAnim = useRef(new Animated.Value(150)).current;
 
@@ -54,8 +57,16 @@ export const BookingSummaryBar: React.FC<BookingSummaryBarProps> = ({
             <Text style={styles.summaryLabel}>Tổng tiền: <Text style={styles.priceText}>{totalPrice}</Text></Text>
           </View>
 
-          <TouchableOpacity style={styles.nextBtn} onPress={onNext}>
-            <Text style={styles.nextBtnText}>TIẾP THEO</Text>
+          <TouchableOpacity 
+            style={[styles.nextBtn, isLoading && { opacity: 0.8 }]} 
+            onPress={onNext}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.WHITE} size="small" />
+            ) : (
+              <Text style={styles.nextBtnText}>TIẾP THEO</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
