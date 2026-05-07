@@ -85,7 +85,7 @@ export const VENUES = [
     rating: 0,
     is_verified: false,
     base_price_per_hour: 120000,
-    lat: 20.9800,
+    lat: 11.9800,
     lng: 105.7700,
   },
   {
